@@ -1,0 +1,91 @@
+<h2>Restaurants</h2>
+
+<p> <input
+  type="text"
+  [formControl]="searchControl"
+  placeholder="Search by name..."
+/> </p>
+
+<p *ngIf="loading">Loading...</p>
+<p *ngIf="!loading && errorMsg">{{ errorMsg }}</p>
+
+<ul class="list" *ngIf="!loading && !errorMsg && restaurants.length > 0">
+  <li class="card" *ngFor="let restaurant of visibleRestaurants; trackBy: trackById"> 
+    <div>
+      <span class="name", type="name">
+        <p calss="name" *ngIf="restaurant._id != undefined">{{
+          expanded[restaurant._id] || restaurant.profile.name.length <= 15
+            ? restaurant.profile.name
+            : (restaurant.profile.name | slice:0:15) + '...'
+        }}</p>
+      </span>
+
+      <button *ngIf="restaurant._id != undefined && restaurant.profile.name.length > 15"
+              class="btn"
+              (click)="toggleExpand(restaurant._id)">
+        {{ expanded[restaurant._id] ? 'Show less' : 'Show more' }}
+      </button>
+    </div>
+
+    <div *ngIf="restaurant._id != undefined">
+      <span class="muted">{{ restaurant._id }}</span>
+
+      <button type="button"
+              class="btn"
+              (click)="edit(restaurant)">
+        Edit
+      </button>
+
+      <button type="button"
+              class="btn delete-btn"
+              (click)="confirmDelete(restaurant._id, restaurant.profile.name)">
+        X
+      </button>
+    </div>
+
+  </li>
+</ul>
+
+<button 
+    *ngIf="!showAllRestaurants && restaurants.length > limit"
+    class="btn"
+    (click)="showMore()">
+  Show more
+</button>
+<button 
+  *ngIf="showAllRestaurants"
+  class="btn"
+  (click)="showAllRestaurants = false">
+
+  Show less
+</button>
+
+<p *ngIf="!loading && !errorMsg && restaurants.length === 0">
+  No organizations.
+</p>
+
+<button type="button" class="btn" (click)="showRestaurantForm()">
+  Add
+</button>
+
+<div *ngIf="showForm" class="card">
+
+  <h3>{{ editting ? 'Edit organization' : 'New organization' }}</h3>
+
+  <form [formGroup]="restaurantForm"> <!-- (ngSubmit)="save()" to be added-->
+
+    <label>Name:</label>
+    <input type="text" formControlName="name" />
+
+    <button type="submit"
+            class="btn"
+            [disabled]="restaurantForm.invalid">
+      {{ editting ? 'Update' : 'Save' }}
+    </button>
+  </form>
+</div>
+
+<!-- Botón para recargar la lista -->
+<button type="button" class="btn" (click)="load()">
+  Refresh
+</button>
