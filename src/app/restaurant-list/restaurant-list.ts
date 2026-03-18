@@ -31,6 +31,37 @@ export class RestaurantList implements OnInit {
   constructor(private api: RestaurantService, private fb: FormBuilder, private cdr: ChangeDetectorRef, private dialog: MatDialog) {
     this.restaurantForm = this.fb.group({
       name: ['', Validators.required],
+      description: ['', Validators.required],
+      category: ['', Validators.required],
+      rating: [0, [Validators.pattern('^[0-5]+(\\.[0-9]+)?$'), Validators.min(0), Validators.max(5)]],
+      mondayOpen: [''],
+      tuesdayOpen: [''],
+      wednesdayOpen: [''],
+      thursdayOpen: [''],
+      fridayOpen: [''],
+      saturdayOpen: [''],
+      sundayOpen: [''],
+      mondayClose: [''],
+      tuesdayClose: [''],
+      wednesdayClose: [''],
+      thursdayClose: [''],
+      fridayClose: [''],
+      saturdayClose: [''],
+      sundayClose: [''],
+      imageUrl: [''],
+      phone: [''],
+      email: ['', Validators.email],
+      city: ['', Validators.required],
+      address: ['', Validators.required],
+      googlePlaceId: [''],
+      type: [''], //Coordinates type
+      lat: ['', Validators.required],
+      lon: ['', Validators.required],
+      employees: [''],
+      dishes: [''],
+      rewards: [''],
+      statistics: [''],
+      badges: [''],
     });
 
     this.searchControl = new FormControl('');
@@ -72,8 +103,15 @@ export class RestaurantList implements OnInit {
     return restaurant._id;
   }
 
-  showRestaurantForm(): void {
-    this.showForm = true;
+  toggleShowForm(): void {
+    if (this.editting) {
+      this.showForm = true;
+      this.editting = false;
+      this.restaurantForm.patchValue({
+        name: ""
+      });
+    }
+    else { this.showForm = !this.showForm; }
   }
 
   showMore(): void {
@@ -97,8 +135,6 @@ export class RestaurantList implements OnInit {
     });
   }
 
-  // Function save not yet implemented
-  //
   // save(): void {
   //   if (this.restaurantForm.invalid) return;
 

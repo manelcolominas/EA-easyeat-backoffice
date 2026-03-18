@@ -25,6 +25,7 @@ h2 {
   border: 1px solid #eaeaea;
   border-radius: 10px;
   padding: 12px 14px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -41,7 +42,13 @@ h2 {
 }
 
 .name {
+  background: white;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  padding: 12px 12px;
   font-weight: 600;
+  margin-bottom: 15px;
+  display: grid;
 }
 
 .muted {
@@ -60,4 +67,8 @@ h2 {
 }
 .btn:hover {
   background: #f3f3f3;
+}
+
+.image {
+  max-width: 100%;
 }

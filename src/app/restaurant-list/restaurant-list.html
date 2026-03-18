@@ -9,12 +9,180 @@
 <p *ngIf="loading">Loading...</p>
 <p *ngIf="!loading && errorMsg">{{ errorMsg }}</p>
 
+<button type="button" class="btn" (click)="toggleShowForm()" style="margin-bottom: 15px;">
+  Add
+</button>
+
+@if (!loading && !errorMsg && restaurants.length > 0) {
+  <button type="button" class="btn" (click)="load()">
+    Refresh
+  </button>
+}
+
+@if (showForm) {
+  <div class="name">
+    <h3>{{ editting ? 'Edit organization' : 'New organization' }}</h3>
+
+    <form [formGroup]="restaurantForm"> <!-- (ngSubmit)="save()" to be added-->
+
+      <div>
+        <label>Name: </label>
+        <input type="text" formControlName="name"/>
+      </div>
+
+      <div>
+        <label>Description: </label>
+        <input type="text" formControlName="description"/>
+      </div>
+
+      <div>
+        <label>Rating: </label>
+        <input type="text" formControlName="rating"/>
+        <small style="color: red;" *ngIf="restaurantForm.get('rating')?.hasError('pattern') && restaurantForm.get('rating')?.touched">
+          Invalid rating format.
+        </small>
+        <small style="color: red;" *ngIf="(restaurantForm.get('rating')?.hasError('min') || restaurantForm.get('rating')?.hasError('max')) && restaurantForm.get('rating')?.touched">
+          Value not within range.
+        </small>
+      </div>
+
+      <div>
+        <label>Category: </label>
+        <input type="text" formControlName="category"/>
+      </div>
+
+      <p></p>
+      <div>
+        <label>Monday: </label>
+        <input type="time" formControlName="mondayOpen"/>
+        <input type="time" formControlName="mondayClose"/>
+      </div>
+      <div>
+        <label>Tuesday: </label>
+        <input type="time" formControlName="tuesdayOpen"/>
+        <input type="time" formControlName="tuesdayClose"/>
+      </div>
+      <div>
+        <label>Wednesday: </label>
+        <input type="time" formControlName="wednesdayOpen"/>
+        <input type="time" formControlName="wednesdayClose"/>
+      </div>
+      <div>
+        <label>Thursday: </label>
+        <input type="time" formControlName="thursdayOpen"/>
+        <input type="time" formControlName="thursdayClose"/>
+      </div>
+      <div>
+        <label>Friday: </label>
+        <input type="time" formControlName="fridayOpen"/>
+        <input type="time" formControlName="fridayClose"/>
+      </div>
+      <div>
+        <label>Saturday: </label>
+        <input type="time" formControlName="saturdayOpen"/>
+        <input type="time" formControlName="saturdayClose"/>
+      </div>
+      <div>
+        <label>Sunday: </label>
+        <input type="time" formControlName="sundayOpen"/>
+        <input type="time" formControlName="sundayClose"/>
+      </div>
+
+      <p></p> <!-- to make a \n -->
+      <div>
+        <label>Image URL: </label>
+        <input type="url" formControlName="imageUrl"/>
+      </div>
+
+      <div>
+        <label>Phone: </label>
+        <input type="tel" formControlName="phone"/>
+      </div>
+
+      <div>
+        <label>Email: </label>
+        <input type="text" formControlName="email"/>
+        <small style="color: red;" *ngIf="restaurantForm.get('email')?.hasError('email') && restaurantForm.get('email')?.touched">
+          Invalid email format.
+        </small>
+      </div>
+
+      <div>
+        <label>City: </label>
+        <input type="text" formControlName="city"/>
+      </div>
+
+      <div>
+        <label>Address: </label>
+        <input type="text" formControlName="address"/>
+      </div>
+
+      <div>
+        <label>Google Place ID: </label>
+        <input type="text" formControlName="googlePlaceId"/>
+      </div>
+
+      <div>
+        <label>Type: </label>
+        <select type="text" formControlName="type">
+          <option value="" disabled selected>Select type</option>
+          <option [value]="'Point'">Point</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Latitude: </label>
+        <input type="text" formControlName="lat"/>
+      </div>
+
+      <div>
+        <label>Longitude: </label>
+        <input type="text" formControlName="lon"/>
+      </div>
+
+      <p></p>
+      <div>
+        <label>Employees: </label>
+        <input type="text" formControlName="employees"/>
+      </div>
+
+      <div>
+        <label>Dishes: </label>
+        <input type="text" formControlName="dishes"/>
+      </div>
+
+      <div>
+        <label>Rewards: </label>
+        <input type="text" formControlName="rewards"/>
+      </div>
+
+      <div>
+        <label>Statistics: </label>
+        <input type="text" formControlName="statistics"/>
+      </div>
+
+      <div>
+        <label>Badges: </label>
+        <input type="text" formControlName="badges"/>
+      </div>
+
+      <button type="submit"
+              class="btn"
+              [disabled]="restaurantForm.invalid">
+        {{ editting ? 'Update' : 'Save' }}
+      </button>
+
+      <button class="btn" type="reset" (click)="toggleShowForm()">Cancel</button>
+    </form>
+  </div>
+}
+
 <ul class="list" *ngIf="!loading && !errorMsg && restaurants.length > 0">
   <li *ngFor="let restaurant of visibleRestaurants; trackBy: trackById">
     <div class="header">
       <div>
-        <span class="name" type="name">
-          <p class="name" *ngIf="restaurant._id != undefined">{{
+        <span type="name">
+          <p *ngIf="restaurant._id != undefined">{{
             expanded[restaurant._id] || restaurant.profile.name.length <= 30
               ? restaurant.profile.name
               : (restaurant.profile.name | slice:0:30) + '...'
@@ -28,21 +196,23 @@
         </button>
       </div>
 
-      <div *ngIf="restaurant._id != undefined">
-        <span class="muted">{{ restaurant._id }}</span>
+      @if (restaurant._id != undefined) {
+        <div>
+          <span class="muted">{{ restaurant._id }}</span>
 
-        <button type="button"
-                class="btn"
-                (click)="edit(restaurant)">
-          Edit
-        </button>
+          <button type="button"
+                  class="btn"
+                  (click)="edit(restaurant)">
+            Edit
+          </button>
 
-        <button type="button"
-                class="btn delete-btn"
-                (click)="confirmDelete(restaurant._id, restaurant.profile.name)">
-          X
-        </button>
-      </div>
+          <button type="button"
+                  class="btn delete-btn"
+                  (click)="confirmDelete(restaurant._id, restaurant.profile.name)">
+            X
+          </button>
+        </div>
+      }
     </div>
 
     <div class="data" *ngIf="restaurant._id != undefined && expanded[restaurant._id]">
@@ -50,62 +220,65 @@
       <p>Rating: {{ restaurant.profile.rating }}</p>
       <p>Category: {{ restaurant.profile.category }}</p>
       
-      <div *ngIf="restaurant.profile.timetable != undefined">
+      @if (restaurant.profile.timetable != undefined) {
         <p>Timetable:</p>
         
-        <div *ngIf="restaurant.profile.timetable.monday != undefined">
+        @if (restaurant.profile.timetable.monday != undefined) {
           <p>Monday:</p>
           <p *ngFor="let time of restaurant.profile.timetable.monday;">
             {{ time.open }} - {{ time.close }}
           </p>
-        </div>
+        }
         
-        <div *ngIf="restaurant.profile.timetable.tuesday != undefined">
+        @if (restaurant.profile.timetable.tuesday != undefined) {
           <p>Tuesday:</p>
           <p *ngFor="let time of restaurant.profile.timetable.tuesday;">
             {{ time.open }} - {{ time.close }}
           </p>
-        </div>
+        }
 
-        <div *ngIf="restaurant.profile.timetable.wednesday != undefined">
+        @if (restaurant.profile.timetable.wednesday != undefined) {
           <p>Wednesday:</p>
           <p *ngFor="let time of restaurant.profile.timetable.wednesday;">
             {{ time.open }} - {{ time.close }}
           </p>
-        </div>
+        }
 
-        <div *ngIf="restaurant.profile.timetable.thursday != undefined">
+        @if (restaurant.profile.timetable.thursday != undefined) {
           <p>Thursday:</p>
           <p *ngFor="let time of restaurant.profile.timetable.thursday;">
             {{ time.open }} - {{ time.close }}
           </p>
-        </div>
+        }
 
-        <div *ngIf="restaurant.profile.timetable.friday != undefined">
+        @if (restaurant.profile.timetable.friday != undefined) {
           <p>Friday:</p>
           <p *ngFor="let time of restaurant.profile.timetable.friday;">
             {{ time.open }} - {{ time.close }}
           </p>
-        </div>
+        }
 
-        <div *ngIf="restaurant.profile.timetable.saturday != undefined">
+        @if (restaurant.profile.timetable.saturday != undefined) {
           <p>Saturday:</p>
           <p *ngFor="let time of restaurant.profile.timetable.saturday;">
             {{ time.open }} - {{ time.close }}
           </p>
-        </div>
+        }
 
-        <div *ngIf="restaurant.profile.timetable.sunday != undefined">
+        @if (restaurant.profile.timetable.sunday != undefined) {
           <p>Sunday:</p>
           <p *ngFor="let time of restaurant.profile.timetable.sunday;">
             {{ time.open }} - {{ time.close }}
           </p>
-        </div>
-      </div>
+        }
+      }
 
       <p>Image:</p>
-      <img src="{{ restaurant.profile.image }}">
-      <p>Image url: {{ restaurant.profile.image }}</p>
+      @for (imageUrl of restaurant.profile.image; track $index) {
+        <img class="image" src="{{ imageUrl }}">
+      }
+
+      <p>Image urls: {{ restaurant.profile.image }}</p>
 
       <div>
         <p>Contact:</p>
@@ -155,27 +328,6 @@
 <p *ngIf="!loading && !errorMsg && restaurants.length === 0">
   No organizations.
 </p>
-
-<button type="button" class="btn" (click)="showRestaurantForm()">
-  Add
-</button>
-
-<div *ngIf="showForm" class="card">
-
-  <h3>{{ editting ? 'Edit organization' : 'New organization' }}</h3>
-
-  <form [formGroup]="restaurantForm"> <!-- (ngSubmit)="save()" to be added-->
-
-    <label>Name:</label>
-    <input type="text" formControlName="name" />
-
-    <button type="submit"
-            class="btn"
-            [disabled]="restaurantForm.invalid">
-      {{ editting ? 'Update' : 'Save' }}
-    </button>
-  </form>
-</div>
 
 <button type="button" class="btn" (click)="load()">
   Refresh
