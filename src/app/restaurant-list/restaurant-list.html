@@ -10,39 +10,131 @@
 <p *ngIf="!loading && errorMsg">{{ errorMsg }}</p>
 
 <ul class="list" *ngIf="!loading && !errorMsg && restaurants.length > 0">
-  <li class="card" *ngFor="let restaurant of visibleRestaurants; trackBy: trackById"> 
-    <div>
-      <span class="name", type="name">
-        <p calss="name" *ngIf="restaurant._id != undefined">{{
-          expanded[restaurant._id] || restaurant.profile.name.length <= 15
-            ? restaurant.profile.name
-            : (restaurant.profile.name | slice:0:15) + '...'
-        }}</p>
-      </span>
+  <li *ngFor="let restaurant of visibleRestaurants; trackBy: trackById">
+    <div class="header">
+      <div>
+        <span class="name" type="name">
+          <p class="name" *ngIf="restaurant._id != undefined">{{
+            expanded[restaurant._id] || restaurant.profile.name.length <= 30
+              ? restaurant.profile.name
+              : (restaurant.profile.name | slice:0:30) + '...'
+          }}</p>
+        </span>
 
-      <button *ngIf="restaurant._id != undefined && restaurant.profile.name.length > 15"
-              class="btn"
-              (click)="toggleExpand(restaurant._id)">
-        {{ expanded[restaurant._id] ? 'Show less' : 'Show more' }}
-      </button>
+        <button *ngIf="restaurant._id != undefined"
+                class="btn"
+                (click)="toggleExpand(restaurant._id)">
+          {{ expanded[restaurant._id] ? 'Show less' : 'Show more' }}
+        </button>
+      </div>
+
+      <div *ngIf="restaurant._id != undefined">
+        <span class="muted">{{ restaurant._id }}</span>
+
+        <button type="button"
+                class="btn"
+                (click)="edit(restaurant)">
+          Edit
+        </button>
+
+        <button type="button"
+                class="btn delete-btn"
+                (click)="confirmDelete(restaurant._id, restaurant.profile.name)">
+          X
+        </button>
+      </div>
     </div>
 
-    <div *ngIf="restaurant._id != undefined">
-      <span class="muted">{{ restaurant._id }}</span>
+    <div class="data" *ngIf="restaurant._id != undefined && expanded[restaurant._id]">
+      <p>{{ restaurant.profile.description }}</p>
+      <p>Rating: {{ restaurant.profile.rating }}</p>
+      <p>Category: {{ restaurant.profile.category }}</p>
+      
+      <div *ngIf="restaurant.profile.timetable != undefined">
+        <p>Timetable:</p>
+        
+        <div *ngIf="restaurant.profile.timetable.monday != undefined">
+          <p>Monday:</p>
+          <p *ngFor="let time of restaurant.profile.timetable.monday;">
+            {{ time.open }} - {{ time.close }}
+          </p>
+        </div>
+        
+        <div *ngIf="restaurant.profile.timetable.tuesday != undefined">
+          <p>Tuesday:</p>
+          <p *ngFor="let time of restaurant.profile.timetable.tuesday;">
+            {{ time.open }} - {{ time.close }}
+          </p>
+        </div>
 
-      <button type="button"
-              class="btn"
-              (click)="edit(restaurant)">
-        Edit
-      </button>
+        <div *ngIf="restaurant.profile.timetable.wednesday != undefined">
+          <p>Wednesday:</p>
+          <p *ngFor="let time of restaurant.profile.timetable.wednesday;">
+            {{ time.open }} - {{ time.close }}
+          </p>
+        </div>
 
-      <button type="button"
-              class="btn delete-btn"
-              (click)="confirmDelete(restaurant._id, restaurant.profile.name)">
-        X
-      </button>
+        <div *ngIf="restaurant.profile.timetable.thursday != undefined">
+          <p>Thursday:</p>
+          <p *ngFor="let time of restaurant.profile.timetable.thursday;">
+            {{ time.open }} - {{ time.close }}
+          </p>
+        </div>
+
+        <div *ngIf="restaurant.profile.timetable.friday != undefined">
+          <p>Friday:</p>
+          <p *ngFor="let time of restaurant.profile.timetable.friday;">
+            {{ time.open }} - {{ time.close }}
+          </p>
+        </div>
+
+        <div *ngIf="restaurant.profile.timetable.saturday != undefined">
+          <p>Saturday:</p>
+          <p *ngFor="let time of restaurant.profile.timetable.saturday;">
+            {{ time.open }} - {{ time.close }}
+          </p>
+        </div>
+
+        <div *ngIf="restaurant.profile.timetable.sunday != undefined">
+          <p>Sunday:</p>
+          <p *ngFor="let time of restaurant.profile.timetable.sunday;">
+            {{ time.open }} - {{ time.close }}
+          </p>
+        </div>
+      </div>
+
+      <p>Image:</p>
+      <img src="{{ restaurant.profile.image }}">
+      <p>Image url: {{ restaurant.profile.image }}</p>
+
+      <div>
+        <p>Contact:</p>
+        <p>Phone: {{ restaurant.profile.contact?.phone }}</p>
+        <p>Email: {{ restaurant.profile.contact?.email }}</p>
+      </div>
+
+      <div>
+        <p>Location:</p>
+        <p>City: {{ restaurant.profile.location.city }}</p>
+        <p>Address: {{ restaurant.profile.location.address }}</p>
+        <p>Google place ID: {{ restaurant.profile.location.googlePlaceId }}</p>
+
+        <div>
+          <p>Coordinates:</p>
+          <p>Type: {{ restaurant.profile.location.coordinates.type }}</p>
+          <p>
+            Longitude: {{ restaurant.profile.location.coordinates.coordinates[0] }}, 
+            latitude: {{ restaurant.profile.location.coordinates.coordinates[1] }}
+          </p>
+        </div>
+      </div>
+
+      <p>Employees' IDs: {{ restaurant.employees }}</p>
+      <p>Dishs' IDs: {{ restaurant.dishes }}</p>
+      <p>Rewards' IDs: {{ restaurant.rewards }}</p>
+      <p>Statistics' IDs: {{ restaurant.statistics }}</p>
+      <p>Badges' IDs: {{ restaurant.badges }}</p>
     </div>
-
   </li>
 </ul>
 
@@ -85,7 +177,6 @@
   </form>
 </div>
 
-<!-- Botón para recargar la lista -->
 <button type="button" class="btn" (click)="load()">
   Refresh
 </button>

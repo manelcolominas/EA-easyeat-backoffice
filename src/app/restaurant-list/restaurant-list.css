@@ -20,9 +20,28 @@ h2 {
   justify-content: space-between;
 }
 
+.header {
+  background: white;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.data {
+  background: white;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: grid;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .name {
   font-weight: 600;
-  max-width: 5px;
 }
 
 .muted {

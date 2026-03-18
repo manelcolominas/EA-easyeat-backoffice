@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RestaurantService } from '../services/restaurant.service';
 import { IRestaurant } from '../models/restaurant.model';
@@ -26,6 +26,7 @@ export class RestaurantList implements OnInit {
   expanded: { [key: string]: boolean } = {};
   limit = 10;
   showAllRestaurants = false;
+  showAllData = false;
   
   constructor(private api: RestaurantService, private fb: FormBuilder, private cdr: ChangeDetectorRef, private dialog: MatDialog) {
     this.restaurantForm = this.fb.group({
@@ -50,19 +51,19 @@ export class RestaurantList implements OnInit {
   load(): void {
     this.loading = true;
     this.errorMsg = '';
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
 
     this.api.getRestaurants().subscribe({
       next: (res) => {
         this.restaurants = res;
         this.filteredRestaurants = [...this.restaurants];
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: () => {
         this.errorMsg = 'Could not load restaurants.';
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
     });
   }
@@ -76,7 +77,7 @@ export class RestaurantList implements OnInit {
   }
 
   showMore(): void {
-  this.showAllRestaurants = true;
+    this.showAllRestaurants = true;
   } 
 
   get visibleRestaurants(): IRestaurant[] {
@@ -167,6 +168,7 @@ export class RestaurantList implements OnInit {
   delete(id: string): void {
     this.errorMsg = '';
     this.loading = true;
+    this.cdr.markForCheck();
 
     this.api.deleteRestaurant(id).subscribe({
       next: () => {
@@ -175,6 +177,7 @@ export class RestaurantList implements OnInit {
       error: () => {
         this.errorMsg = 'Error delete';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
