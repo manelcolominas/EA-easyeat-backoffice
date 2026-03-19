@@ -13,7 +13,7 @@
   Add
 </button>
 
-@if (!loading && !errorMsg && restaurants.length > 0) {
+@if (!loading && !errorMsg && pagedRestaurants.length > 0) {
   <button type="button" class="btn" (click)="load()">
     Refresh
   </button>
@@ -274,7 +274,7 @@
   </div>
 }
 
-<ul class="list" *ngIf="!loading && !errorMsg && restaurants.length > 0">
+<ul class="list" *ngIf="!loading && !errorMsg && pagedRestaurants.length > 0">
   <li *ngFor="let restaurant of visibleRestaurants; trackBy: trackById">
     <div class="header">
       <div>
@@ -519,24 +519,20 @@
   </li>
 </ul>
 
-<button 
-    *ngIf="!showAllRestaurants && restaurants.length > limit"
-    class="btn"
-    (click)="showMore()">
-  Show more
-</button>
-<button 
-  *ngIf="showAllRestaurants"
-  class="btn"
-  (click)="showAllRestaurants = false">
+<div class="footer">
+  <button class="btn" (click)="leftPage()">
+    ⬅ Previous
+  </button>
+  <p class="btn">{{ currentPage }}</p>
+  <button class="btn" (click)="rightPage()">
+    Next ➡
+  </button>
 
-  Show less
-</button>
+  <p *ngIf="!loading && !errorMsg && pagedRestaurants.length === 0">
+    No organizations.
+  </p>
 
-<p *ngIf="!loading && !errorMsg && restaurants.length === 0">
-  No organizations.
-</p>
-
-<button type="button" class="btn" (click)="load()">
-  Refresh
-</button>
+  <button type="button" class="btn" (click)="load()">
+    Refresh
+  </button>
+</div>

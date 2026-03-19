@@ -20,6 +20,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 export class RestaurantList implements OnInit {
   restaurants: IRestaurant[] = [];
   filteredRestaurants: IRestaurant[] = [];
+  pagedRestaurants: IRestaurant[] = [];
   searchControl = new FormControl('');
   loading = true;
   errorMsg = '';
@@ -28,7 +29,8 @@ export class RestaurantList implements OnInit {
   editting = false;
   restaurantEditId: string | undefined;
   expanded: { [key: string]: boolean } = {};
-  limit = 10;
+  limit = 2;
+  currentPage = 1;
   showAllRestaurants = false;
   showAllData = false;
 
@@ -157,6 +159,9 @@ export class RestaurantList implements OnInit {
       next: (res) => {
         this.restaurants = res;
         this.filteredRestaurants = [...this.restaurants];
+        if (res.length > 2) {
+          this.pagedRestaurants = this.filteredRestaurants.slice(this.currentPage*this.limit - this.limit, this.currentPage*this.limit);
+        }
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -188,7 +193,7 @@ export class RestaurantList implements OnInit {
     if (this.showAllRestaurants) {
       return this.filteredRestaurants;
     }
-    return this.filteredRestaurants.slice(0, this.limit);
+    return this.pagedRestaurants;
   }
 
   edit(restaurant: IRestaurant): void {
@@ -433,17 +438,6 @@ export class RestaurantList implements OnInit {
     this.restaurantEditId = undefined;
     this.restaurantForm.reset();
   }
-
-  // Function editRestaurant not yet implemented
-  //
-  // editRestaurant(restaurant: IRestaurant) {
-  //   const newName = prompt('New name:', restaurant.profile.name);
-
-  //   if (newName && newName.trim() !== '' && restaurant._id != null) {
-  //     this.api.updateRestaurant(restaurant._id, newName)
-  //       .subscribe(() => { restaurant.profile.name = newName; });
-  //   }
-  // }
 
   confirmDelete(id: string, name?: string) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
@@ -728,5 +722,18 @@ export class RestaurantList implements OnInit {
       }
     });
   }
-}
 
+  leftPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.load();
+    }
+  }
+
+  rightPage(): void {
+    if (this.currentPage * 2 < this.filteredRestaurants.length) {
+      this.currentPage++;
+      this.load();
+    }
+  }
+}

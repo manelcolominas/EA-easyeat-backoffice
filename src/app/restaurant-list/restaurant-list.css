@@ -72,3 +72,10 @@ h2 {
 .image {
   max-width: 100%;
 }
+
+.footer {
+  display: inline-flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  height: 36px;
+}
