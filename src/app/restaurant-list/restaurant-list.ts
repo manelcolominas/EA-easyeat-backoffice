@@ -22,6 +22,7 @@ export class RestaurantList implements OnInit {
   filteredRestaurants: IRestaurant[] = [];
   pagedRestaurants: IRestaurant[] = [];
   searchControl = new FormControl('');
+  search = true;
   loading = true;
   errorMsg = '';
   showForm = false;
@@ -144,6 +145,7 @@ export class RestaurantList implements OnInit {
     this.searchControl.valueChanges.subscribe(value => {
       const term = value?.toLowerCase() ?? '';
 
+      term ? this.search = true : this.search = false;
       this.filteredRestaurants = this.restaurants.filter(restaurant =>
         restaurant.profile.name.toLowerCase().includes(term)
       );
@@ -190,7 +192,7 @@ export class RestaurantList implements OnInit {
   }
 
   get visibleRestaurants(): IRestaurant[] {
-    if (this.showAllRestaurants) {
+    if (this.search) {
       return this.filteredRestaurants;
     }
     return this.pagedRestaurants;
