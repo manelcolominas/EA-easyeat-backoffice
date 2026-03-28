@@ -8,7 +8,9 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 src/
 ├── environments/
 │   └── environment.ts
-│
+├── main.ts
+├── main.server.ts
+│  
 └── app/
     ├── app.ts
     ├── app.spec.ts
@@ -20,31 +22,31 @@ src/
     ├── app.routes.server.ts
     │
     ├── models/
-    │   ├── organization.model.ts
-    │   └── user.model.ts
+    │   ├── restaurant.model.ts
+    │   └── customer.model.ts
     │
     ├── services/
-    │   ├── organization.service.ts
-    │   ├── organization.spec.ts
-    │   ├── user.service.ts
-    │   └── user.spec.ts
+    │   ├── restaurant.service.ts
+    │   ├── restaurant.spec.ts
+    │   ├── customer.service.ts
+    │   └── customer.spec.ts
     │
-    ├── organization-list/
-    │   ├── organization-list.ts
-    │   ├── organization-list.html
-    │   ├── organization-list.css
-    │   └── organization-list.spec.ts
+    ├── restaurant-list/
+    │   ├── restaurant-list.ts
+    │   ├── restaurant-list.html
+    │   ├── restaurant-list.css
+    │   └── restaurant-list.spec.ts
     │
-    ├── user-list/
-    │   ├── user-list.ts
-    │   ├── user-list.html
-    │   └── user-list.css
+    ├── restaurant-list/
+    │   ├── restaurant-list.ts
+    │   ├── restaurant-list.html
+    │   └── restaurant-list.css
     │
     └── confirm-dialog/
-        ├── organization-list.ts
-        ├── organization-list.html
-        ├── organization-list.css
-        └── organization-list.spec.ts
+        ├── restaurant-list.ts
+        ├── restaurant-list.html
+        ├── restaurant-list.css
+        └── restaurant-list.spec.ts
 ```
 
 ---

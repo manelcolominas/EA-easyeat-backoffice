@@ -12,7 +12,7 @@ export interface IReview {
   };
 
   date: string; 
-  rating: number;
+  globalRating: number;
 
   ratings?: {
     foodQuality?: number;

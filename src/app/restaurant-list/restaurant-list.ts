@@ -30,6 +30,7 @@ export class RestaurantList implements OnInit {
   editting = false;
   restaurantEditId: string | undefined;
   expanded: { [key: string]: boolean } = {};
+  restaurantFull: { [key: string]: IRestaurant } = {};
   limit = 3;
   currentPage = 1;
   showAllRestaurants = false;
@@ -89,7 +90,7 @@ export class RestaurantList implements OnInit {
       categoryGelateria: [false],
       categoryEstrellaMichelin: [false],
       categoryStreetFood: [false],
-      rating: [0, [Validators.pattern('^[0-5]+(\\.[0-9]+)?$'), Validators.min(0), Validators.max(5)]],
+      globalRating: [0, [Validators.pattern('^[0-5]+(\\.[0-9]+)?$'), Validators.min(0), Validators.max(5)]],
       monday: ['',    [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
       tuesday: ['',   [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
       wednesday: ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
@@ -207,7 +208,7 @@ export class RestaurantList implements OnInit {
     this.restaurantForm.patchValue({
       name: restaurant.profile.name,
       description: restaurant.profile.description,
-      rating: restaurant.profile.rating,
+      globalRating: restaurant.profile.globalRating,
       categoryItalià: restaurant.profile.category?.includes('Italià'),
       categoryJaponès: restaurant.profile.category?.includes('Japonès'),
       categorySushi: restaurant.profile.category?.includes('Sushi'),
@@ -377,7 +378,7 @@ export class RestaurantList implements OnInit {
         },
         name: this.restaurantForm.value.name,
         description: this.restaurantForm.value.description,
-        rating: this.restaurantForm.value.rating,
+        globalRating: this.restaurantForm.value.globalRating,
         category: category,
         image: this.restaurantForm.value.imageUrl === '' ? undefined : this.restaurantForm.value.imageUrl.split(',').map((slot: string) => {
           return slot;
@@ -396,6 +397,7 @@ export class RestaurantList implements OnInit {
           next: () => {
             this.resetForm();
             this.load();
+            setTimeout(() => this.cdr.detectChanges());
           },
           error: () => {
             this.errorMsg = 'Could not update the restaurant.';
@@ -415,25 +417,24 @@ export class RestaurantList implements OnInit {
         });
     }
   }
+  
+  toggleExpand(restaurantId: string): void {
+    this.expanded[restaurantId] = !this.expanded[restaurantId];
 
-  toggleExpand(id: string): void {
-    this.expanded[id] = !this.expanded[id];
-    if (this.expanded[id] && !this.restaurantVisits[id]) {
-      this.loading = true;
-      this.visitApi.getVisitsByRestaurantId(id).subscribe({
-        next: (visits) => {
-          this.restaurantVisits[id] = visits;
-          this.loading = false;
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.errorMsg = 'Could not load visits.';
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      });
+    // Only fetch if expanding and not already loaded
+    if (this.expanded[restaurantId] && !this.restaurantFull[restaurantId]) {
+        this.api.getRestaurantFull(restaurantId).subscribe({
+            next: (full) => {
+                this.restaurantFull[restaurantId] = full;
+                this.cdr.markForCheck();
+            },
+            error: () => {
+                this.errorMsg = 'Could not load full restaurant data.';
+                this.cdr.markForCheck();
+            }
+        });
     }
-  }
+}
 
   resetForm(): void {
     this.showForm = false;

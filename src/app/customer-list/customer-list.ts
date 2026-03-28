@@ -53,7 +53,7 @@ export class CustomerList implements OnInit {
   reviewLimit = 1;
   reviewPage: { [key: string]: number } = {};
   reviewTotal: { [key: string]: number } = {};
-  minRatingFilter: number | null = null;
+  minglobalRatingFilter: number | null = null;
   sortByLikes = false;
 
   // ========================
@@ -88,7 +88,7 @@ export class CustomerList implements OnInit {
 
     this.reviewForm = this.fb.group({
       restaurant_id: ['', Validators.required],
-      rating: [null, [Validators.required, Validators.min(1), Validators.max(10)]],
+      globalRating: [null, [Validators.required, Validators.min(1), Validators.max(10)]],
       comment: ['']
     });
 
@@ -291,7 +291,7 @@ export class CustomerList implements OnInit {
       customerId,
       this.reviewLimit,
       skip,
-      this.minRatingFilter || undefined,
+      this.minglobalRatingFilter || undefined,
       this.sortByLikes
     ).subscribe((res: any) => {
       this.reviewsByCustomer = {
@@ -334,7 +334,7 @@ export class CustomerList implements OnInit {
 
     this.reviewForm.patchValue({
       restaurant_id: review.restaurant_id._id,
-      rating: review.rating,
+      globalRating: review.globalRating,
       comment: review.comment ?? ''
     });
   }
@@ -344,7 +344,7 @@ export class CustomerList implements OnInit {
 
     if (this.editingReviewId) {
       const data = {
-        rating: this.reviewForm.value.rating,
+        globalRating: this.reviewForm.value.globalRating,
         comment: this.reviewForm.value.comment
       };
       this.reviewService.update(this.editingReviewId, data)
@@ -397,8 +397,8 @@ export class CustomerList implements OnInit {
       .subscribe(updated => review.likes = updated.likes);
   }
 
-  getStars(rating: number): number[] {
-    return Array(Math.round(rating / 2)).fill(0);
+  getStars(globalRating: number): number[] {
+    return Array(Math.round(globalRating / 2)).fill(0);
   }
 
   // ========================

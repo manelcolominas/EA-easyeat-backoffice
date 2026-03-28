@@ -15,7 +15,7 @@ export interface IDish {
 
     dietaryFlags?: ('vegan' | 'vegetarian' | 'gluten-free' | 'halal' | 'kosher' | 'dairy-free' | 'nut-free')[];
 
-    flavorProfile?: ('spicy' | 'mild' | 'sweet' | 'sour' | 'salty' | 'bitter' | 'umami' | 'smoky' | 'rich' | 'light' | 'creamy' | 'tangy' | 'fresh' | 'hearty')[];
+    flavorProfile?: ('spicy' | 'mild' | 'sweet' | 'sour' | 'salty' | 'bitter' | 'umami' | 'smoky' | 'rich' | 'light' | 'creamy' | 'tangy' | 'fresh' | 'hearty' | 'nutty' )[];
     cuisineTags?: string[];
 
     portionSize?: 'small' | 'medium' | 'large' | 'sharing';

@@ -109,8 +109,8 @@
 
             <!-- Filtros de reviews -->
             <div class="card" style="margin-top:10px;">
-              <label>Min rating:</label>
-              <select [(ngModel)]="minRatingFilter" (change)="loadReviews(customer._id!)">
+              <label>Min globalRating:</label>
+              <select [(ngModel)]="minglobalRatingFilter" (change)="loadReviews(customer._id!)">
                 <option [ngValue]="null">All</option>
                 <option [ngValue]="5">5+</option>
                 <option [ngValue]="7">7+</option>
@@ -198,7 +198,7 @@
                   <div style="border-bottom:1px solid #ccc; margin-bottom:8px; padding-bottom:8px;">
                     <p><strong>{{ review.restaurant_id.name }}</strong></p>
                     <div>
-                      @for (_ of getStars(review.rating); track $index) {
+                      @for (_ of getStars(review.globalRating); track $index) {
                         <span>⭐</span>
                       }
                     </div>
@@ -238,8 +238,8 @@
                 </select>
               </div>
               <div>
-                <label>Rating:</label>
-                <input type="number" min="1" max="10" formControlName="rating" />
+                <label>globalRating:</label>
+                <input type="number" min="1" max="10" formControlName="globalRating" />
               </div>
               <div>
                 <label>Comment:</label>

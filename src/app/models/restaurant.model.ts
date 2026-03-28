@@ -6,7 +6,7 @@ export interface IRestaurant {
     profile: {
         name: string;
         description?: string;
-        rating?: number;
+        globalRating?: number;
         category?: string[];
         timetable?: {
             monday?: { open: string, close: string }[];
@@ -38,4 +38,6 @@ export interface IRestaurant {
     statistics?: string;
     badges?: string[];
     visits?: (string | IVisit)[]; 
+    reviews?: string[];
+    deletedAt?: Date | null;
 }
