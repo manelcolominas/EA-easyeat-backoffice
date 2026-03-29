@@ -287,13 +287,7 @@ export class CustomerList implements OnInit {
     const page = this.reviewPage[customerId] || 0;
     const skip = page * this.reviewLimit;
 
-    this.reviewService.getByCustomer(
-      customerId,
-      this.reviewLimit,
-      skip,
-      this.minglobalRatingFilter || undefined,
-      this.sortByLikes
-    ).subscribe((res: any) => {
+    this.reviewService.getByCustomer( customerId, this.reviewLimit, skip, this.minglobalRatingFilter || undefined, this.sortByLikes ).subscribe((res: any) => {
       this.reviewsByCustomer = {
         ...this.reviewsByCustomer,
         [customerId]: res?.data ?? []

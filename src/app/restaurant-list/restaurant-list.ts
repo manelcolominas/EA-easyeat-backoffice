@@ -396,8 +396,7 @@ export class RestaurantList implements OnInit {
     };
 
     if (this.editting && this.restaurantEditId) {
-      this.api.updateRestaurant(this.restaurantEditId, newRestaurant)
-        .subscribe({
+      this.api.updateRestaurant(this.restaurantEditId, newRestaurant).subscribe({
           next: () => {
             this.resetForm();
             this.load();
