@@ -1,0 +1,49 @@
+<div class="login-container">
+  <mat-card class="login-card mat-elevation-z8">
+    <mat-card-header>
+      <div mat-card-avatar class="logo-avatar">
+        <mat-icon color="primary">restaurant</mat-icon>
+      </div>
+      <mat-card-title>EasyEat Backoffice</mat-card-title>
+      <mat-card-subtitle>Admin Login</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" placeholder="admin@easyeat.com" required>
+          <mat-error *ngIf="loginForm.get('email')?.hasError('required')">
+            Email is required
+          </mat-error>
+          <mat-error *ngIf="loginForm.get('email')?.hasError('email')">
+            Please enter a valid email address
+          </mat-error>
+          <mat-icon matSuffix>email</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width mt-3">
+          <mat-label>Password</mat-label>
+          <input matInput formControlName="password" type="password" required>
+          <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
+            Password is required
+          </mat-error>
+          <mat-icon matSuffix>lock</mat-icon>
+        </mat-form-field>
+
+        <div class="error-message" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+        <button 
+          mat-raised-button 
+          color="primary" 
+          type="submit" 
+          class="login-button full-width"
+          [disabled]="loginForm.invalid || isLoading">
+          {{ isLoading ? 'Logging in...' : 'Log in' }}
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

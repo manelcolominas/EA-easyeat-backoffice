@@ -77,3 +77,20 @@
   text-align: center;
   color: #6b7280;
 }
+
+.logout-btn {
+  background: none;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background-color: #fef2f2;
+}
