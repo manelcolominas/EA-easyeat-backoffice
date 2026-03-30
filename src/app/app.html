@@ -1,11 +1,11 @@
-<header class="topbar">
+<header class="topbar" *ngIf="authService.isLoggedIn()">
   <div class="brand">
     <span class="brand-title">EasyEat</span>
   </div>
 
   <nav class="nav">
     <a
-      routerLink="/"
+      routerLink="/restaurants"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: true }"
     >
@@ -17,6 +17,7 @@
     >
       Customers
     </a>
+    <button class="logout-btn" (click)="logout()">Logout</button>
   </nav>
 </header>
 
