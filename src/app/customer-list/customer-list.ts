@@ -42,6 +42,7 @@ export class CustomerList implements OnInit {
   limit = 2;
   currentPage = 1;
   expanded: { [key: string]: boolean } = {};
+  goToPageControl = new FormControl<number | null>(1);
 
   // ========================
   // REVIEWS
@@ -673,6 +674,18 @@ export class CustomerList implements OnInit {
 
   getVisitsByCustomer(customerId: string): IVisit[] {
     return this.getVisitsByCustomer(customerId) || [];
+  }
+
+  goToPage(): void {
+    const requestedPage = Number(this.goToPageControl.value);
+    if (!Number.isFinite(requestedPage)) return;
+
+    const totalPages = this.totalPages;
+    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
+
+    this.currentPage = safePage;
+    this.goToPageControl.setValue(safePage, { emitEvent: false });
+    this.updatePagedCustomers();
   }
 
   private updatePagedCustomers(): void {
