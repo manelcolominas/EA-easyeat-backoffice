@@ -1,14 +1,11 @@
 export interface IReview {
   _id?: string;
 
-  customer_id: {
-    _id: string;
-    name: string;
-  };
+  customer_id: string;
 
   restaurant_id: {
     _id: string;
-    name: string;
+    profile: { name: string };
   };
 
   date: string; 

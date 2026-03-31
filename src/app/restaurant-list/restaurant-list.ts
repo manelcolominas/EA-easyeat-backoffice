@@ -251,10 +251,31 @@ export class RestaurantList implements OnInit {
     }
   }
 
-  edit(restaurant: IRestaurant): void {
-    this.showForm = true;
-    this.editting = true;
-    this.restaurantEditId = restaurant._id;
+  private formatRelationValue(value: unknown): string {
+    if (Array.isArray(value)) {
+      return value
+        .map(item => {
+          if (typeof item === 'string') return item;
+          if (item && typeof item === 'object') {
+            const record = item as Record<string, unknown>;
+            return String(record['_id'] ?? '');
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    if (value && typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      return String(record['_id'] ?? '');
+    }
+
+    return value != null ? String(value) : '';
+  }
+
+  private patchRestaurantForm(restaurant: IRestaurant): void {
+    const coordinates = restaurant.profile.location?.coordinates?.coordinates ?? [];
 
     this.restaurantForm.patchValue({
       name: restaurant.profile.name,
@@ -304,19 +325,55 @@ export class RestaurantList implements OnInit {
       friday:    restaurant.profile.timetable?.friday    ? restaurant.profile.timetable.friday.map(s => `${s.open}-${s.close}`).join(',') : '',
       saturday:  restaurant.profile.timetable?.saturday  ? restaurant.profile.timetable.saturday.map(s => `${s.open}-${s.close}`).join(',') : '',
       sunday:    restaurant.profile.timetable?.sunday    ? restaurant.profile.timetable.sunday.map(s => `${s.open}-${s.close}`).join(',') : '',
-      imageUrl:      restaurant.profile.image ? restaurant.profile.image : '',
-      phone:         restaurant.profile.contact?.phone || '',
-      email:         restaurant.profile.contact?.email || '',
-      city:          restaurant.profile.location?.city || '',
-      address:       restaurant.profile.location?.address || '',
-      googlePlaceId: restaurant.profile.location?.googlePlaceId || '',
-      type: restaurant.profile.location?.coordinates?.type || '',
-      lat:  restaurant.profile.location?.coordinates?.coordinates[1] || '',
-      lon:  restaurant.profile.location?.coordinates?.coordinates[0] || '',
-      employees:  restaurant.employees ? restaurant.employees.join(', ') : '',
-      dishes:     restaurant.dishes    ? restaurant.dishes.join(', ')    : '',
-      statistics: restaurant.statistics || '',
-      badges:     restaurant.badges    ? restaurant.badges.join(', ')    : '',
+      imageUrl: restaurant.profile.image?.join(',') ?? '',
+      phone: restaurant.profile.contact?.phone ?? '',
+      email: restaurant.profile.contact?.email ?? '',
+      city: restaurant.profile.location?.city ?? '',
+      address: restaurant.profile.location?.address ?? '',
+      googlePlaceId: restaurant.profile.location?.googlePlaceId ?? '',
+      type: restaurant.profile.location?.coordinates?.type ?? '',
+      lat: coordinates[1] ?? '',
+      lon: coordinates[0] ?? '',
+      employees: this.formatRelationValue(restaurant.employees),
+      dishes: this.formatRelationValue(restaurant.dishes),
+      statistics: this.formatRelationValue(restaurant.statistics),
+      badges: this.formatRelationValue(restaurant.badges),
+    });
+  }
+
+  edit(restaurant: IRestaurant): void {
+    this.showForm = true;
+    this.editting = true;
+    this.restaurantEditId = restaurant._id;
+    this.patchRestaurantForm(restaurant);
+
+    if (!restaurant._id) {
+      return;
+    }
+
+    const fullRestaurant = this.restaurantFull[restaurant._id];
+    if (fullRestaurant) {
+      this.patchRestaurantForm(fullRestaurant);
+      return;
+    }
+
+    this.loading = true;
+    this.errorMsg = '';
+    this.cdr.markForCheck();
+
+    this.api.getRestaurantFull(restaurant._id).subscribe({
+      next: (full) => {
+        this.restaurantFull[restaurant._id!] = full;
+        this.patchRestaurantForm(full);
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.patchRestaurantForm(restaurant);
+        this.errorMsg = 'Could not load full restaurant data for editing.';
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 

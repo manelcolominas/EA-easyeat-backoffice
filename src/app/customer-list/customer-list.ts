@@ -410,7 +410,7 @@ export class CustomerList implements OnInit {
   editReview(review: IReview): void {
     const customerId = typeof review.customer_id === 'string'
       ? review.customer_id
-      : review.customer_id._id;
+      : review.customer_id;
 
     this.selectedCustomerId = customerId;
     this.editingReviewId = review._id!;
