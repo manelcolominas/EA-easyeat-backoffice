@@ -664,7 +664,7 @@ loadVisits(customerId: string): void {
   }
 
   getVisitsByCustomer(customerId: string): IVisit[] {
-    return this.getVisitsByCustomer(customerId) || [];
+    return this.customerVisits[customerId] || [];
   }
 
 }
