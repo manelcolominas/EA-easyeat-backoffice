@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RestaurantService } from '../services/restaurant.service';
 import { RewardService } from '../services/reward.service';
@@ -39,7 +39,6 @@ export class RestaurantList implements OnInit {
 
   showRewardForm: { [key: string]: boolean } = {};
   newRewardForm!: FormGroup;
-
   editingRewardId: string | null = null;
   editRewardForm!: FormGroup;
 
@@ -49,7 +48,14 @@ export class RestaurantList implements OnInit {
   editingVisitId: string | null = null;
   editVisitForm!: FormGroup;
 
-  constructor(private api: RestaurantService, private rewardApi: RewardService, private visitApi: VisitService, private fb: FormBuilder, private cdr: ChangeDetectorRef, private dialog: MatDialog) {
+  constructor(
+    private api: RestaurantService,
+    private rewardApi: RewardService,
+    private visitApi: VisitService,
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
+  ) {
     this.restaurantForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
       description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(2000)]],
@@ -91,20 +97,20 @@ export class RestaurantList implements OnInit {
       categoryEstrellaMichelin: [false],
       categoryStreetFood: [false],
       globalRating: [0, [Validators.pattern('^[0-5]+(\\.[0-9]+)?$'), Validators.min(0), Validators.max(5)]],
-      monday: ['',    [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      tuesday: ['',   [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      monday:    ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      tuesday:   ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
       wednesday: ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      thursday: ['',  [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      friday: ['',    [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      saturday: ['',  [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      sunday: ['',    [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      thursday:  ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      friday:    ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      saturday:  ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      sunday:    ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
       imageUrl: ['', Validators.pattern('^http[^,\\s]*(,http[^,\\s]*)*$')],
       phone: [''],
       email: [''],
       city: ['', Validators.required],
       address: [''],
       googlePlaceId: [''],
-      type: ['', Validators.required], //Coordinates type
+      type: ['', Validators.required],
       lon: ['', Validators.required],
       lat: ['', Validators.required],
       employees: [''],
@@ -137,8 +143,6 @@ export class RestaurantList implements OnInit {
       billAmount: [0, [Validators.min(0)]],
       pointsEarned: [0, [Validators.min(0)]]
     });
-
-    this.searchControl = new FormControl('');
   }
 
   ngOnInit(): void {
@@ -146,7 +150,6 @@ export class RestaurantList implements OnInit {
 
     this.searchControl.valueChanges.subscribe(value => {
       const term = value?.toLowerCase() ?? '';
-
       term ? this.search = true : this.search = false;
       this.filteredRestaurants = this.restaurants.filter(restaurant =>
         restaurant.profile.name.toLowerCase().includes(term)
@@ -162,9 +165,10 @@ export class RestaurantList implements OnInit {
     this.cdr.markForCheck();
 
     this.api.getRestaurants().subscribe({
-      next: (res) => {
-        this.restaurants = res;
-        this.filteredRestaurants = [...this.restaurants];
+      next: (res: any) => {
+        const data = res?.data ?? res ?? [];
+        this.restaurants = data;
+        this.filteredRestaurants = [...data];
         this.updatePagedRestaurants();
         this.loading = false;
         this.cdr.markForCheck();
@@ -185,8 +189,9 @@ export class RestaurantList implements OnInit {
     if (this.editting) {
       this.showForm = true;
       this.editting = false;
+    } else {
+      this.showForm = !this.showForm;
     }
-    else { this.showForm = !this.showForm; }
   }
 
   showMore(): void {
@@ -198,6 +203,29 @@ export class RestaurantList implements OnInit {
       return this.filteredRestaurants;
     }
     return this.pagedRestaurants;
+  }
+
+  toggleExpand(restaurantId: string): void {
+  this.expanded[restaurantId] = !this.expanded[restaurantId];
+
+  if (this.expanded[restaurantId]) {
+    if (!this.restaurantFull[restaurantId]) {
+        this.api.getRestaurantFull(restaurantId).subscribe({
+          next: (full) => {
+            this.restaurantFull[restaurantId] = full;
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.errorMsg = 'Could not load full restaurant data.';
+            this.cdr.markForCheck();
+          }
+        });
+    }
+
+    if (!this.restaurantVisits[restaurantId]) {
+      this.loadRestaurantVisits(restaurantId);
+    }
+   }
   }
 
   edit(restaurant: IRestaurant): void {
@@ -234,38 +262,38 @@ export class RestaurantList implements OnInit {
       categoryRamen: restaurant.profile.category?.includes('Ramen'),
       categoryGlutenFree: restaurant.profile.category?.includes('Gluten Free'),
       categoryGourmet: restaurant.profile.category?.includes('Gourmet'),
-      categoryFastFood:restaurant.profile.category?.includes('Fast Food'),
-      categoryBuffet:restaurant.profile.category?.includes('Buffet'),
-      categoryFoodTruck:restaurant.profile.category?.includes('Food Truck'),
-      categoryLounge:restaurant.profile.category?.includes('Lounge'),
-      categoryPub:restaurant.profile.category?.includes('Pub'),
-      categoryWineBar:restaurant.profile.category?.includes('Wine Bar'),
-      categoryRooftop:restaurant.profile.category?.includes('Rooftop'),
-      categoryBar:restaurant.profile.category?.includes('Bar'),
-      categoryTaperia:restaurant.profile.category?.includes('Taperia'),
-      categoryGelateria:restaurant.profile.category?.includes('Gelateria'),
-      categoryEstellaMichelin:restaurant.profile.category?.includes('Estella Michelin'),
-      categoryStreetFood:restaurant.profile.category?.includes('Street Food'),
-      monday: restaurant.profile.timetable?.monday ? restaurant.profile.timetable.monday.map(slot => `${slot.open}-${slot.close}`).join(',') : '',
-      tuesday: restaurant.profile.timetable?.tuesday ? restaurant.profile.timetable.tuesday.map(slot => `${slot.open}-${slot.close}`).join(',') : '',
-      wednesday: restaurant.profile.timetable?.wednesday ? restaurant.profile.timetable.wednesday.map(slot => `${slot.open}-${slot.close}`).join(',') : '',
-      thursday: restaurant.profile.timetable?.thursday ? restaurant.profile.timetable.thursday.map(slot => `${slot.open}-${slot.close}`).join(',') : '',
-      friday: restaurant.profile.timetable?.friday ? restaurant.profile.timetable.friday.map(slot => `${slot.open}-${slot.close}`).join(',') : '',
-      saturday: restaurant.profile.timetable?.saturday ? restaurant.profile.timetable.saturday.map(slot => `${slot.open}-${slot.close}`).join(',') : '',
-      sunday: restaurant.profile.timetable?.sunday ? restaurant.profile.timetable.sunday.map(slot => `${slot.open}-${slot.close}`).join(',') : '',
-      imageUrl: restaurant.profile.image ? restaurant.profile.image : '',
-      phone: restaurant.profile.contact?.phone || '',
-      email: restaurant.profile.contact?.email || '',
-      city: restaurant.profile.location?.city || '',
-      address: restaurant.profile.location?.address || '',
+      categoryFastFood: restaurant.profile.category?.includes('Fast Food'),
+      categoryBuffet: restaurant.profile.category?.includes('Buffet'),
+      categoryFoodTruck: restaurant.profile.category?.includes('Food Truck'),
+      categoryLounge: restaurant.profile.category?.includes('Lounge'),
+      categoryPub: restaurant.profile.category?.includes('Pub'),
+      categoryWineBar: restaurant.profile.category?.includes('Wine Bar'),
+      categoryRooftop: restaurant.profile.category?.includes('Rooftop'),
+      categoryBar: restaurant.profile.category?.includes('Bar'),
+      categoryTaperia: restaurant.profile.category?.includes('Taperia'),
+      categoryGelateria: restaurant.profile.category?.includes('Gelateria'),
+      categoryEstrellaMichelin: restaurant.profile.category?.includes('Estrella Michelin'),
+      categoryStreetFood: restaurant.profile.category?.includes('Street Food'),
+      monday:    restaurant.profile.timetable?.monday    ? restaurant.profile.timetable.monday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      tuesday:   restaurant.profile.timetable?.tuesday   ? restaurant.profile.timetable.tuesday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      wednesday: restaurant.profile.timetable?.wednesday ? restaurant.profile.timetable.wednesday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      thursday:  restaurant.profile.timetable?.thursday  ? restaurant.profile.timetable.thursday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      friday:    restaurant.profile.timetable?.friday    ? restaurant.profile.timetable.friday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      saturday:  restaurant.profile.timetable?.saturday  ? restaurant.profile.timetable.saturday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      sunday:    restaurant.profile.timetable?.sunday    ? restaurant.profile.timetable.sunday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      imageUrl:      restaurant.profile.image ? restaurant.profile.image : '',
+      phone:         restaurant.profile.contact?.phone || '',
+      email:         restaurant.profile.contact?.email || '',
+      city:          restaurant.profile.location?.city || '',
+      address:       restaurant.profile.location?.address || '',
       googlePlaceId: restaurant.profile.location?.googlePlaceId || '',
       type: restaurant.profile.location?.coordinates?.type || '',
-      lat: restaurant.profile.location?.coordinates?.coordinates[1] || '',
-      lon: restaurant.profile.location?.coordinates?.coordinates[0] || '',
-      employees: restaurant.employees ? restaurant.employees.join(', ') : '',
-      dishes: restaurant.dishes ? restaurant.dishes.join(', ') : '',
+      lat:  restaurant.profile.location?.coordinates?.coordinates[1] || '',
+      lon:  restaurant.profile.location?.coordinates?.coordinates[0] || '',
+      employees:  restaurant.employees ? restaurant.employees.join(', ') : '',
+      dishes:     restaurant.dishes    ? restaurant.dishes.join(', ')    : '',
       statistics: restaurant.statistics || '',
-      badges: restaurant.badges ? restaurant.badges.join(', ') : '',
+      badges:     restaurant.badges    ? restaurant.badges.join(', ')    : '',
     });
   }
 
@@ -276,172 +304,92 @@ export class RestaurantList implements OnInit {
     this.errorMsg = '';
     this.cdr.markForCheck();
 
-    const monday: { open: string; close: string }[] | undefined = this.restaurantForm.value.monday ? this.restaurantForm.value.monday.split(',').map((slot: string) => {
-      const [open, close] = slot.split('-');
-      return { open, close };
-    }) : undefined;
+    const parseDay = (val: string): { open: string; close: string }[] | undefined =>
+      val ? val.split(',').map((slot: string) => {
+        const [open, close] = slot.split('-');
+        return { open, close };
+      }) : undefined;
 
-    const tuesday: { open: string; close: string }[] | undefined = this.restaurantForm.value.tuesday ? this.restaurantForm.value.tuesday.split(',').map((slot: string) => {
-      const [open, close] = slot.split('-');
-      return { open, close };
-    }) : undefined;
+    const category: string[] = [];
+    const cats: { [key: string]: string } = {
+      categoryItalià: 'Italià', categoryJaponès: 'Japonès', categorySushi: 'Sushi',
+      categoryMexicà: 'Mexicà', categoryXinès: 'Xinès', categoryIndi: 'Indi',
+      categoryTailandès: 'Tailandès', categoryFrancès: 'Francès', categoryEspanyol: 'Espanyol',
+      categoryGrec: 'Grec', categoryTurc: 'Turc', categoryCoreà: 'Coreà',
+      categoryVietnamita: 'Vietnamita', categoryAlemany: 'Alemany', categoryBrasileny: 'Brasileny',
+      categoryPeruà: 'Peruà', categoryVegà: 'Vegà', categoryVegetarià: 'Vegetarià',
+      categoryMarisc: 'Marisc', categoryCarn: 'Carn', categoryPizzeria: 'Pizzeria',
+      categoryCafeteria: 'Cafeteria', categoryRamen: 'Ramen', categoryGlutenFree: 'Gluten Free',
+      categoryGourmet: 'Gourmet', categoryFastFood: 'Fast Food', categoryBuffet: 'Buffet',
+      categoryFoodTruck: 'Food Truck', categoryLounge: 'Lounge', categoryPub: 'Pub',
+      categoryWineBar: 'Wine Bar', categoryRooftop: 'Rooftop', categoryBar: 'Bar',
+      categoryTaperia: 'Taperia', categoryGelateria: 'Gelateria',
+      categoryEstrellaMichelin: 'Estrella Michelin', categoryStreetFood: 'Street Food',
+    };
+    Object.keys(cats).forEach(key => {
+      if (this.restaurantForm.value[key]) category.push(cats[key]);
+    });
 
-    const wednesday: { open: string; close: string }[] | undefined = this.restaurantForm.value.wednesday ? this.restaurantForm.value.wednesday.split(',').map((slot: string) => {
-      const [open, close] = slot.split('-');
-      return { open, close };
-    }) : undefined;
+    if (category.length === 0) return;
 
-    const thursday: { open: string; close: string }[] | undefined = this.restaurantForm.value.thursday ? this.restaurantForm.value.thursday.split(',').map((slot: string) => {
-      const [open, close] = slot.split('-');
-      return { open, close };
-    }) : undefined;
-
-    const friday: { open: string; close: string }[] | undefined = this.restaurantForm.value.friday ? this.restaurantForm.value.friday.split(',').map((slot: string) => {
-      const [open, close] = slot.split('-');
-      return { open, close };
-    }) : undefined;
-
-    const saturday: { open: string; close: string }[] | undefined = this.restaurantForm.value.saturday ? this.restaurantForm.value.saturday.split(',').map((slot: string) => {
-      const [open, close] = slot.split('-');
-      return { open, close };
-    }) : undefined;
-
-    const sunday: { open: string; close: string }[] | undefined = this.restaurantForm.value.sunday ? this.restaurantForm.value.sunday.split(',').map((slot: string) => {
-      const [open, close] = slot.split('-');
-      return { open, close };
-    }) : undefined;
-
-    let category: string[] | undefined = undefined;
-
-    if (this.restaurantForm.value.categoryItalià) category = [...(category || []), 'Italià'];
-    if (this.restaurantForm.value.categoryJaponès) category = [...(category || []), 'Japonès'];
-    if (this.restaurantForm.value.categorySushi) category = [...(category || []), 'Sushi'];
-    if (this.restaurantForm.value.categoryMexicà) category = [...(category || []), 'Mexicà'];
-    if (this.restaurantForm.value.categoryXinès) category = [...(category || []), 'Xinès'];
-    if (this.restaurantForm.value.categoryIndi) category = [...(category || []), 'Indi'];
-    if (this.restaurantForm.value.categoryTailandès) category = [...(category || []), 'Tailandès'];
-    if (this.restaurantForm.value.categoryFrancès) category = [...(category || []), 'Francès'];
-    if (this.restaurantForm.value.categoryEspanyol) category = [...(category || []), 'Espanyol'];
-    if (this.restaurantForm.value.categoryGrec) category = [...(category || []), 'Grec'];
-    if (this.restaurantForm.value.categoryTurc) category = [...(category || []), 'Turc'];
-    if (this.restaurantForm.value.categoryCoreà) category = [...(category || []), 'Coreà'];
-    if (this.restaurantForm.value.categoryVietnamita) category = [...(category || []), 'Vietnamita'];
-    if (this.restaurantForm.value.categoryAlemany) category = [...(category || []), 'Alemany'];
-    if (this.restaurantForm.value.categoryBrasileny) category = [...(category || []), 'Brasileny'];
-    if (this.restaurantForm.value.categoryPeruà) category = [...(category || []), 'Peruà'];
-    if (this.restaurantForm.value.categoryVegà) category = [...(category || []), 'Vegà'];
-    if (this.restaurantForm.value.categoryVegetarià) category = [...(category || []), 'Vegetarià'];
-    if (this.restaurantForm.value.categoryMarisc) category = [...(category || []), 'Marisc'];
-    if (this.restaurantForm.value.categoryCarn) category = [...(category || []), 'Carn'];
-    if (this.restaurantForm.value.categoryPizzeria) category = [...(category || []), 'Pizzeria'];
-    if (this.restaurantForm.value.categoryCafeteria) category = [...(category || []), 'Cafeteria'];
-    if (this.restaurantForm.value.categoryRamen) category = [...(category || []), 'Ramen'];
-    if (this.restaurantForm.value.categoryGlutenFree) category = [...(category || []), 'Gluten Free'];
-    if (this.restaurantForm.value.categoryGourmet) category = [...(category || []), 'Gourmet'];
-    if (this.restaurantForm.value.categoryFastFood) category = [...(category || []), 'Fast Food'];
-    if (this.restaurantForm.value.categoryBuffet) category = [...(category || []), 'Buffet'];
-    if (this.restaurantForm.value.categoryFoodTruck) category = [...(category || []), 'Food Truck'];
-    if (this.restaurantForm.value.categoryLounge) category = [...(category || []), 'Lounge'];
-    if (this.restaurantForm.value.categoryPub) category = [...(category || []), 'Pub'];
-    if (this.restaurantForm.value.categoryWineBar) category = [...(category || []), 'Wine Bar'];
-    if (this.restaurantForm.value.categoryRooftop) category = [...(category || []), 'Rooftop'];
-    if (this.restaurantForm.value.categoryBar) category = [...(category || []), 'Bar'];
-    if (this.restaurantForm.value.categoryTaperia) category = [...(category || []), 'Taperia'];
-    if (this.restaurantForm.value.categoryGelateria) category = [...(category || []), 'Gelateria'];
-    if (this.restaurantForm.value.categoryEstellaMichelin) category = [...(category || []), 'Estella Michelin'];
-    if (this.restaurantForm.value.categoryStreetFood) category = [...(category || []), 'Street Food'];
-
-    if (!category || category.length === 0 || category === undefined) return;
-
+    const v = this.restaurantForm.value;
     const newRestaurant: Partial<IRestaurant> = {
       profile: {
         timetable: {
-          monday: monday,
-          tuesday: tuesday,
-          wednesday: wednesday,
-          thursday: thursday,
-          friday: friday,
-          saturday: saturday,
-          sunday: sunday,
+          monday:    parseDay(v.monday),
+          tuesday:   parseDay(v.tuesday),
+          wednesday: parseDay(v.wednesday),
+          thursday:  parseDay(v.thursday),
+          friday:    parseDay(v.friday),
+          saturday:  parseDay(v.saturday),
+          sunday:    parseDay(v.sunday),
         },
         contact: {
-          phone: this.restaurantForm.value.phone === '' ? undefined : this.restaurantForm.value.phone,
-          email: this.restaurantForm.value.email === '' ? undefined : this.restaurantForm.value.email,
+          phone: v.phone || undefined,
+          email: v.email || undefined,
         },
         location: {
           coordinates: {
-            type: this.restaurantForm.value.type === '' ? undefined : this.restaurantForm.value.type,
-            coordinates: [
-              this.restaurantForm.value.lon === '' ? undefined : this.restaurantForm.value.lon,
-              this.restaurantForm.value.lat === '' ? undefined : this.restaurantForm.value.lat
-            ],
+            type: v.type || undefined,
+            coordinates: [v.lon || undefined, v.lat || undefined],
           },
-          city: this.restaurantForm.value.city === '' ? undefined : this.restaurantForm.value.city,
-          address: this.restaurantForm.value.address === '' ? undefined : this.restaurantForm.value.address,
-          googlePlaceId: this.restaurantForm.value.googlePlaceId === '' ? undefined : this.restaurantForm.value.googlePlaceId,
+          city:          v.city || undefined,
+          address:       v.address || undefined,
+          googlePlaceId: v.googlePlaceId || undefined,
         },
-        name: this.restaurantForm.value.name,
-        description: this.restaurantForm.value.description,
-        globalRating: this.restaurantForm.value.globalRating,
-        category: category,
-        image: this.restaurantForm.value.imageUrl === '' ? undefined : this.restaurantForm.value.imageUrl.split(',').map((slot: string) => {
-          return slot;
-        }),
+        name:        v.name,
+        description: v.description,
+        globalRating: v.globalRating,
+        category,
+        image: v.imageUrl ? v.imageUrl.split(',') : undefined,
       },
-      employees: undefined,
-      dishes: undefined,
-      rewards: undefined,
-      statistics: this.restaurantForm.value.statistics ? this.restaurantForm.value.statistics : undefined,
-      badges: undefined,
+      employees:  undefined,
+      dishes:     undefined,
+      rewards:    undefined,
+      statistics: v.statistics || undefined,
+      badges:     undefined,
     };
 
     if (this.editting && this.restaurantEditId) {
       this.api.updateRestaurant(this.restaurantEditId, newRestaurant).subscribe({
-          next: () => {
-            this.resetForm();
-            this.load();
-          },
-          error: (err) => {
-            this.errorMsg = 'Could not update the restaurant.';
-            console.error(err);
-            this.loading = false;
-            this.cdr.markForCheck();
-          }
-        });
-
+        next: () => { this.resetForm(); this.load(); },
+        error: (err) => {
+          this.errorMsg = 'Could not update the restaurant.';
+          console.error(err);
+          this.loading = false;
+          this.cdr.markForCheck();
+        }
+      });
     } else {
-      this.api.createRestaurant(newRestaurant)
-        .subscribe({
-          next: () => {
-            this.resetForm();
-            this.load();
-          },
-          error: (err) => {
-            this.errorMsg = 'Could not create the restaurant.';
-            this.errorMsg = 'Could not create the restaurant.';
-            console.error(err);
-            this.loading = false;
-            this.cdr.markForCheck();
-          }
-        });
-    }
-  }
-  
-  toggleExpand(restaurantId: string): void {
-    this.expanded[restaurantId] = !this.expanded[restaurantId];
-
-    // Only fetch if expanding and not already loaded
-    if (this.expanded[restaurantId] && !this.restaurantFull[restaurantId]) {
-        this.api.getRestaurantFull(restaurantId).subscribe({
-            next: (full) => {
-                this.restaurantFull[restaurantId] = full;
-                this.cdr.markForCheck();
-            },
-            error: () => {
-                this.errorMsg = 'Could not load full restaurant data.';
-                this.cdr.markForCheck();
-            }
-        });
+      this.api.createRestaurant(newRestaurant).subscribe({
+        next: () => { this.resetForm(); this.load(); },
+        error: (err) => {
+          this.errorMsg = 'Could not create the restaurant.';
+          console.error(err);
+          this.loading = false;
+          this.cdr.markForCheck();
+        }
+      });
     }
 }
 
@@ -452,15 +400,10 @@ export class RestaurantList implements OnInit {
     this.restaurantForm.reset();
   }
 
-  confirmDelete(id: string, name?: string) {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: name
-    });
-
+  confirmDelete(id: string, name?: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: name });
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.delete(id);
-      }
+      if (result) this.delete(id);
     });
   }
 
@@ -470,9 +413,7 @@ export class RestaurantList implements OnInit {
     this.cdr.markForCheck();
 
     this.api.deleteRestaurant(id).subscribe({
-      next: () => {
-        this.load();
-      },
+      next: () => this.load(),
       error: () => {
         this.errorMsg = 'Error delete';
         this.loading = false;
@@ -480,6 +421,10 @@ export class RestaurantList implements OnInit {
       }
     });
   }
+
+  // ========================
+  // REWARDS
+  // ========================
 
   toggleRewardForm(restaurantId: string): void {
     this.showRewardForm[restaurantId] = !this.showRewardForm[restaurantId];
@@ -520,9 +465,8 @@ export class RestaurantList implements OnInit {
   }
 
   removeReward(restaurant: IRestaurant, reward: any): void {
-    const rewardName = reward.name || 'this reward';
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete ${rewardName}?`
+      data: `Delete ${reward.name || 'this reward'}?`
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -558,7 +502,7 @@ export class RestaurantList implements OnInit {
     this.editRewardForm.patchValue({
       name: reward.name || '',
       description: reward.description || '',
-      pointsRequired: reward.pointsRequired !== undefined ? reward.pointsRequired : (reward.points || 0)
+      pointsRequired: reward.pointsRequired ?? reward.points ?? 0
     });
   }
 
@@ -585,9 +529,7 @@ export class RestaurantList implements OnInit {
       next: (updatedReward) => {
         if (restaurant.rewards) {
           const index = restaurant.rewards.findIndex((r: any) => (r._id || r.id || r) === targetRewardId);
-          if (index !== -1) {
-            restaurant.rewards[index] = updatedReward;
-          }
+          if (index !== -1) restaurant.rewards[index] = updatedReward;
         }
         this.editingRewardId = null;
         this.loading = false;
@@ -601,14 +543,36 @@ export class RestaurantList implements OnInit {
     });
   }
 
+  // ========================
+  // VISITS
+  // ========================
+
+  private loadRestaurantVisits(restaurantId: string): void {
+    this.visitApi.getVisitsByRestaurantId(restaurantId).subscribe({
+      next: (res: any) => {
+        this.restaurantVisits = {
+          ...this.restaurantVisits,
+          [restaurantId]: res?.data ?? res ?? []
+        };
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.restaurantVisits = { ...this.restaurantVisits, [restaurantId]: [] };
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   toggleVisitForm(restaurantId: string): void {
     this.showVisitForm[restaurantId] = !this.showVisitForm[restaurantId];
     if (this.showVisitForm[restaurantId]) {
       this.newVisitForm.reset();
-      this.newVisitForm.patchValue({ 
+      this.newVisitForm.patchValue({
         date: new Date().toISOString().substring(0, 16),
-        billAmount: 0, 
-        pointsEarned: 0 
+        billAmount: 0,
+        pointsEarned: 0
       });
     }
   }
@@ -628,15 +592,9 @@ export class RestaurantList implements OnInit {
     };
 
     this.visitApi.createVisit(data).subscribe({
-      next: (savedVisit) => {
-        if (!this.restaurantVisits[restaurantId]) this.restaurantVisits[restaurantId] = [];
+      next: () => {
         this.showVisitForm[restaurantId] = false;
-        
-        this.visitApi.getVisitsByRestaurantId(restaurantId).subscribe(visits => {
-           this.restaurantVisits[restaurantId] = visits;
-           this.loading = false;
-           this.cdr.markForCheck();
-        });
+        this.loadRestaurantVisits(restaurantId);
       },
       error: () => {
         this.errorMsg = 'Could not add visit.';
@@ -647,9 +605,8 @@ export class RestaurantList implements OnInit {
   }
 
   removeVisit(restaurantId: string, visit: IVisit): void {
-    const customerName = visit.customer_id?.name || 'this customer';
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete visit from ${customerName}?`
+      data: `Delete visit from ${visit.customer_id?.name || 'this customer'}?`
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -662,9 +619,8 @@ export class RestaurantList implements OnInit {
 
         this.visitApi.deleteVisit(visitId).subscribe({
           next: () => {
-            if (this.restaurantVisits[restaurantId]) {
-              this.restaurantVisits[restaurantId] = this.restaurantVisits[restaurantId].filter((v: IVisit) => (v._id || v.id) !== visitId);
-            }
+            this.restaurantVisits[restaurantId] = this.restaurantVisits[restaurantId]
+              .filter((v: IVisit) => (v._id || v.id) !== visitId);
             this.loading = false;
             this.cdr.markForCheck();
           },
@@ -682,15 +638,15 @@ export class RestaurantList implements OnInit {
     const visitId = visit._id || visit.id;
     if (!visitId) return;
     this.editingVisitId = visitId;
-    
+
     let dateStr = '';
     if (visit.date) {
       const d = new Date(visit.date);
       if (!isNaN(d.getTime())) {
-         dateStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().substring(0, 16);
+        dateStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().substring(0, 16);
       }
     }
-    
+
     this.editVisitForm.patchValue({
       date: dateStr,
       billAmount: visit.billAmount || 0,
@@ -719,14 +675,8 @@ export class RestaurantList implements OnInit {
 
     this.visitApi.updateVisit(targetVisitId, data).subscribe({
       next: () => {
-        this.visitApi.getVisitsByRestaurantId(restaurantId).subscribe({
-           next: (visits) => {
-             this.restaurantVisits[restaurantId] = visits;
-             this.editingVisitId = null;
-             this.loading = false;
-             this.cdr.markForCheck();
-           }
-        });
+        this.editingVisitId = null;
+        this.loadRestaurantVisits(restaurantId);
       },
       error: () => {
         this.errorMsg = 'Could not update visit.';
@@ -734,6 +684,17 @@ export class RestaurantList implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  // ========================
+  // PAGINATION
+  // ========================
+
+  leftPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePagedRestaurants();
+    }
   }
 
   rightPage(): void {
@@ -768,12 +729,5 @@ export class RestaurantList implements OnInit {
     this.pagedRestaurants = this.filteredRestaurants.slice(start, end);
     this.goToPageControl.setValue(this.currentPage, { emitEvent: false });
     this.cdr.markForCheck();
-  }
-
-  leftPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.updatePagedRestaurants();
-    }
   }
 }
