@@ -52,7 +52,7 @@ export class CustomerList implements OnInit {
   reviewForm!: FormGroup;
   selectedCustomerId: string | null = null;
   editingReviewId: string | null = null;
-  reviewLimit = 5;
+  reviewLimit = 2;
   reviewPage: { [key: string]: number } = {};
   reviewTotal: { [key: string]: number } = {};
   minGlobalRatingFilter: number | null = null;
@@ -69,7 +69,8 @@ export class CustomerList implements OnInit {
   currentCustomerId: string | null = null;
   selectedVisitId: string | null = null;
   visitPage: { [customerId: string]: number } = {};
-  visitLimit = 5;
+  visitTotal: { [key: string]: number } = {};
+  visitLimit = 2;
   visitsExpanded: { [customerId: string]: boolean } = {};
   visitSortField: 'date' | 'billAmount' | 'pointsEarned' = 'date';
   visitSortOrder: 'asc' | 'desc' = 'desc';
@@ -137,7 +138,7 @@ export class CustomerList implements OnInit {
         this.filteredCustomers = [...data];
         this.updatePagedCustomers();
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error(err);
@@ -145,7 +146,7 @@ export class CustomerList implements OnInit {
         this.customers = [];
         this.filteredCustomers = [];
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -263,20 +264,16 @@ export class CustomerList implements OnInit {
     }
   }
 
-  // ========================
-  // REVIEWS
-  // ========================
-
   loadRestaurants(): void {
     this.restaurantService.getRestaurants().subscribe({
       next: (res: any) => {
         this.restaurants = res?.data ?? res ?? [];
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error(err);
         this.restaurants = [];
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -295,10 +292,11 @@ export class CustomerList implements OnInit {
     }
   }
 
-  loadReviews(customerId: string): void {
-    // Reset to page 0 when filters/sorting change
-    this.reviewPage[customerId] = 0;
+  // ========================
+  // REVIEWS
+  // ========================
 
+  loadReviews(customerId: string): void {
     this.reviewService.getByCustomer(customerId).subscribe({
       next: (allReviews: IReview[]) => {
         // STEP 1: FILTER
@@ -316,12 +314,12 @@ export class CustomerList implements OnInit {
           [customerId]: paginated
         };
 
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error loading reviews:', err);
         this.reviewsByCustomer[customerId] = [];
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -454,7 +452,10 @@ export class CustomerList implements OnInit {
 
   like(review: IReview): void {
     this.reviewService.like(review._id!)
-      .subscribe(updated => review.likes = updated.likes);
+      .subscribe(updated => {
+        review.likes = updated.likes;
+        this.cdr.markForCheck();
+      });
   }
 
   getStars(globalRating: number): number[] {
@@ -464,6 +465,97 @@ export class CustomerList implements OnInit {
   // ========================
   // VISITS
   // ========================
+
+  loadVisits(customerId: string): void {
+    this.visitService.getVisitsByCustomerId(customerId).subscribe({
+      next: (allVisits: IVisit[]) => {
+        // STEP 1: FILTER
+        let filtered = this.filterVisits(allVisits);
+
+        // STEP 2: SORT
+        let sorted = this.sortVisits(filtered);
+
+        // STEP 3: PAGINATE
+        let paginated = this.paginateVisits(sorted, customerId);
+
+        // Store filtered & paginated reviews for display
+        this.customerVisits = {
+          ...this.customerVisits,
+          [customerId]: paginated
+        };
+
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading reviews:', err);
+        this.reviewsByCustomer[customerId] = [];
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * STEP 1: Filter by minimum rating
+   */
+  private filterVisits(visits: IVisit[]): IVisit[] {
+    return visits; // No filters yes
+  }
+
+  /**
+   * STEP 2: Sort by likes (descending)
+   */
+  private sortVisits(visits: IVisit[]): IVisit[] {
+    return [...visits].sort((a, b) => {
+      let aVal = a[this.visitSortField];
+      let bVal = b[this.visitSortField];
+
+      // Handle undefined values
+      if (aVal === undefined || aVal === null) aVal = '';
+      if (bVal === undefined || bVal === null) bVal = '';
+
+      if (this.visitSortField === 'date') {
+        const aTime = new Date(aVal as string | number).getTime();
+        const bTime = new Date(bVal as string | number).getTime();
+        return this.visitSortOrder === 'asc' ? aTime - bTime : bTime - aTime;
+      }
+
+      if (aVal < bVal) return this.visitSortOrder === 'asc' ? -1 : 1;
+      if (aVal > bVal) return this.visitSortOrder === 'asc' ? 1 : -1;
+
+      return 0;
+    });
+  }
+
+  /**
+   * STEP 3: Paginate using slice()
+   */
+  private paginateVisits(visits: IVisit[], customerId: string): IVisit[] {
+    const page = this.visitPage[customerId] || 0;
+    const start = page * this.visitLimit;
+    const end = start + this.visitLimit;
+
+    // Store total for pagination controls
+    this.visitTotal[customerId] = visits.length;
+
+    return visits.slice(start, end);
+  }
+
+  nextVisitPage(customerId: string): void {
+    const page = this.visitPage[customerId] || 0;
+    const total = this.visitTotal[customerId] || 0;
+
+    if ((page + 1) * this.visitLimit >= total) return;
+
+    this.visitPage[customerId] = page + 1;
+    this.loadVisits(customerId);
+  }
+
+  prevVisitPage(customerId: string): void {
+    if ((this.visitPage[customerId] || 0) === 0) return;
+
+    this.visitPage[customerId]--;
+    this.loadVisits(customerId);
+  }
 
   changeVisitPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
@@ -557,82 +649,6 @@ export class CustomerList implements OnInit {
     this.visitForm.reset();
   }
 
-  // ========================
-  // VISITS LOADING & PAGINATION
-  // ========================
-
-
-  loadVisits(customerId: string): void { 
-    if (!customerId) {
-      console.error('[loadVisits] customerId is undefined or null!');
-      return;
-    }
-    
-    console.log(`[loadVisits] Calling service.getVisitsByCustomerId('${customerId}')`);
-    
-    this.visitService.getVisitsByCustomerId(customerId).subscribe({
-      next: (response: any) => {
-        console.log(`[loadVisits] Response received:`, response);
-        
-        let allVisits: IVisit[] = [];
-        
-        if (Array.isArray(response)) {
-          allVisits = response;
-        } else if (response?.data && Array.isArray(response.data)) {
-          allVisits = response.data;
-        } else {
-          allVisits = [];
-        }
-
-        console.log(`[loadVisits] Total visits: ${allVisits.length}`);
-
-        let filtered = [...allVisits];
-
-        // FIX: Handle undefined values in sort
-        filtered.sort((a, b) => {
-          let aVal = a[this.visitSortField];
-          let bVal = b[this.visitSortField];
-
-          // Handle undefined values
-          if (aVal === undefined || aVal === null) aVal = '';
-          if (bVal === undefined || bVal === null) bVal = '';
-
-          if (this.visitSortField === 'date') {
-            const aTime = new Date(aVal as string | number).getTime();
-            const bTime = new Date(bVal as string | number).getTime();
-            return this.visitSortOrder === 'asc' ? aTime - bTime : bTime - aTime;
-          }
-
-          if (aVal < bVal) return this.visitSortOrder === 'asc' ? -1 : 1;
-          if (aVal > bVal) return this.visitSortOrder === 'asc' ? 1 : -1;
-          return 0;
-        });
-
-        const page = this.visitPage[customerId] || 0;
-        const skip = page * this.visitLimit;
-        const paginatedVisits = filtered.slice(skip, skip + this.visitLimit);
-
-        console.log(` [loadVisits] Paginating: page ${page}, limit ${this.visitLimit}, total shown: ${paginatedVisits.length}`);
-
-        this.customerVisits = {
-          ...this.customerVisits,
-          [customerId]: paginatedVisits
-        };
-
-        console.log(` [loadVisits] Stored in customerVisits[${customerId}]:`, paginatedVisits);
-
-        this.cdr.detectChanges();
-        console.log(`[loadVisits] Complete!`);
-      },
-      error: (err) => {
-        console.error(`[loadVisits] Error:`, err);
-        this.customerVisits[customerId] = [];
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-
   toggleVisitsExpand(customerId: string): void {
     this.visitsExpanded[customerId] = !this.visitsExpanded[customerId];
 
@@ -640,26 +656,6 @@ export class CustomerList implements OnInit {
       this.visitPage[customerId] = 0;
       this.loadVisits(customerId);
     }
-  }
-
-  nextVisitPage(customerId: string): void {
-    const page = this.visitPage[customerId] || 0;
-    this.visitService.getVisitsByCustomerId(customerId).subscribe((res: any) => {
-      const allVisits = res?.data ?? res ?? [];
-      const total = allVisits.length;
-
-      if ((page + 1) * this.visitLimit >= total) return;
-
-      this.visitPage[customerId] = page + 1;
-      this.loadVisits(customerId);
-    });
-  }
-
-  prevVisitPage(customerId: string): void {
-    if ((this.visitPage[customerId] || 0) === 0) return;
-
-    this.visitPage[customerId]--;
-    this.loadVisits(customerId);
   }
 
   setVisitSort(field: 'date' | 'billAmount' | 'pointsEarned', customerId: string): void {

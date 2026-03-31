@@ -187,6 +187,11 @@
               } @else {
                 <p class="muted italic">No hay visitas activas.</p>
               }
+              <div style="margin-top:10px; display:flex; gap:10px;">
+                <button class="btn" type="button" (click)="prevVisitPage(customer._id!)" [disabled]="(visitPage[customer._id!] || 0) === 0">⬅ Prev</button>
+                <span>Page {{ (visitPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit)) }}</span>
+                <button class="btn" type="button" (click)="nextVisitPage(customer._id!)" [disabled]="((visitPage[customer._id!] || 0) + 1) * visitLimit >= (reviewTotal[customer._id!] || 0)">Next ➡</button>
+              </div>
             </div>
 
             <!-- Sección de Reviews -->
