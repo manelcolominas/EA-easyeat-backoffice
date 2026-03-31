@@ -42,10 +42,16 @@ export class RestaurantList implements OnInit {
   showAllData = false;
   goToPageControl = new FormControl<number | null>(1);
 
+  restaurantRewards: { [key: string]: IReward[] } = {};
   showRewardForm: { [key: string]: boolean } = {};
   newRewardForm!: FormGroup;
   editingRewardId: string | null = null;
   editRewardForm!: FormGroup;
+  rewardPage: { [restaurantId: string]: number } = {};
+  rewardTotal: { [key: string]: number } = {};
+  rewardLimit = 2;
+  rewardExpanded: { [restaurantId: string]: boolean } = {};
+  goToRewardPageControl = new FormControl<number | null>(1);
 
   restaurantVisits: { [key: string]: IVisit[] } = {};
   showVisitForm: { [key: string]: boolean } = {};
@@ -53,10 +59,10 @@ export class RestaurantList implements OnInit {
   editingVisitId: string | null = null;
   editVisitForm!: FormGroup;
   loadingCustomers: boolean = false;
-  visitPage: { [customerId: string]: number } = {};
+  visitPage: { [restaurantId: string]: number } = {};
   visitTotal: { [key: string]: number } = {};
   visitLimit = 2;
-  visitsExpanded: { [customerId: string]: boolean } = {};
+  visitsExpanded: { [restaurantId: string]: boolean } = {};
   goToVisitPageControl = new FormControl<number | null>(1);
 
   constructor(
@@ -217,28 +223,32 @@ export class RestaurantList implements OnInit {
     return this.pagedRestaurants;
   }
 
+  private refreshRestaurantFull(restaurantId: string) {
+    this.api.getRestaurantFull(restaurantId).subscribe({
+      next: (full) => {
+        this.restaurantFull[restaurantId] = full;
+        this.visitPage[restaurantId] = 0;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.errorMsg = 'Could not load full restaurant data.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   toggleExpand(restaurantId: string): void {
-  this.expanded[restaurantId] = !this.expanded[restaurantId];
+    this.expanded[restaurantId] = !this.expanded[restaurantId];
 
-  if (this.expanded[restaurantId]) {
-    if (!this.restaurantFull[restaurantId]) {
-        this.api.getRestaurantFull(restaurantId).subscribe({
-          next: (full) => {
-            this.restaurantFull[restaurantId] = full;
-            this.visitPage[restaurantId] = 0;
-            this.cdr.markForCheck();
-          },
-          error: () => {
-            this.errorMsg = 'Could not load full restaurant data.';
-            this.cdr.markForCheck();
-          }
-        });
-    }
-
-    if (!this.restaurantVisits[restaurantId]) {
+    if (this.expanded[restaurantId]) {
+      this.refreshRestaurantFull(restaurantId);
+      this.loadRestaurantRewards(restaurantId);
       this.loadRestaurantVisits(restaurantId);
+
+        if (!this.restaurantVisits[restaurantId]) {
+          this.loadRestaurantVisits(restaurantId);
+        }
     }
-   }
   }
 
   edit(restaurant: IRestaurant): void {
@@ -439,6 +449,67 @@ export class RestaurantList implements OnInit {
   // REWARDS
   // ========================
 
+  private loadRestaurantRewards(restaurantId: string): void {
+    this.rewardApi.getRewards().subscribe({
+      next: (allRewards: IReward[]) => {
+        console.log(allRewards);
+        console.log(restaurantId);
+        const res: IReward[] = allRewards.filter((reward: IReward) => reward.restaurant_id === restaurantId)
+        console.log(res);
+        this.restaurantRewards = {
+          ...this.restaurantRewards,
+          [restaurantId]: this.paginateRewards(res, restaurantId) ?? []
+        };
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.restaurantRewards = { ...this.restaurantRewards, [restaurantId]: [] };
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private paginateRewards(rewards: IReward[], restaurantId: string): IReward[] {
+    const page = this.rewardPage[restaurantId] || 0;
+    const start = page * this.rewardLimit;
+    const end = start + this.rewardLimit;
+
+    this.rewardTotal[restaurantId] = rewards.length;
+
+    return rewards.slice(start, end);
+  }
+
+  nextRewardPage(restaurantId: string): void {
+    const page = this.rewardPage[restaurantId] || 0;
+    const total = this.rewardTotal[restaurantId] || 0;
+
+    if ((page + 1) * this.rewardLimit >= total) return;
+
+    this.rewardPage[restaurantId] = page + 1;
+    this.loadRestaurantRewards(restaurantId);
+  }
+
+  prevRewardPage(restaurantId: string): void {
+    if ((this.rewardPage[restaurantId] || 0) === 0) return;
+
+    this.rewardPage[restaurantId]--;
+    this.loadRestaurantRewards(restaurantId);
+  }
+
+  goToRewardPage(restaurantId: string): void {
+    const requestedPage = Number(this.goToRewardPageControl.value);
+    if (!Number.isFinite(requestedPage)) return;
+
+    const totalPages = this.rewardTotal[restaurantId] || 0;
+    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
+
+    this.rewardPage[restaurantId] = safePage - 1;
+    this.goToRewardPageControl.setValue(safePage, { emitEvent: false });
+    this.loadRestaurantRewards(restaurantId);
+  }
+
   toggleRewardForm(restaurantId: string): void {
     this.showRewardForm[restaurantId] = !this.showRewardForm[restaurantId];
     if (this.showRewardForm[restaurantId]) {
@@ -466,6 +537,9 @@ export class RestaurantList implements OnInit {
         if (!restaurant.rewards) restaurant.rewards = [];
         restaurant.rewards.push(savedReward);
         this.showRewardForm[restaurant._id!] = false;
+
+        this.refreshRestaurantFull(restaurant._id!);
+
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -492,9 +566,8 @@ export class RestaurantList implements OnInit {
 
         this.rewardApi.deleteReward(rewardId).subscribe({
           next: () => {
-            if (restaurant.rewards) {
-              restaurant.rewards = restaurant.rewards.filter((r: any) => (r._id || r.id || r) !== rewardId);
-            }
+            this.refreshRestaurantFull(restaurant._id!);
+            
             this.loading = false;
             this.cdr.markForCheck();
           },
@@ -540,10 +613,8 @@ export class RestaurantList implements OnInit {
 
     this.rewardApi.updateReward(targetRewardId, data).subscribe({
       next: (updatedReward) => {
-        if (restaurant.rewards) {
-          const index = restaurant.rewards.findIndex((r: any) => (r._id || r.id || r) === targetRewardId);
-          if (index !== -1) restaurant.rewards[index] = updatedReward;
-        }
+        this.refreshRestaurantFull(restaurant._id!);
+
         this.editingRewardId = null;
         this.loading = false;
         this.cdr.markForCheck();
@@ -606,16 +677,16 @@ export class RestaurantList implements OnInit {
     this.loadRestaurantVisits(restaurantId);
   }
 
-  goToVisitPage(customerId: string): void {
+  goToVisitPage(restaurantId: string): void {
     const requestedPage = Number(this.goToVisitPageControl.value);
     if (!Number.isFinite(requestedPage)) return;
 
-    const totalPages = this.visitTotal[customerId] || 0;
+    const totalPages = this.visitTotal[restaurantId] || 0;
     const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
 
-    this.visitPage[customerId] = safePage - 1;
+    this.visitPage[restaurantId] = safePage - 1;
     this.goToVisitPageControl.setValue(safePage, { emitEvent: false });
-    this.loadRestaurantVisits(customerId);
+    this.loadRestaurantVisits(restaurantId);
   }
 
   toggleVisitForm(restaurantId: string): void {

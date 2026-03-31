@@ -310,296 +310,199 @@
       }
     </div>
 
-    <!-- <div class="data" *ngIf="restaurant._id != undefined && expanded[restaurant._id]">
-      <p>{{ restaurant.profile.description }}</p>
-      <p>globalRating: {{ restaurant.profile.globalRating }}</p>
-      <p>Category: {{ restaurant.profile.category }}</p>
-      
-      @if (restaurant.profile.timetable != undefined) {
+    <div class="data" *ngIf="restaurant._id != undefined && expanded[restaurant._id]">
+
+    <!-- Loading state while /full is being fetched -->
+    @if (!restaurantFull[restaurant._id]) {
+      <p>Loading full data...</p>
+    } @else {
+      <p>{{ restaurantFull[restaurant._id].profile.description }}</p>
+      <p>globalRating: {{ restaurantFull[restaurant._id].profile.globalRating }}</p>
+      <p>Category: {{ restaurantFull[restaurant._id].profile.category }}</p>
+
+      @if (restaurantFull[restaurant._id].profile.timetable != undefined) {
         <p>Timetable:</p>
-        
-        @if (restaurant.profile.timetable.monday != undefined) {
+        @if (restaurantFull[restaurant._id].profile.timetable?.monday) {
           <p>Monday:</p>
-          <p *ngFor="let time of restaurant.profile.timetable.monday;">
+          <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.monday">
             {{ time.open }} - {{ time.close }}
           </p>
         }
-        
-        @if (restaurant.profile.timetable.tuesday != undefined) {
+        @if (restaurantFull[restaurant._id].profile.timetable?.tuesday) {
           <p>Tuesday:</p>
-          <p *ngFor="let time of restaurant.profile.timetable.tuesday;">
+          <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.tuesday">
             {{ time.open }} - {{ time.close }}
           </p>
         }
-
-        @if (restaurant.profile.timetable.wednesday != undefined) {
+        @if (restaurantFull[restaurant._id].profile.timetable?.wednesday) {
           <p>Wednesday:</p>
-          <p *ngFor="let time of restaurant.profile.timetable.wednesday;">
+          <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.wednesday">
             {{ time.open }} - {{ time.close }}
           </p>
         }
-
-        @if (restaurant.profile.timetable.thursday != undefined) {
+        @if (restaurantFull[restaurant._id].profile.timetable?.thursday) {
           <p>Thursday:</p>
-          <p *ngFor="let time of restaurant.profile.timetable.thursday;">
+          <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.thursday">
             {{ time.open }} - {{ time.close }}
           </p>
         }
-
-        @if (restaurant.profile.timetable.friday != undefined) {
+        @if (restaurantFull[restaurant._id].profile.timetable?.friday) {
           <p>Friday:</p>
-          <p *ngFor="let time of restaurant.profile.timetable.friday;">
+          <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.friday">
             {{ time.open }} - {{ time.close }}
           </p>
         }
-
-        @if (restaurant.profile.timetable.saturday != undefined) {
+        @if (restaurantFull[restaurant._id].profile.timetable?.saturday) {
           <p>Saturday:</p>
-          <p *ngFor="let time of restaurant.profile.timetable.saturday;">
+          <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.saturday">
             {{ time.open }} - {{ time.close }}
           </p>
         }
-
-        @if (restaurant.profile.timetable.sunday != undefined) {
+        @if (restaurantFull[restaurant._id].profile.timetable?.sunday) {
           <p>Sunday:</p>
-          <p *ngFor="let time of restaurant.profile.timetable.sunday;">
+          <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.sunday">
             {{ time.open }} - {{ time.close }}
           </p>
         }
       }
 
-      <p>Image:</p>
-      @for (imageUrl of restaurant.profile.image; track $index) {
+      <p>Images:</p>
+      @for (imageUrl of restaurantFull[restaurant._id].profile.image; track $index) {
         <img class="image" src="{{ imageUrl }}">
       }
 
-      <p>Image urls: {{ restaurant.profile.image }}</p>
+      <p>Image urls: {{ restaurantFull[restaurant._id].profile.image }}</p>
 
       <div>
         <p>Contact:</p>
-        <p>Phone: {{ restaurant.profile.contact?.phone }}</p>
-        <p>Email: {{ restaurant.profile.contact?.email }}</p>
+        <p>Phone: {{ restaurantFull[restaurant._id].profile.contact?.phone }}</p>
+        <p>Email: {{ restaurantFull[restaurant._id].profile.contact?.email }}</p>
       </div>
 
       <div>
         <p>Location:</p>
-        <p>City: {{ restaurant.profile.location.city }}</p>
-        <p>Address: {{ restaurant.profile.location.address }}</p>
-        <p>Google place ID: {{ restaurant.profile.location.googlePlaceId }}</p>
-
+        <p>City: {{ restaurantFull[restaurant._id].profile.location.city }}</p>
+        <p>Address: {{ restaurantFull[restaurant._id].profile.location.address }}</p>
+        <p>Google place ID: {{ restaurantFull[restaurant._id].profile.location.googlePlaceId }}</p>
         <div>
           <p>Coordinates:</p>
-          <p>Type: {{ restaurant.profile.location.coordinates.type }}</p>
+          <p>Type: {{ restaurantFull[restaurant._id].profile.location.coordinates.type }}</p>
           <p>
-            Longitude: {{ restaurant.profile.location.coordinates.coordinates[0] }}, 
-            latitude: {{ restaurant.profile.location.coordinates.coordinates[1] }}
+            Longitude: {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}, 
+            Latitude: {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }}
           </p>
         </div>
       </div>
 
-      <p>Employees' IDs: {{ restaurant.employees }}</p>
-      <p>Dishs' IDs: {{ restaurant.dishes }}</p>
-      
-      @if (restaurant.rewards && restaurant.rewards.length > 0) {
+      <!-- Employees -->
+      @if (restaurantFull[restaurant._id].employees && restaurantFull[restaurant._id].employees!.length > 0) {
+        <div>
+          <p>Employees:</p>
+          <ul>
+            <li *ngFor="let emp of restaurantFull[restaurant._id].employees">
+              <ng-container *ngIf="$any(emp).profile; else empId">
+                {{ $any(emp).profile.name }} — {{ $any(emp).profile.role }} — {{ $any(emp).profile.email }}
+              </ng-container>
+              <ng-template #empId>{{ emp }}</ng-template>
+            </li>
+          </ul>
+        </div>
+      } @else {
+        <p>Employees: None</p>
+      }
+
+      <!-- Dishes -->
+      @if (restaurantFull[restaurant._id].dishes && restaurantFull[restaurant._id].dishes!.length > 0) {
+        <div>
+          <p>Dishes:</p>
+          <ul>
+            <li *ngFor="let dish of restaurantFull[restaurant._id].dishes">
+              <ng-container *ngIf="$any(dish).name; else dishId">
+                {{ $any(dish).name }} — {{ $any(dish).price }}€
+              </ng-container>
+              <ng-template #dishId>{{ dish }}</ng-template>
+            </li>
+          </ul>
+        </div>
+      } @else {
+        <p>Dishes: None</p>
+      }
+
+      <!-- Statistics -->
+      @if (restaurantFull[restaurant._id].statistics) {
+        <div>
+          <p>Statistics:</p>
+          <ng-container *ngIf="$any(restaurantFull[restaurant._id].statistics)?.totalPointsGiven !== undefined; else statsId">
+            <p>Total points given: {{ $any(restaurantFull[restaurant._id].statistics).totalPointsGiven }}</p>
+            <p>Loyal customers: {{ $any(restaurantFull[restaurant._id].statistics).loyalCustomers }}</p>
+            <p>Avg points per visit: {{ $any(restaurantFull[restaurant._id].statistics).averagePointsPerVisit }}</p>
+          </ng-container>
+          <ng-template #statsId>
+            <p>ID: {{ restaurantFull[restaurant._id].statistics }}</p>
+          </ng-template>
+        </div>
+      } @else {
+        <p>Statistics: None</p>
+      }
+
+      <!-- Badges -->
+      @if (restaurantFull[restaurant._id].badges && restaurantFull[restaurant._id].badges!.length > 0) {
+        <div>
+          <p>Badges:</p>
+          <ul>
+            <li *ngFor="let badge of restaurantFull[restaurant._id].badges">
+              <ng-container *ngIf="$any(badge).title; else badgeId">
+                {{ $any(badge).title }} — {{ $any(badge).description }}
+              </ng-container>
+              <ng-template #badgeId>{{ badge }}</ng-template>
+            </li>
+          </ul>
+        </div>
+      } @else {
+        <p>Badges: None</p>
+      }
+
+      <!-- Rewards (populated objects from /full) -->
+      @if (restaurantFull[restaurant._id].rewards && restaurantFull[restaurant._id].rewards!.length > 0) {
         <div>
           <p>Rewards:</p>
           <ul>
-            <li *ngFor="let reward of restaurant.rewards">
-              <span style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;" *ngIf="editingRewardId !== ($any(reward)._id || $any(reward).id || reward)">
-                <ng-container *ngIf="$any(reward).name; else stringReward">
-                  {{ $any(reward).name }} - {{ $any(reward).description || 'No description' }} (Points: {{ $any(reward).points || $any(reward).pointsRequired || 0 }})
-                </ng-container>
-                <ng-template #stringReward>
-                  ID: {{ reward }}
-                </ng-template>
-                <button type="button" class="btn" style="padding: 2px 5px; font-size: 12px; border-radius: 3px;" (click)="startEditReward(reward)">Edit</button>
-                <button type="button" class="btn delete-btn" style="padding: 2px 5px; font-size: 12px; background-color: #f44336; border: none; color: white; cursor: pointer; border-radius: 3px;" (click)="removeReward(restaurant, reward)">X</button>
-              </span>
-              
-              <div *ngIf="editingRewardId === ($any(reward)._id || $any(reward).id || reward)" style="margin-bottom: 5px; padding: 5px; border: 1px dotted #aaa; border-radius: 3px;">
-                <form [formGroup]="editRewardForm" (ngSubmit)="saveEditedReward(restaurant)" style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap;">
-                  <input type="text" formControlName="name" placeholder="Name" style="width: 120px;" />
-                  <input type="text" formControlName="description" placeholder="Description" style="flex: 1; min-width: 150px;" />
-                  <input type="number" formControlName="pointsRequired" placeholder="Pts" style="width: 60px;" />
-                  
-                  <button type="submit" class="btn" [disabled]="editRewardForm.invalid" style="padding: 2px 8px; font-size: 12px;">Save</button>
-                  <button type="button" class="btn" style="padding: 2px 8px; font-size: 12px; background-color: #9e9e9e; color: white; border: none; border-radius: 3px; cursor: pointer;" (click)="cancelEditReward()">Cancel</button>
-                </form>
+            @for (reward of restaurantRewards[restaurant._id!]; track $index) {
+              <div class="reward">
+                <li>
+                  {{ $any(reward).name }} — {{ $any(reward).description }} ({{ $any(reward).pointsRequired }} pts)
+                </li>
+                <button type="button" class="btn delete-btn" (click)="removeReward(restaurant, reward)">X</button>
               </div>
-            </li>
+            }
           </ul>
         </div>
       } @else {
         <p>Rewards: None</p>
       }
-    </div> -->
+      <div class="footer">
+        <button class="btn" (click)="prevRewardPage(restaurant._id!)" [disabled]="rewardPage[restaurant._id!] < 1">
+          ⬅ Previous
+        </button>
 
-    <div class="data" *ngIf="restaurant._id != undefined && expanded[restaurant._id]">
+        <p class="btn">Page {{ (rewardPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit)) }}</p>
 
-  <!-- Loading state while /full is being fetched -->
-  @if (!restaurantFull[restaurant._id]) {
-    <p>Loading full data...</p>
-  } @else {
-    <p>{{ restaurantFull[restaurant._id].profile.description }}</p>
-    <p>globalRating: {{ restaurantFull[restaurant._id].profile.globalRating }}</p>
-    <p>Category: {{ restaurantFull[restaurant._id].profile.category }}</p>
+        <button class="btn" (click)="nextRewardPage(restaurant._id!)" [disabled]="((rewardPage[restaurant._id!] || 0) + 1) * rewardLimit >= (rewardTotal[restaurant._id!] || 0)">
+          Next ➡
+        </button>
 
-    @if (restaurantFull[restaurant._id].profile.timetable != undefined) {
-      <p>Timetable:</p>
-      @if (restaurantFull[restaurant._id].profile.timetable?.monday) {
-        <p>Monday:</p>
-        <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.monday">
-          {{ time.open }} - {{ time.close }}
-        </p>
-      }
-      @if (restaurantFull[restaurant._id].profile.timetable?.tuesday) {
-        <p>Tuesday:</p>
-        <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.tuesday">
-          {{ time.open }} - {{ time.close }}
-        </p>
-      }
-      @if (restaurantFull[restaurant._id].profile.timetable?.wednesday) {
-        <p>Wednesday:</p>
-        <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.wednesday">
-          {{ time.open }} - {{ time.close }}
-        </p>
-      }
-      @if (restaurantFull[restaurant._id].profile.timetable?.thursday) {
-        <p>Thursday:</p>
-        <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.thursday">
-          {{ time.open }} - {{ time.close }}
-        </p>
-      }
-      @if (restaurantFull[restaurant._id].profile.timetable?.friday) {
-        <p>Friday:</p>
-        <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.friday">
-          {{ time.open }} - {{ time.close }}
-        </p>
-      }
-      @if (restaurantFull[restaurant._id].profile.timetable?.saturday) {
-        <p>Saturday:</p>
-        <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.saturday">
-          {{ time.open }} - {{ time.close }}
-        </p>
-      }
-      @if (restaurantFull[restaurant._id].profile.timetable?.sunday) {
-        <p>Sunday:</p>
-        <p *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.sunday">
-          {{ time.open }} - {{ time.close }}
-        </p>
-      }
-    }
-
-    <p>Images:</p>
-    @for (imageUrl of restaurantFull[restaurant._id].profile.image; track $index) {
-      <img class="image" src="{{ imageUrl }}">
-    }
-
-    <p>Image urls: {{ restaurantFull[restaurant._id].profile.image }}</p>
-
-    <div>
-      <p>Contact:</p>
-      <p>Phone: {{ restaurantFull[restaurant._id].profile.contact?.phone }}</p>
-      <p>Email: {{ restaurantFull[restaurant._id].profile.contact?.email }}</p>
-    </div>
-
-    <div>
-      <p>Location:</p>
-      <p>City: {{ restaurantFull[restaurant._id].profile.location.city }}</p>
-      <p>Address: {{ restaurantFull[restaurant._id].profile.location.address }}</p>
-      <p>Google place ID: {{ restaurantFull[restaurant._id].profile.location.googlePlaceId }}</p>
-      <div>
-        <p>Coordinates:</p>
-        <p>Type: {{ restaurantFull[restaurant._id].profile.location.coordinates.type }}</p>
-        <p>
-          Longitude: {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}, 
-          Latitude: {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }}
-        </p>
+        <label for="goToRewardPageInput" style="margin-left: 8px;">Go to page:</label>
+        <input
+          id="goToRewardPageInput"
+          type="number"
+          [formControl]="goToRewardPageControl"
+          min="1"
+          [max]="Math.max(1, Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit))"
+          style="width: 80px;"
+        />
+        <button class="btn" type="button" (click)="goToRewardPage(restaurant._id!)">Go</button>
       </div>
-    </div>
-
-    <!-- Employees -->
-@if (restaurantFull[restaurant._id].employees && restaurantFull[restaurant._id].employees!.length > 0) {
-  <div>
-    <p>Employees:</p>
-    <ul>
-      <li *ngFor="let emp of restaurantFull[restaurant._id].employees">
-        <ng-container *ngIf="$any(emp).profile; else empId">
-          {{ $any(emp).profile.name }} — {{ $any(emp).profile.role }} — {{ $any(emp).profile.email }}
-        </ng-container>
-        <ng-template #empId>{{ emp }}</ng-template>
-      </li>
-    </ul>
-  </div>
-} @else {
-  <p>Employees: None</p>
-}
-
-<!-- Dishes -->
-@if (restaurantFull[restaurant._id].dishes && restaurantFull[restaurant._id].dishes!.length > 0) {
-  <div>
-    <p>Dishes:</p>
-    <ul>
-      <li *ngFor="let dish of restaurantFull[restaurant._id].dishes">
-        <ng-container *ngIf="$any(dish).name; else dishId">
-          {{ $any(dish).name }} — {{ $any(dish).price }}€
-        </ng-container>
-        <ng-template #dishId>{{ dish }}</ng-template>
-      </li>
-    </ul>
-  </div>
-} @else {
-  <p>Dishes: None</p>
-}
-
-<!-- Statistics -->
-@if (restaurantFull[restaurant._id].statistics) {
-  <div>
-    <p>Statistics:</p>
-    <ng-container *ngIf="$any(restaurantFull[restaurant._id].statistics)?.totalPointsGiven !== undefined; else statsId">
-      <p>Total points given: {{ $any(restaurantFull[restaurant._id].statistics).totalPointsGiven }}</p>
-      <p>Loyal customers: {{ $any(restaurantFull[restaurant._id].statistics).loyalCustomers }}</p>
-      <p>Avg points per visit: {{ $any(restaurantFull[restaurant._id].statistics).averagePointsPerVisit }}</p>
-    </ng-container>
-    <ng-template #statsId>
-      <p>ID: {{ restaurantFull[restaurant._id].statistics }}</p>
-    </ng-template>
-  </div>
-} @else {
-  <p>Statistics: None</p>
-}
-
-<!-- Badges -->
-@if (restaurantFull[restaurant._id].badges && restaurantFull[restaurant._id].badges!.length > 0) {
-  <div>
-    <p>Badges:</p>
-    <ul>
-      <li *ngFor="let badge of restaurantFull[restaurant._id].badges">
-        <ng-container *ngIf="$any(badge).title; else badgeId">
-          {{ $any(badge).title }} — {{ $any(badge).description }}
-        </ng-container>
-        <ng-template #badgeId>{{ badge }}</ng-template>
-      </li>
-    </ul>
-  </div>
-} @else {
-  <p>Badges: None</p>
-}
-
-    <!-- Rewards (populated objects from /full) -->
-    @if (restaurantFull[restaurant._id].rewards && restaurantFull[restaurant._id].rewards!.length > 0) {
-      <div>
-        <p>Rewards:</p>
-        <ul>
-          <li *ngFor="let reward of restaurantFull[restaurant._id].rewards">
-            {{ $any(reward).name }} — {{ $any(reward).description }} ({{ $any(reward).pointsRequired }} pts)
-          </li>
-        </ul>
-      </div>
-    } @else {
-      <p>Rewards: None</p>
     }
-  }
 
       <div style="margin-top: 10px;">
         <button type="button" class="btn" (click)="toggleRewardForm(restaurant._id!)">
@@ -623,6 +526,7 @@
         </form>
       </div>
 
+      <!--Visits-->
       <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #ccc;">
         <p><strong>Received visits:</strong></p>
         

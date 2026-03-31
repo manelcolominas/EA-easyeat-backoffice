@@ -12,6 +12,10 @@ export class RewardService {
 
   constructor(private http: HttpClient) {}
 
+  getRewards(): Observable<IReward[]> {
+    return this.http.get<IReward[]>(`${this.baseUrl}/rewards`)
+  }
+
   createReward(data: Partial<IReward>): Observable<IReward> {
     return this.http.post<IReward>(`${this.baseUrl}/rewards`, data);
   }

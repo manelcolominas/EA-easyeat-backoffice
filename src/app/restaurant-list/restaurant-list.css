@@ -69,12 +69,29 @@ h2 {
   background: #f3f3f3;
 }
 
+.delete-btn {
+  padding: 2px 5px;
+  font-size: 12px;
+  background-color: #f44336;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
 .image {
   max-width: 100%;
 }
 
 .footer {
   display: inline-flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  height: 36px;
+}
+
+.reward {
+  display: flex;
   justify-content: space-between;
   margin-top: 12px;
   height: 36px;
