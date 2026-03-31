@@ -13,6 +13,8 @@ import { AuthService } from './services/auth.service';
 export class App {
   constructor(public authService: AuthService, private router: Router) {}
 
+  getUrl() { return this.router.url; }
+
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);

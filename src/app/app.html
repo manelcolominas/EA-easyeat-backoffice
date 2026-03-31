@@ -3,6 +3,7 @@
     <span class="brand-title">EasyEat</span>
   </div>
 
+  @if (getUrl() != "/login") {
   <nav class="nav">
     <a
       routerLink="/restaurants"
@@ -19,6 +20,7 @@
     </a>
     <button class="logout-btn" (click)="logout()">Logout</button>
   </nav>
+  }
 </header>
 
 <main class="container">
