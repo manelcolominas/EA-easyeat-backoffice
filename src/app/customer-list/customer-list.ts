@@ -492,7 +492,7 @@ export class CustomerList implements OnInit {
     const requestedPage = Number(this.goToReviewPageControl.value);
     if (!Number.isFinite(requestedPage)) return;
 
-    const totalPages = this.reviewTotal[customerId] || 0;
+    const totalPages = Math.max(1, Math.ceil((this.reviewTotal[customerId] || 0) / this.reviewLimit));
     const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
 
     this.reviewPage[customerId] = safePage - 1;
@@ -696,7 +696,7 @@ export class CustomerList implements OnInit {
     const requestedPage = Number(this.goToVisitPageControl.value);
     if (!Number.isFinite(requestedPage)) return;
 
-    const totalPages = this.visitTotal[customerId] || 0;
+    const totalPages = Math.max(1, Math.ceil((this.visitTotal[customerId] || 0) / this.visitLimit));
     const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
 
     this.visitPage[customerId] = safePage - 1;

@@ -134,8 +134,13 @@
                   <h5>{{ isEditingVisit ? 'Edit Visit' : 'New Visit' }}</h5>
                   <form [formGroup]="visitForm" (ngSubmit)="saveVisit()">
                     <div class="form-group">
-                      <label>Restaurant ID:</label>
-                      <input type="text" formControlName="restaurant_id" />
+                      <label>Restaurant:</label>
+                      <select formControlName="restaurant_id">
+                        <option value="">Select a restaurant</option>
+                        @for (restaurant of restaurants; track restaurant._id) {
+                          <option [value]="restaurant._id">{{ restaurant.profile.name }}</option>
+                        }
+                      </select>
                     </div>
                     <div class="form-row" style="display: flex; gap: 10px;">
                       <div class="form-group" style="flex: 1;">

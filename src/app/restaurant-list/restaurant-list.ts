@@ -502,7 +502,7 @@ export class RestaurantList implements OnInit {
     const requestedPage = Number(this.goToRewardPageControl.value);
     if (!Number.isFinite(requestedPage)) return;
 
-    const totalPages = this.rewardTotal[restaurantId] || 0;
+    const totalPages = Math.max(1, Math.ceil((this.rewardTotal[restaurantId] || 0) / this.rewardLimit));
     const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
 
     this.rewardPage[restaurantId] = safePage - 1;
@@ -538,7 +538,7 @@ export class RestaurantList implements OnInit {
         restaurant.rewards.push(savedReward);
         this.showRewardForm[restaurant._id!] = false;
 
-        this.refreshRestaurantFull(restaurant._id!);
+        this.loadRestaurantRewards(restaurant._id!);
 
         this.loading = false;
         this.cdr.markForCheck();
@@ -566,7 +566,7 @@ export class RestaurantList implements OnInit {
 
         this.rewardApi.deleteReward(rewardId).subscribe({
           next: () => {
-            this.refreshRestaurantFull(restaurant._id!);
+            this.loadRestaurantRewards(restaurant._id!);
             
             this.loading = false;
             this.cdr.markForCheck();
@@ -613,7 +613,7 @@ export class RestaurantList implements OnInit {
 
     this.rewardApi.updateReward(targetRewardId, data).subscribe({
       next: (updatedReward) => {
-        this.refreshRestaurantFull(restaurant._id!);
+        this.loadRestaurantRewards(restaurant._id!);
 
         this.editingRewardId = null;
         this.loading = false;
@@ -681,7 +681,7 @@ export class RestaurantList implements OnInit {
     const requestedPage = Number(this.goToVisitPageControl.value);
     if (!Number.isFinite(requestedPage)) return;
 
-    const totalPages = this.visitTotal[restaurantId] || 0;
+    const totalPages = Math.max(1, Math.ceil((this.visitTotal[restaurantId] || 0) / this.visitLimit));
     const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
 
     this.visitPage[restaurantId] = safePage - 1;
