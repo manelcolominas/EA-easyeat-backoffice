@@ -6,11 +6,12 @@ import { isPlatformBrowser } from '@angular/common';
 
 export interface LoginResponse {
   message: string;
-  token: string;
+  accessToken: string;
   admin: {
     id: string;
     email: string;
     name: string;
+    role?: string;
   };
 }
 
@@ -29,22 +30,26 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, { email, password }).pipe(
-      tap(response => {
-        if (response && response.token && this.isBrowser) {
-          localStorage.setItem('admin_token', response.token);
-          localStorage.setItem('admin_user', JSON.stringify(response.admin));
-        }
-      })
-    );
-  }
+  return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, { email, password }).pipe(
+    tap(response => {
+      if (response && response.accessToken && this.isBrowser) {
+        localStorage.setItem('admin_token', response.accessToken); // ← Fix: response.token → response.accessToken
+        localStorage.setItem('admin_user', JSON.stringify(response.admin));
+      }
+    })
+  );
+}
 
   logout() {
-    if (this.isBrowser) {
-      localStorage.removeItem('admin_token');
-      localStorage.removeItem('admin_user');
+  this.http.post(`${this.baseUrl}/auth/logout`, {}).subscribe({
+    complete: () => {
+      if (this.isBrowser) {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+      }
     }
-  }
+  });
+}
 
   getToken(): string | null {
     if (this.isBrowser) {
@@ -55,5 +60,13 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return !!this.getToken();
+  }
+
+  getUser(): any {
+    if (this.isBrowser) {
+      const user = localStorage.getItem('admin_user');
+      return user ? JSON.parse(user) : null;
+    }
+    return null;
   }
 }

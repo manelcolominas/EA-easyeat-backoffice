@@ -13,15 +13,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule
-  ],
+  imports: [ CommonModule, ReactiveFormsModule, MatCardModule, 
+    MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -30,11 +23,7 @@ export class LoginComponent {
   isLoading = false;
   errorMessage = '';
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {
+  constructor( private fb: FormBuilder, private authService: AuthService, private router: Router ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]]
