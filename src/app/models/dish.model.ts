@@ -19,4 +19,7 @@ export interface IDish {
     cuisineTags?: string[];
 
     portionSize?: 'small' | 'medium' | 'large' | 'sharing';
+
+    userRatingAvg?: number;
+    userRatingCount?: number;
 }

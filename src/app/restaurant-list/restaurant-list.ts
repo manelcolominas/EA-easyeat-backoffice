@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RestaurantService } from '../services/restaurant.service';
 import { RewardService } from '../services/reward.service';
@@ -88,6 +89,9 @@ export class RestaurantList implements OnInit, OnDestroy {
   dishTotal: { [key: string]: number } = {};
   dishLimit = 5;
   goToDishPageControl = new FormControl<number | null>(1);
+  topDishByRestaurant: { [key: string]: IDish | null } = {};
+  topDishState: { [key: string]: 'idle' | 'loading' | 'success' | 'empty' | 'error' } = {};
+  topDishErrorText: { [key: string]: string } = {};
 
   restaurantEmployees: { [key: string]: IEmployee[] } = {};
   showEmployeeForm: { [key: string]: boolean } = {};
@@ -349,6 +353,7 @@ export class RestaurantList implements OnInit, OnDestroy {
       this.loadRestaurantVisits(restaurantId);
 
       this.dishPage[restaurantId] = 0;
+      this.loadRestaurantTopDish(restaurantId);
       this.loadRestaurantDishes(restaurantId);
 
       this.employeePage[restaurantId] = 0;
@@ -356,6 +361,86 @@ export class RestaurantList implements OnInit, OnDestroy {
     } else {
       this.mapLoading[restaurantId] = false;
     }
+  }
+
+  private normalizeTopDishResponse(response: unknown): IDish | null {
+    const raw = response as Record<string, unknown> | null;
+    if (!raw) {
+      return null;
+    }
+
+    const candidate = (raw['data'] ?? raw['dish'] ?? raw) as Partial<IDish>;
+    if (!candidate || !candidate.name) {
+      return null;
+    }
+
+    return candidate as IDish;
+  }
+
+  private loadRestaurantTopDish(restaurantId: string): void {
+    this.topDishState[restaurantId] = 'loading';
+    this.topDishErrorText[restaurantId] = '';
+    this.cdr.markForCheck();
+
+    this.dishApi.getTopDishByRestaurant(restaurantId).subscribe({
+      next: (res: unknown) => {
+        const topDish = this.normalizeTopDishResponse(res);
+        if (!topDish) {
+          this.topDishByRestaurant[restaurantId] = null;
+          this.topDishState[restaurantId] = 'empty';
+        } else {
+          this.topDishByRestaurant[restaurantId] = topDish;
+          this.topDishState[restaurantId] = 'success';
+        }
+        this.cdr.markForCheck();
+      },
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          this.topDishByRestaurant[restaurantId] = null;
+          this.topDishState[restaurantId] = 'empty';
+          this.topDishErrorText[restaurantId] = '';
+        } else {
+          this.topDishState[restaurantId] = 'error';
+          this.topDishErrorText[restaurantId] = 'Could not load top rated dish.';
+        }
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  retryTopDishLoad(restaurantId: string): void {
+    this.loadRestaurantTopDish(restaurantId);
+  }
+
+  getTopDishState(restaurantId: string): 'idle' | 'loading' | 'success' | 'empty' | 'error' {
+    return this.topDishState[restaurantId] ?? 'idle';
+  }
+
+  getTopDish(restaurantId: string): IDish | null {
+    return this.topDishByRestaurant[restaurantId] ?? null;
+  }
+
+  getTopDishImage(dish: IDish | null): string | null {
+    if (!dish?.images?.length) {
+      return null;
+    }
+    return dish.images[0] || null;
+  }
+
+  formatTopDishRating(rating: number | undefined): string {
+    if (!Number.isFinite(rating)) {
+      return '—';
+    }
+    const fixed = Number((rating as number).toFixed(2));
+    return fixed.toString();
+  }
+
+  formatTopDishVotes(count: number | undefined): string {
+    if (!Number.isFinite(count)) {
+      return '0 valoraciones';
+    }
+    const safeCount = Math.max(0, Math.trunc(count as number));
+    return `${safeCount} valoraciones`;
   }
 
   private getLocationData(restaurant: IRestaurant): GoogleLocationData {

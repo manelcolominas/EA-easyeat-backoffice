@@ -20,6 +20,10 @@ export class DishService {
     return this.http.get<IDish>(`${this.baseUrl}/dishes/${dishId}`);
   }
 
+  getTopDishByRestaurant(restaurantId: string): Observable<IDish> {
+    return this.http.get<IDish>(`${this.baseUrl}/restaurants/${restaurantId}/dishes/top`);
+  }
+
   createDish(data: Partial<IDish>): Observable<IDish> {
     return this.http.post<IDish>(`${this.baseUrl}/dishes`, data);
   }

@@ -714,6 +714,58 @@
         <!-- DISHES SECTION -->
         <div class="info-card info-card-full mt-md">
           <span class="info-card-title">🍽️ Dishes</span>
+
+          <section class="top-dish-card" aria-label="Top rated dish">
+            <div class="top-dish-header">
+              <span class="chip chip-warning top-dish-badge">Top 1</span>
+              <span class="top-dish-title">Most liked dish</span>
+            </div>
+
+            @if (getTopDishState(restaurant._id!) === 'loading') {
+              <div class="top-dish-skeleton" aria-hidden="true">
+                <div class="top-dish-skeleton-media"></div>
+                <div class="top-dish-skeleton-content">
+                  <div class="skeleton-line skeleton-line-title"></div>
+                  <div class="skeleton-line"></div>
+                  <div class="skeleton-line" style="width: 65%;"></div>
+                </div>
+              </div>
+            } @else if (getTopDishState(restaurant._id!) === 'success') {
+              @if (getTopDish(restaurant._id!); as topDish) {
+                <article class="top-dish-content">
+                  @if (getTopDishImage(topDish); as topDishImage) {
+                    <img
+                      class="top-dish-image"
+                      [src]="topDishImage"
+                      [alt]="'Image of top dish: ' + topDish.name"
+                      loading="lazy"
+                    />
+                  } @else {
+                    <div class="top-dish-image-fallback" role="img" aria-label="No dish image available">No image</div>
+                  }
+
+                  <div class="top-dish-meta">
+                    <h4 class="top-dish-name">{{ topDish.name }}</h4>
+                    <p class="top-dish-description">{{ topDish.description || 'No description available yet.' }}</p>
+                    <div class="top-dish-stats" aria-label="Top dish stats">
+                      <span class="chip chip-success">★ {{ formatTopDishRating(topDish.userRatingAvg) }}</span>
+                      <span class="chip chip-neutral">{{ formatTopDishVotes(topDish.userRatingCount) }}</span>
+                      <span class="chip chip-primary">{{ topDish.section || '—' }}</span>
+                      <span class="chip chip-warning">{{ topDish.price | number:'1.2-2' }}€</span>
+                    </div>
+                  </div>
+                </article>
+              }
+            } @else if (getTopDishState(restaurant._id!) === 'empty') {
+              <p class="muted top-dish-empty">Aun no hay valoraciones de platos en este restaurante.</p>
+            } @else if (getTopDishState(restaurant._id!) === 'error') {
+              <div class="top-dish-error" role="status" aria-live="polite">
+                <p class="muted">{{ topDishErrorText[restaurant._id!] || 'Could not load top rated dish.' }}</p>
+                <button type="button" class="btn-custom btn-secondary btn-sm" (click)="retryTopDishLoad(restaurant._id!)">Retry</button>
+              </div>
+            }
+          </section>
+
           <p *ngIf="loading && expanded[restaurant._id!] && !restaurantDishes[restaurant._id!]" class="muted">Loading dishes...</p>
 
           <ul class="data-list" *ngIf="restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length > 0">
