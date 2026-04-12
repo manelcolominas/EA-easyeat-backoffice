@@ -7,11 +7,13 @@ import { CustomerService } from '../services/customer.service';
 import { ReviewService } from '../services/review.service';
 import { RestaurantService } from '../services/restaurant.service';
 import { VisitService } from '../services/visit.service';
+import { BadgeService } from '../services/badge.service';
 
 import { ICustomer } from '../models/customer.model';
 import { IReview } from '../models/review.model';
 import { IRestaurant } from '../models/restaurant.model';
 import { IVisit } from '../models/visit.model';
+import { IBadge } from '../models/badge.model';
 
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 
@@ -78,11 +80,15 @@ export class CustomerList implements OnInit {
   visitSortOrder: 'asc' | 'desc' = 'desc';
   goToVisitPageControl = new FormControl<number | null>(1);
 
+  customerBadges: { [key: string]: IBadge[] } = {};
+  loadingBadges: { [key: string]: boolean } = {};
+
   constructor(
     private api: CustomerService,
     private reviewService: ReviewService,
     private restaurantService: RestaurantService,
     private visitService: VisitService,
+    private badgeService: BadgeService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog
@@ -292,6 +298,8 @@ export class CustomerList implements OnInit {
       // NEW: Load visits on expand
       this.visitPage[id] = 0;
       this.loadVisits(id);
+
+      this.loadCustomerBadges(id);
     }
   }
 
@@ -702,5 +710,25 @@ export class CustomerList implements OnInit {
     this.visitPage[customerId] = safePage - 1;
     this.goToVisitPageControl.setValue(safePage, { emitEvent: false });
     this.loadVisits(customerId);
+  }
+
+  // ========================
+  // BADGES
+  // ========================
+
+  loadCustomerBadges(customerId: string): void {
+    this.loadingBadges[customerId] = true;
+    this.badgeService.getBadgesByCustomer(customerId).subscribe({
+      next: (badges: IBadge[]) => {
+        this.customerBadges[customerId] = badges;
+        this.loadingBadges[customerId] = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.customerBadges[customerId] = [];
+        this.loadingBadges[customerId] = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 }

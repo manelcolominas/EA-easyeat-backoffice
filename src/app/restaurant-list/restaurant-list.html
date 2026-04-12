@@ -22,8 +22,8 @@
   />
 </div>
 
-<p *ngIf="loading" class="muted mt-md">Loading...</p>
-<p *ngIf="!loading && errorMsg" class="error mt-md">{{ errorMsg }}</p>
+<p *ngIf="loading && pagedRestaurants.length === 0" class="muted mt-md">Loading...</p>
+<p *ngIf="errorMsg" class="error mt-md">{{ errorMsg }}</p>
 
 @if (showForm) {
 
@@ -281,7 +281,7 @@
   </div>
 }
 
-<ul class="list" *ngIf="!loading && !errorMsg && pagedRestaurants.length > 0">
+<ul class="list" *ngIf="pagedRestaurants.length > 0">
   <li *ngFor="let restaurant of visibleRestaurants; trackBy: trackById">
     <div class="header">
       <div class="list-item-row">
@@ -393,22 +393,7 @@
             </div>
           </div>
 
-          <!-- Badges card -->
-          @if (restaurantFull[restaurant._id].badges && restaurantFull[restaurant._id].badges!.length > 0) {
-            <div class="info-card info-card-full">
-              <span class="info-card-title">🏅 Badges</span>
-              <div class="chips-wrap">
-                <ng-container *ngFor="let badge of restaurantFull[restaurant._id].badges">
-                  <ng-container *ngIf="$any(badge).title; else badgeChipId">
-                    <span class="chip chip-success">{{ $any(badge).title }}</span>
-                  </ng-container>
-                  <ng-template #badgeChipId>
-                    <span class="chip chip-neutral">{{ badge }}</span>
-                  </ng-template>
-                </ng-container>
-              </div>
-            </div>
-          }
+
 
           <!-- Timetable card (full width) -->
           @if (restaurantFull[restaurant._id].profile.timetable != undefined) {
@@ -867,6 +852,85 @@
             <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newEmployeeForm.invalid">Save Employee</button>
           </form>
         </div><!-- end add employee -->
+        
+        <!-- BADGES SECTION -->
+        <div class="info-card info-card-full mt-md">
+          <span class="info-card-title">🏅 Manage Badges</span>
+          <p *ngIf="loading && expanded[restaurant._id!] && !restaurantBadges[restaurant._id!]" class="muted">Loading badges...</p>
+
+          <ul class="data-list" *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length > 0">
+            <li *ngFor="let badge of restaurantBadges[restaurant._id!]">
+              <ng-container *ngIf="editingBadgeId !== $any(badge)._id">
+                <span style="display:flex;flex-direction:column;gap:2px;">
+                  <span>
+                    <strong>{{ badge.title }}</strong>
+                    <span class="chip chip-success" style="margin-left:6px;">{{ badge.type }}</span>
+                  </span>
+                  <span class="muted">{{ badge.description }}</span>
+                </span>
+                <span style="display:flex;align-items:center;gap:6px;">
+                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="startEditBadge(badge)">Edit</button>
+                  <button type="button" class="btn-custom btn-danger btn-sm" (click)="removeBadge(restaurant._id!, badge)">✕</button>
+                </span>
+              </ng-container>
+
+              <!-- Inline edit form -->
+              <ng-container *ngIf="editingBadgeId === $any(badge)._id">
+                <form [formGroup]="editBadgeForm" (ngSubmit)="saveEditedBadge(restaurant._id!)" style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;width:100%">
+                  <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;">
+                    <input class="input-custom" type="text" formControlName="title" placeholder="Title" />
+                    <input class="input-custom" type="text" formControlName="description" placeholder="Description" />
+                  </div>
+                  <select class="select-custom" formControlName="type" style="width:120px;">
+                    <option value="achievement">Achievement</option>
+                    <option value="status">Status</option>
+                    <option value="special">Special</option>
+                  </select>
+                  <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="editBadgeForm.invalid">Save</button>
+                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="cancelEditBadge()">Cancel</button>
+                </form>
+              </ng-container>
+            </li>
+          </ul>
+
+          <div *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length === 0">
+            <span class="muted">No badges defined for this restaurant.</span>
+          </div>
+
+          <!-- Pagination -->
+          <div class="footer" style="margin-top:var(--spacing-sm)">
+            <button class="btn-custom btn-secondary btn-sm" (click)="prevBadgePage(restaurant._id!)" [disabled]="badgePage[restaurant._id!] < 1">⬅ Prev</button>
+            <span class="muted" style="font-size:13px;">Page {{ (badgePage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit)) }}</span>
+            <button class="btn-custom btn-secondary btn-sm" (click)="nextBadgePage(restaurant._id!)" [disabled]="((badgePage[restaurant._id!] || 0) + 1) * badgeLimit >= (badgeTotal[restaurant._id!] || 0)">Next ➡</button>
+            <input class="input-custom" id="goToBadgePageInput" type="number" [formControl]="goToBadgePageControl" min="1" [max]="Math.max(1, Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit))" style="width:70px;" />
+            <button class="btn-custom btn-primary btn-sm" type="button" (click)="goToBadgePage(restaurant._id!)">Go</button>
+          </div>
+        </div>
+
+        <div style="margin-top:var(--spacing-sm)">
+          <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleBadgeForm(restaurant._id!)">
+            {{ showBadgeForm[restaurant._id!] ? '✕ Cancel' : '+ Add Badge' }}
+          </button>
+          <form *ngIf="showBadgeForm[restaurant._id!]" [formGroup]="newBadgeForm" (ngSubmit)="saveBadge(restaurant._id!)" class="info-card mt-sm">
+            <div class="form-group">
+              <label class="section-label">*Title</label>
+              <input class="input-custom" type="text" formControlName="title" />
+            </div>
+            <div class="form-group">
+              <label class="section-label">*Description</label>
+              <input class="input-custom" type="text" formControlName="description" />
+            </div>
+            <div class="form-group">
+              <label class="section-label">*Type</label>
+              <select class="select-custom" formControlName="type">
+                <option value="achievement">Achievement</option>
+                <option value="status">Status</option>
+                <option value="special">Special</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newBadgeForm.invalid">Save Badge</button>
+          </form>
+        </div><!-- end add badge -->
 
       }
     </div><!-- end .data -->

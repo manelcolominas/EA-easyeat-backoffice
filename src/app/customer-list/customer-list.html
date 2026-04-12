@@ -215,6 +215,24 @@
               <button class="btn-custom btn-primary" type="button" (click)="goToVisitPage(customer._id!)">Go</button>
             </div>
 
+            <!-- Sección de Badges -->
+            <div class="badges-section" style="margin-top: 20px;">
+              <h4>Earned Badges</h4>
+              @if (loadingBadges[customer._id!]) {
+                <p class="muted italic">Cargando...</p>
+              } @else if (customerBadges[customer._id!]?.length) {
+                <div class="chips-wrap" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+                  @for (badge of customerBadges[customer._id!]; track badge._id) {
+                    <div class="chip chip-success" [title]="badge.description" style="cursor: help;">
+                      🏅 {{ badge.title }}
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="muted italic">Este cliente aún no ha ganado insignias.</p>
+              }
+            </div>
+
             <!-- Sección de Reviews -->
             <div class="card-custom" style="margin-top:10px;">
               <h4>Reviews</h4>
