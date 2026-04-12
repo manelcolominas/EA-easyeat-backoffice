@@ -10,6 +10,8 @@ import { IReward } from '../models/reward.model';
 import { IVisit } from '../models/visit.model';
 import { IDish } from '../models/dish.model';
 import { IEmployee } from '../models/employee.model';
+import { IBadge } from '../models/badge.model';
+import { BadgeService } from '../services/badge.service';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
@@ -89,12 +91,23 @@ export class RestaurantList implements OnInit {
   employeeLimit = 6;
   goToEmployeePageControl = new FormControl<number | null>(1);
 
+  restaurantBadges: { [key: string]: IBadge[] } = {};
+  showBadgeForm: { [key: string]: boolean } = {};
+  newBadgeForm!: FormGroup;
+  editingBadgeId: string | null = null;
+  editBadgeForm!: FormGroup;
+  badgePage: { [restaurantId: string]: number } = {};
+  badgeTotal: { [key: string]: number } = {};
+  badgeLimit = 5;
+  goToBadgePageControl = new FormControl<number | null>(1);
+
   constructor(
     private api: RestaurantService,
     private rewardApi: RewardService,
     private visitApi: VisitService,
     private dishApi: DishService,
     private employeeApi: EmployeeService,
+    private badgeApi: BadgeService,
     private customerApi: CustomerService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
@@ -229,10 +242,22 @@ export class RestaurantList implements OnInit {
 
     this.editEmployeeForm = this.fb.group({
       name: ['', Validators.required],
-      email: [''],
+      email: ['', [Validators.email]],
       phone: [''],
       role: ['staff'],
       isActive: [true]
+    });
+
+    this.newBadgeForm = this.fb.group({
+      title: ['', Validators.required],
+      description: ['', Validators.required],
+      type: ['achievement', Validators.required]
+    });
+
+    this.editBadgeForm = this.fb.group({
+      title: ['', Validators.required],
+      description: ['', Validators.required],
+      type: ['achievement', Validators.required]
     });
   }
 
@@ -327,6 +352,9 @@ export class RestaurantList implements OnInit {
 
       this.employeePage[restaurantId] = 0;
       this.loadRestaurantEmployees(restaurantId);
+
+      this.badgePage[restaurantId] = 0;
+      this.loadRestaurantBadges(restaurantId);
     }
   }
 
@@ -1283,27 +1311,186 @@ export class RestaurantList implements OnInit {
   }
 
   saveEditedEmployee(restaurantId: string): void {
-    if (this.editEmployeeForm.invalid || !this.editingEmployeeId) return;
-    const v = this.editEmployeeForm.value;
-    this.loading = true;
-    this.cdr.markForCheck();
-    const data: Partial<IEmployee> = {
-      profile: {
-        name: v.name,
-        email: v.email || undefined,
-        phone: v.phone || undefined,
-        role: v.role || 'staff',
-      },
-      isActive: v.isActive,
-    };
-    const targetId = this.editingEmployeeId;
-    this.employeeApi.updateEmployee(targetId, data).subscribe({
-      next: () => {
-        this.editingEmployeeId = null;
-        this.loadRestaurantEmployees(restaurantId);
+    // ... (unchanged)
+  }
+
+  // ========================
+  // BADGES
+  // ========================
+
+  private loadRestaurantBadges(restaurantId: string): void {
+    this.badgeApi.getBadgesByRestaurant(restaurantId).subscribe({
+      next: (badges: IBadge[]) => {
+        this.badgeTotal[restaurantId] = badges.length;
+        this.restaurantBadges[restaurantId] = this.paginateBadges(badges, restaurantId);
+        this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
-        this.errorMsg = 'Could not update employee.';
+        this.restaurantBadges[restaurantId] = [];
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private paginateBadges(badges: IBadge[], restaurantId: string): IBadge[] {
+    const page = this.badgePage[restaurantId] || 0;
+    const start = page * this.badgeLimit;
+    const end = start + this.badgeLimit;
+    this.badgeTotal[restaurantId] = badges.length;
+    return badges.slice(start, end);
+  }
+
+  nextBadgePage(restaurantId: string): void {
+    const page = this.badgePage[restaurantId] || 0;
+    const total = this.badgeTotal[restaurantId] || 0;
+    if ((page + 1) * this.badgeLimit >= total) return;
+    this.badgePage[restaurantId] = page + 1;
+    this.loadRestaurantBadges(restaurantId);
+  }
+
+  prevBadgePage(restaurantId: string): void {
+    if ((this.badgePage[restaurantId] || 0) === 0) return;
+    this.badgePage[restaurantId]--;
+    this.loadRestaurantBadges(restaurantId);
+  }
+
+  goToBadgePage(restaurantId: string): void {
+    const requestedPage = Number(this.goToBadgePageControl.value);
+    if (!Number.isFinite(requestedPage)) return;
+    const totalPages = Math.max(1, Math.ceil((this.badgeTotal[restaurantId] || 0) / this.badgeLimit));
+    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
+    this.badgePage[restaurantId] = safePage - 1;
+    this.goToBadgePageControl.setValue(safePage, { emitEvent: false });
+    this.loadRestaurantBadges(restaurantId);
+  }
+
+  toggleBadgeForm(restaurantId: string): void {
+    this.showBadgeForm[restaurantId] = !this.showBadgeForm[restaurantId];
+    if (this.showBadgeForm[restaurantId]) {
+      this.newBadgeForm.reset();
+      this.newBadgeForm.patchValue({ type: 'achievement' });
+    }
+  }
+
+  saveBadge(restaurantId: string): void {
+    if (this.newBadgeForm.invalid) return;
+    this.loading = true;
+    this.cdr.markForCheck();
+
+    // Step 1: Create the global badge (no restaurant_id)
+    const badgeData: Partial<IBadge> = { ...this.newBadgeForm.value };
+
+    this.badgeApi.createBadge(badgeData).subscribe({
+      next: (createdBadge: IBadge) => {
+        const badgeId = createdBadge._id;
+        if (!badgeId) {
+          this.loading = false;
+          this.cdr.markForCheck();
+          return;
+        }
+
+        // Step 2: Get current restaurant badge IDs and add the new one
+        const full = this.restaurantFull[restaurantId];
+        const currentIds: string[] = (full?.badges ?? []).map((b: any) =>
+          typeof b === 'string' ? b : (b._id ?? b)
+        );
+        currentIds.push(badgeId);
+
+        this.api.updateRestaurant(restaurantId, { badges: currentIds as any }).subscribe({
+          next: () => {
+            this.showBadgeForm[restaurantId] = false;
+            this.loading = false;
+            this.refreshRestaurantFull(restaurantId);
+            this.loadRestaurantBadges(restaurantId);
+          },
+          error: (err) => {
+            console.error('Error linking badge to restaurant:', err);
+            this.errorMsg = 'Badge created but could not link to restaurant.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error adding badge:', err);
+        this.errorMsg = 'Could not add badge.';
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  removeBadge(restaurantId: string, badge: any): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `Delete badge "${badge.title || 'this badge'}"?`
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const badgeId = badge._id;
+        if (!badgeId) return;
+        this.loading = true;
+        this.cdr.markForCheck();
+
+        // Remove from restaurant's badge array first
+        const full = this.restaurantFull[restaurantId];
+        const updatedIds: string[] = (full?.badges ?? []).map((b: any) =>
+          typeof b === 'string' ? b : (b._id ?? b)
+        ).filter((id: string) => id !== badgeId);
+
+        this.api.updateRestaurant(restaurantId, { badges: updatedIds as any }).subscribe({
+          next: () => {
+            // Then delete the global badge
+            this.badgeApi.deleteBadge(badgeId).subscribe({
+              next: () => {
+                this.loading = false;
+                this.refreshRestaurantFull(restaurantId);
+                this.loadRestaurantBadges(restaurantId);
+              },
+              error: () => {
+                this.loading = false;
+                this.loadRestaurantBadges(restaurantId);
+              }
+            });
+          },
+          error: () => {
+            this.errorMsg = 'Could not unlink badge from restaurant.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          }
+        });
+      }
+    });
+  }
+
+  startEditBadge(badge: any): void {
+    if (!badge._id) return;
+    this.editingBadgeId = badge._id;
+    this.editBadgeForm.patchValue({
+      title: badge.title || '',
+      description: badge.description || '',
+      type: badge.type || 'achievement'
+    });
+  }
+
+  cancelEditBadge(): void {
+    this.editingBadgeId = null;
+    this.editBadgeForm.reset();
+  }
+
+  saveEditedBadge(restaurantId: string): void {
+    if (this.editBadgeForm.invalid || !this.editingBadgeId) return;
+    this.loading = true;
+    this.cdr.markForCheck();
+    const targetId = this.editingBadgeId;
+    this.badgeApi.updateBadge(targetId, this.editBadgeForm.value).subscribe({
+      next: () => {
+        this.editingBadgeId = null;
+        this.loadRestaurantBadges(restaurantId);
+      },
+      error: () => {
+        this.errorMsg = 'Could not update badge.';
         this.loading = false;
         this.cdr.markForCheck();
       }
