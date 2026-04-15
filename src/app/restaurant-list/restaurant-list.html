@@ -324,7 +324,15 @@
 
       <!-- Loading state while /full is being fetched -->
       @if (!restaurantFull[restaurant._id]) {
-        <p class="muted">Loading full data...</p>
+        <div class="detail-skeleton" aria-hidden="true">
+          <div class="skeleton-line skeleton-line-title"></div>
+          <div class="skeleton-grid">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </div>
+        </div>
       } @else {
 
         <!-- DASHBOARD GRID -->
@@ -350,20 +358,105 @@
             </span>
           </div>
 
-          <!-- Location card -->
-          <div class="info-card">
-            <span class="info-card-title">📍 Location</span>
-            <span class="info-card-value"><strong>City:</strong> {{ restaurantFull[restaurant._id].profile.location.city }}</span>
-            <span class="info-card-value"><strong>Address:</strong> {{ restaurantFull[restaurant._id].profile.location.address || '—' }}</span>
-            <span class="info-card-value">
-              <strong>Coords:</strong>
-              {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }},
-              {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}
-            </span>
-            <span class="info-card-value" *ngIf="restaurantFull[restaurant._id].profile.location.googlePlaceId">
-              <strong>Place ID:</strong> {{ restaurantFull[restaurant._id].profile.location.googlePlaceId }}
-            </span>
-          </div>
+          <!-- Location + map card -->
+          @if (hasLocationData(restaurantFull[restaurant._id])) {
+            <div class="info-card info-card-full location-card">
+              <span class="info-card-title">📍 Location</span>
+
+              <div class="location-layout">
+                <div class="location-content">
+                  <span class="info-card-value"><strong>Address:</strong> {{ restaurantFull[restaurant._id].profile.location.address || '—' }}</span>
+                  <span class="info-card-value"><strong>City:</strong> {{ restaurantFull[restaurant._id].profile.location.city || '—' }}</span>
+                  @if (restaurantFull[restaurant._id].profile.location.googlePlaceId) {
+                    <span class="info-card-value"><strong>Place ID:</strong> {{ restaurantFull[restaurant._id].profile.location.googlePlaceId }}</span>
+                  }
+                  @if (hasCoordinates(restaurantFull[restaurant._id])) {
+                    <span class="info-card-value">
+                      <strong>Coords:</strong>
+                      {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }},
+                      {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}
+                    </span>
+                  }
+
+                  <div class="location-actions">
+                    @if (getDirectionsUrl(restaurant._id!)) {
+                      <a
+                        class="btn-custom btn-secondary btn-sm"
+                        [href]="getDirectionsUrl(restaurant._id!)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Open route in Google Maps in a new tab"
+                      >
+                        How to get there
+                      </a>
+                    }
+                    @if (getOpenMapsUrl(restaurant._id!)) {
+                      <a
+                        class="btn-custom btn-primary btn-sm"
+                        [href]="getOpenMapsUrl(restaurant._id!)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Open location in Google Maps in a new tab"
+                      >
+                        Open in Google Maps
+                      </a>
+                    }
+                  </div>
+                </div>
+
+                <div class="location-map-wrap">
+                  @if (hasCoordinates(restaurantFull[restaurant._id]) && getMapEmbedUrl(restaurant._id!)) {
+                    @defer (on viewport) {
+                      <div class="map-frame-container" [class.map-loading]="mapLoading[restaurant._id!]" [class.map-error]="mapLoadError[restaurant._id!]">
+                        <iframe
+                          class="location-map-frame"
+                          [src]="getMapEmbedUrl(restaurant._id!)"
+                          loading="lazy"
+                          referrerpolicy="no-referrer-when-downgrade"
+                          title="Restaurant location map"
+                          (load)="onMapFrameLoad(restaurant._id!)"
+                          (error)="onMapFrameError(restaurant._id!)"
+                          aria-label="Map with restaurant location"
+                        ></iframe>
+
+                        @if (mapLoading[restaurant._id!]) {
+                          <div class="map-overlay" aria-hidden="true">
+                            <div class="map-overlay-line"></div>
+                            <div class="map-overlay-line short"></div>
+                          </div>
+                        }
+
+                        @if (mapLoadError[restaurant._id!]) {
+                          <div class="map-error-state" role="status" aria-live="polite">
+                            <p>Map could not be loaded.</p>
+                            @if (getOpenMapsUrl(restaurant._id!)) {
+                              <a
+                                class="btn-custom btn-secondary btn-sm"
+                                [href]="getOpenMapsUrl(restaurant._id!)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Open in Google Maps
+                              </a>
+                            }
+                          </div>
+                        }
+                      </div>
+                    } @placeholder {
+                      <div class="map-placeholder" aria-hidden="true">
+                        <div class="map-overlay-line"></div>
+                        <div class="map-overlay-line short"></div>
+                      </div>
+                    }
+                  } @else {
+                    <div class="map-fallback" role="note">
+                      <p class="info-card-value">Map preview is not available. Use Google Maps buttons to open the location.</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
 
           <!-- Statistics card -->
           @if (restaurantFull[restaurant._id].statistics) {
@@ -606,6 +699,37 @@
         <!-- DISHES SECTION -->
         <div class="info-card info-card-full mt-md">
           <span class="info-card-title">🍽️ Dishes</span>
+
+          <section class="top-dish-card" aria-label="Top rated dish">
+            <div class="top-dish-header">
+              <span class="chip chip-warning top-dish-badge">Top 1</span>
+              <span class="top-dish-title">Top rated dish</span>
+            </div>
+
+            @if (getTopDishState(restaurant._id!) === 'loading') {
+              <p class="muted top-dish-empty">Loading top rated dish...</p>
+            } @else if (getTopDishState(restaurant._id!) === 'success') {
+              @if (getTopDish(restaurant._id!); as topDish) {
+                <article class="top-dish-content">
+                  <div class="top-dish-meta">
+                    <h4 class="top-dish-name">{{ topDish.name }}</h4>
+                    <div class="top-dish-stats" aria-label="Top dish stats">
+                      <span class="chip chip-success">⭐ {{ formatTopDishRating(topDish.averageRating) }}</span>
+                      <span class="chip chip-neutral">{{ formatTopDishVotes(topDish.totalRatings) }}</span>
+                    </div>
+                  </div>
+                </article>
+              }
+            } @else if (getTopDishState(restaurant._id!) === 'empty') {
+              <p class="muted top-dish-empty">Todavia no hay valoraciones para este restaurante.</p>
+            } @else if (getTopDishState(restaurant._id!) === 'error') {
+              <div class="top-dish-error" role="status" aria-live="polite">
+                <p class="muted">{{ topDishErrorText[restaurant._id!] || 'No se pudo cargar el Top 1 del restaurante.' }}</p>
+                <button type="button" class="btn-custom btn-secondary btn-sm" (click)="retryTopDishLoad(restaurant._id!)">Retry</button>
+              </div>
+            }
+          </section>
+
           <p *ngIf="loading && expanded[restaurant._id!] && !restaurantDishes[restaurant._id!]" class="muted">Loading dishes...</p>
 
           <ul class="data-list" *ngIf="restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length > 0">

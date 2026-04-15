@@ -1,5 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RestaurantService } from '../services/restaurant.service';
 import { RewardService } from '../services/reward.service';
 import { VisitService } from '../services/visit.service';
@@ -12,11 +14,21 @@ import { IDish } from '../models/dish.model';
 import { IEmployee } from '../models/employee.model';
 import { IBadge } from '../models/badge.model';
 import { BadgeService } from '../services/badge.service';
+import { IRestaurantTopDishResponse, ITopDishInfo } from '../models/top-dish.model';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { ICustomer } from '../models/customer.model';
 import { CustomerService } from '../services/customer.service';
+import { environment } from '../../environments/environment';
+import {
+  buildGoogleMapsDirectionsUrl,
+  buildGoogleMapsEmbedUrl,
+  buildGoogleMapsOpenUrl,
+  GoogleLocationData,
+  hasAnyLocationData,
+  isValidCoordinates,
+} from '../utils/google-maps.util';
 
 @Component({
   selector: 'app-restaurant-list',
@@ -25,7 +37,7 @@ import { CustomerService } from '../services/customer.service';
   templateUrl: './restaurant-list.html',
   styleUrls: ['./restaurant-list.css'],
 })
-export class RestaurantList implements OnInit {
+export class RestaurantList implements OnInit, OnDestroy {
   Math = Math;
   
   restaurants: IRestaurant[] = [];
@@ -80,6 +92,9 @@ export class RestaurantList implements OnInit {
   dishTotal: { [key: string]: number } = {};
   dishLimit = 5;
   goToDishPageControl = new FormControl<number | null>(1);
+  topDishByRestaurant: { [key: string]: ITopDishInfo | null } = {};
+  topDishState: { [key: string]: 'idle' | 'loading' | 'success' | 'empty' | 'error' } = {};
+  topDishErrorText: { [key: string]: string } = {};
 
   restaurantEmployees: { [key: string]: IEmployee[] } = {};
   showEmployeeForm: { [key: string]: boolean } = {};
@@ -100,6 +115,11 @@ export class RestaurantList implements OnInit {
   badgeTotal: { [key: string]: number } = {};
   badgeLimit = 5;
   goToBadgePageControl = new FormControl<number | null>(1);
+  mapEmbedUrl: { [key: string]: SafeResourceUrl | null } = {};
+  mapOpenUrl: { [key: string]: string } = {};
+  mapDirectionsUrl: { [key: string]: string } = {};
+  mapLoading: { [key: string]: boolean } = {};
+  mapLoadError: { [key: string]: boolean } = {};
 
   constructor(
     private api: RestaurantService,
@@ -111,7 +131,8 @@ export class RestaurantList implements OnInit {
     private customerApi: CustomerService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private sanitizer: DomSanitizer
   ) {
     this.restaurantForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
@@ -275,6 +296,14 @@ export class RestaurantList implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.mapEmbedUrl = {};
+    this.mapOpenUrl = {};
+    this.mapDirectionsUrl = {};
+    this.mapLoading = {};
+    this.mapLoadError = {};
+  }
+
   load(): void {
     this.loading = true;
     this.errorMsg = '';
@@ -325,6 +354,7 @@ export class RestaurantList implements OnInit {
     this.api.getRestaurantFull(restaurantId).subscribe({
       next: (full) => {
         this.restaurantFull[restaurantId] = full;
+        this.initializeLocationMapState(restaurantId, full);
         this.visitPage[restaurantId] = 0;
         this.cdr.markForCheck();
       },
@@ -348,6 +378,7 @@ export class RestaurantList implements OnInit {
       this.loadRestaurantVisits(restaurantId);
 
       this.dishPage[restaurantId] = 0;
+      this.loadRestaurantTopDish(restaurantId);
       this.loadRestaurantDishes(restaurantId);
 
       this.employeePage[restaurantId] = 0;
@@ -355,7 +386,152 @@ export class RestaurantList implements OnInit {
 
       this.badgePage[restaurantId] = 0;
       this.loadRestaurantBadges(restaurantId);
+    } else {
+      this.mapLoading[restaurantId] = false;
     }
+  }
+
+  private normalizeTopDishResponse(response: IRestaurantTopDishResponse | null | undefined): ITopDishInfo | null {
+    if (!response?.topDish) {
+      return null;
+    }
+
+    const candidate = response.topDish;
+    const hasName = typeof candidate.name === 'string' && candidate.name.trim().length > 0;
+    const hasRatings = Number.isFinite(candidate.totalRatings) && candidate.totalRatings > 0;
+
+    if (!hasName || !hasRatings) {
+      return null;
+    }
+
+    return candidate;
+  }
+
+  private loadRestaurantTopDish(restaurantId: string): void {
+    this.topDishState[restaurantId] = 'loading';
+    this.topDishErrorText[restaurantId] = '';
+    this.cdr.markForCheck();
+
+    this.dishApi.getTopDishByRestaurant(restaurantId).subscribe({
+      next: (res: IRestaurantTopDishResponse) => {
+        const topDish = this.normalizeTopDishResponse(res);
+        if (!topDish) {
+          this.topDishByRestaurant[restaurantId] = null;
+          this.topDishState[restaurantId] = 'empty';
+        } else {
+          this.topDishByRestaurant[restaurantId] = topDish;
+          this.topDishState[restaurantId] = 'success';
+        }
+        this.cdr.markForCheck();
+      },
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          this.topDishByRestaurant[restaurantId] = null;
+          this.topDishState[restaurantId] = 'empty';
+          this.topDishErrorText[restaurantId] = '';
+        } else {
+          this.topDishState[restaurantId] = 'error';
+          this.topDishErrorText[restaurantId] = 'Could not load top rated dish.';
+        }
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  retryTopDishLoad(restaurantId: string): void {
+    this.loadRestaurantTopDish(restaurantId);
+  }
+
+  getTopDishState(restaurantId: string): 'idle' | 'loading' | 'success' | 'empty' | 'error' {
+    return this.topDishState[restaurantId] ?? 'idle';
+  }
+
+  getTopDish(restaurantId: string): ITopDishInfo | null {
+    return this.topDishByRestaurant[restaurantId] ?? null;
+  }
+
+  formatTopDishRating(rating: number): string {
+    if (!Number.isFinite(rating)) {
+      return '—';
+    }
+    const fixed = Number((rating as number).toFixed(2));
+    return fixed.toString();
+  }
+
+  formatTopDishVotes(count: number): string {
+    if (!Number.isFinite(count)) {
+      return '0 valoraciones';
+    }
+    const safeCount = Math.max(0, Math.trunc(count as number));
+    return `${safeCount} valoraciones`;
+  }
+
+  private getLocationData(restaurant: IRestaurant): GoogleLocationData {
+    return {
+      city: restaurant.profile.location?.city,
+      address: restaurant.profile.location?.address,
+      googlePlaceId: restaurant.profile.location?.googlePlaceId,
+      coordinates: restaurant.profile.location?.coordinates?.coordinates,
+    };
+  }
+
+  hasLocationData(restaurant: IRestaurant): boolean {
+    return hasAnyLocationData(this.getLocationData(restaurant));
+  }
+
+  hasCoordinates(restaurant: IRestaurant): boolean {
+    return isValidCoordinates(this.getLocationData(restaurant).coordinates);
+  }
+
+  getLocationText(restaurant: IRestaurant): string {
+    const location = this.getLocationData(restaurant);
+    return [location.address, location.city].filter(Boolean).join(', ') || 'Location available';
+  }
+
+  getMapEmbedUrl(restaurantId: string): SafeResourceUrl | null {
+    return this.mapEmbedUrl[restaurantId] ?? null;
+  }
+
+  getOpenMapsUrl(restaurantId: string): string {
+    return this.mapOpenUrl[restaurantId] ?? '';
+  }
+
+  getDirectionsUrl(restaurantId: string): string {
+    return this.mapDirectionsUrl[restaurantId] ?? '';
+  }
+
+  onMapFrameLoad(restaurantId: string): void {
+    this.mapLoading[restaurantId] = false;
+    this.mapLoadError[restaurantId] = false;
+    this.cdr.markForCheck();
+  }
+
+  onMapFrameError(restaurantId: string): void {
+    this.mapLoading[restaurantId] = false;
+    this.mapLoadError[restaurantId] = true;
+    this.cdr.markForCheck();
+  }
+
+  private initializeLocationMapState(restaurantId: string, restaurant: IRestaurant): void {
+    const location = this.getLocationData(restaurant);
+
+    this.mapOpenUrl[restaurantId] = buildGoogleMapsOpenUrl(location);
+    this.mapDirectionsUrl[restaurantId] = buildGoogleMapsDirectionsUrl(location);
+
+    if (!hasAnyLocationData(location)) {
+      this.mapEmbedUrl[restaurantId] = null;
+      this.mapLoading[restaurantId] = false;
+      this.mapLoadError[restaurantId] = false;
+      return;
+    }
+
+    const embedUrl = buildGoogleMapsEmbedUrl(location, environment.googleMapsEmbedApiKey);
+    this.mapEmbedUrl[restaurantId] = embedUrl
+      ? this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl)
+      : null;
+
+    this.mapLoading[restaurantId] = this.hasCoordinates(restaurant) && Boolean(embedUrl);
+    this.mapLoadError[restaurantId] = false;
   }
 
   private formatRelationValue(value: unknown): string {
