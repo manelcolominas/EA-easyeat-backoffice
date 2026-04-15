@@ -10,7 +10,7 @@ import { environment } from '../../environments/environment';
 export class RestaurantService {
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   createRestaurant(data: Partial<IRestaurant>): Observable<IRestaurant> {
     return this.http.post<IRestaurant>(`${this.baseUrl}/restaurants`, data);
@@ -22,9 +22,21 @@ export class RestaurantService {
     );
   }
 
+  getDeletedRestaurant(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/deleted`
+    );
+  }
+
   getRestaurants(): Observable<IRestaurant[]> {
     return this.http.get<IRestaurant[]>(
       `${this.baseUrl}/restaurants`
+    );
+  }
+
+  getDeletedRestaurants(): Observable<IRestaurant[]> {
+    return this.http.get<IRestaurant[]>(
+      `${this.baseUrl}/restaurants/deleted`
     );
   }
 
@@ -32,15 +44,33 @@ export class RestaurantService {
     return this.http.put<IRestaurant>(`${this.baseUrl}/restaurants/${restaurantId}`, data);
   }
 
-  deleteRestaurant(restaurantId: string): Observable<IRestaurant> {
+  softDeleteRestaurant(restaurantId: string): Observable<IRestaurant> {
     return this.http.delete<IRestaurant>(
       `${this.baseUrl}/restaurants/${restaurantId}/soft`
+    );
+  }
+
+  restoreRestaurant(restaurantId: string): Observable<IRestaurant> {
+    return this.http.patch<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/restore`, {}
+    );
+  }
+
+  hardDeleteRestaurant(restaurantId: string): Observable<IRestaurant> {
+    return this.http.delete<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/hard`
     );
   }
 
   getRestaurantFull(restaurantId: string): Observable<IRestaurant> {
     return this.http.get<IRestaurant>(
       `${this.baseUrl}/restaurants/${restaurantId}/full`
+    );
+  }
+
+  getDeletedRestaurantFull(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/full/deleted`
     );
   }
 
@@ -56,9 +86,81 @@ export class RestaurantService {
     );
   }
 
+  getDeletedBadges(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/badges/deleted`
+    );
+  }
+
   getStatistics(restaurantId: string): Observable<IRestaurant> {
     return this.http.get<IRestaurant>(
       `${this.baseUrl}/restaurants/${restaurantId}/statistics`
+    );
+  }
+
+  getDeletedStatistics(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/statistics/deleted`
+    );
+  }
+
+  getEmployees(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/employees`
+    );
+  }
+
+  getDeletedEmployees(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/employees/deleted`
+    );
+  }
+
+  getDishes(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/dishes`
+    );
+  }
+
+  getDeletedDishes(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/dishes/deleted`
+    );
+  }
+
+  getRewards(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/rewards`
+    );
+  }
+
+  getDeletedRewards(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/rewards/deleted`
+    );
+  }
+
+  getVisits(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/visits`
+    );
+  }
+
+  getDeletedVisits(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/visits/deleted`
+    );
+  }
+
+  getReviews(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/reviews`
+    );
+  }
+
+  getDeletedReviews(restaurantId: string): Observable<IRestaurant> {
+    return this.http.get<IRestaurant>(
+      `${this.baseUrl}/restaurants/${restaurantId}/reviews/deleted`
     );
   }
 }

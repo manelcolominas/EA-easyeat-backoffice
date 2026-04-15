@@ -8,18 +8,14 @@
       + Add Restaurant
     </button>
     @if (!loading && !errorMsg && pagedRestaurants.length > 0) {
-      <button type="button" class="btn-custom btn-secondary" (click)="load()">↻ Refresh</button>
+    <button type="button" class="btn-custom btn-secondary" (click)="load()">↻ Refresh</button>
     }
   </div>
 </div>
 
 <div class="search-wrap">
   <span class="search-icon">🔍</span>
-  <input class="input-custom search-input"
-    type="text"
-    [formControl]="searchControl"
-    placeholder="Search by name..."
-  />
+  <input class="input-custom search-input" type="text" [formControl]="searchControl" placeholder="Search by name..." />
 </div>
 
 <p *ngIf="loading && pagedRestaurants.length === 0" class="muted mt-md">Loading...</p>
@@ -27,258 +23,270 @@
 
 @if (showForm) {
 
-  <div class="name">
-    <h3>{{ editting ? 'Edit organization' : 'New organization' }}</h3>
-    <p>(fields with * are obligatory)</p>
+<div class="name">
+  <h3>{{ editting ? 'Edit restaurant' : 'New restaurant' }}</h3>
+  <p>(fields with * are obligatory)</p>
 
-    <form [formGroup]="restaurantForm" (ngSubmit)="save()">
+  <form [formGroup]="restaurantForm" (ngSubmit)="save()">
 
-      <div>
-        <label>*Name: </label>
-        <input class="input-custom" type="text" formControlName="name"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('name')?.hasError('minlength') && restaurantForm.get('name')?.touched">
-          Name is too short.
-        </small>
-        <small style="color: red;" *ngIf="restaurantForm.get('name')?.hasError('maxlength') && restaurantForm.get('name')?.touched">
-          Name is too long.
-        </small>
-      </div>
+    <div>
+      <label>*Name: </label>
+      <input class="input-custom" type="text" formControlName="name" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('name')?.hasError('minlength') && restaurantForm.get('name')?.touched">
+        Name is too short.
+      </small>
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('name')?.hasError('maxlength') && restaurantForm.get('name')?.touched">
+        Name is too long.
+      </small>
+    </div>
 
-      <div>
-        <label>*Description: </label>
-        <input class="input-custom" type="text" formControlName="description"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('description')?.hasError('minlength') && restaurantForm.get('description')?.touched">
-          Description is too short.
-        </small>
-        <small style="color: red;" *ngIf="restaurantForm.get('description')?.hasError('maxlength') && restaurantForm.get('description')?.touched">
-          Description is too long.
-        </small>
-      </div>
+    <div>
+      <label>*Description: </label>
+      <input class="input-custom" type="text" formControlName="description" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('description')?.hasError('minlength') && restaurantForm.get('description')?.touched">
+        Description is too short.
+      </small>
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('description')?.hasError('maxlength') && restaurantForm.get('description')?.touched">
+        Description is too long.
+      </small>
+    </div>
 
-      <div>
-        <label>globalRating: </label>
-        <input class="input-custom" type="text" formControlName="globalRating"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('globalRating')?.hasError('pattern') && restaurantForm.get('globalRating')?.touched">
-          Invalid globalRating format.
-        </small>
-        <small style="color: red;" *ngIf="(restaurantForm.get('globalRating')?.hasError('min') || restaurantForm.get('globalRating')?.hasError('max')) && restaurantForm.get('globalRating')?.touched">
-          Value not within range.
-        </small>
-      </div>
+    <div>
+      <label>globalRating: </label>
+      <input class="input-custom" type="text" formControlName="globalRating" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('globalRating')?.hasError('pattern') && restaurantForm.get('globalRating')?.touched">
+        Invalid globalRating format.
+      </small>
+      <small style="color: red;"
+        *ngIf="(restaurantForm.get('globalRating')?.hasError('min') || restaurantForm.get('globalRating')?.hasError('max')) && restaurantForm.get('globalRating')?.touched">
+        Value not within range.
+      </small>
+    </div>
 
-      <p>*Category (at least one obligatory)</p>
-      <div>
-        <label>Italià:</label>
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryItalià"/>
-        <label> Japonès:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryJaponès"/>
-        <label> Sushi:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categorySushi"/>
-        <label> Mexicà:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryMexicà"/>
-        <label> Xinès:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryXinès"/>
-        <label> Indi:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryIndi"/>
-        <label> Tailandès:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryTailandès"/>
-        <label> Francès:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryFrancès"/>
-        <label> Espanyol:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryEspanyol"/>
-        <label> Grec:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryGrec"/>
-        <label> Turc:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryTurc"/>
-        <label> Coreà:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryCoreà"/>
-        <label> Vietnamita:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryVietnamita"/>
-        <label> Alemany:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryAlemany"/>
-        <label> Brasileny:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryBrasileny"/>
-        <label> Peruà:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryPeruà"/>
-        <label> Vegà:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryVegà"/>
-        <label> Vegetarià:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryVegetarià"/>
-        <label> Marisc:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryMarisc"/>
-        <label> Carn:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryCarn"/>
-        <label> Pizzeria:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryPizzeria"/>
-        <label> Cafeteria:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryCafeteria"/>
-        <label> Ramen:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryRamen"/>
-        <label> Gluten Free:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryGlutenFree"/>
-        <label> Gourmet:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryGourmet"/>
-        <label> Fast Food:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryFastFood"/>
-        <label> Buffet:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryBuffet"/>
-        <label> Food Truck:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryFoodTruck"/>
-        <label> Lounge:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryLounge"/>
-        <label> Pub:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryPub"/>
-        <label> Wine Bar:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryWineBar"/>
-        <label> Rooftop:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryRooftop"/>
-        <label> Bar:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryBar"/>
-        <label> Taperia:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryTaperia"/>
-        <label> Gelateria:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryGelateria"/>
-        <label> Estrella Michelin:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryEstrellaMichelin"/>
-        <label> Street Food:</label> 
-        <input class="checkbox-custom" type="checkbox" formControlName="categoryStreetFood"/>
-      </div>
+    <p>*Category (at least one obligatory)</p>
+    <div>
+      <label>Italià:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryItalià" />
+      <label> Japonès:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryJaponès" />
+      <label> Sushi:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categorySushi" />
+      <label> Mexicà:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryMexicà" />
+      <label> Xinès:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryXinès" />
+      <label> Indi:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryIndi" />
+      <label> Tailandès:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryTailandès" />
+      <label> Francès:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryFrancès" />
+      <label> Espanyol:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryEspanyol" />
+      <label> Grec:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryGrec" />
+      <label> Turc:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryTurc" />
+      <label> Coreà:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryCoreà" />
+      <label> Vietnamita:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryVietnamita" />
+      <label> Alemany:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryAlemany" />
+      <label> Brasileny:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryBrasileny" />
+      <label> Peruà:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryPeruà" />
+      <label> Vegà:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryVegà" />
+      <label> Vegetarià:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryVegetarià" />
+      <label> Marisc:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryMarisc" />
+      <label> Carn:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryCarn" />
+      <label> Pizzeria:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryPizzeria" />
+      <label> Cafeteria:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryCafeteria" />
+      <label> Ramen:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryRamen" />
+      <label> Gluten Free:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryGlutenFree" />
+      <label> Gourmet:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryGourmet" />
+      <label> Fast Food:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryFastFood" />
+      <label> Buffet:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryBuffet" />
+      <label> Food Truck:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryFoodTruck" />
+      <label> Lounge:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryLounge" />
+      <label> Pub:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryPub" />
+      <label> Wine Bar:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryWineBar" />
+      <label> Rooftop:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryRooftop" />
+      <label> Bar:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryBar" />
+      <label> Taperia:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryTaperia" />
+      <label> Gelateria:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryGelateria" />
+      <label> Estrella Michelin:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryEstrellaMichelin" />
+      <label> Street Food:</label>
+      <input class="checkbox-custom" type="checkbox" formControlName="categoryStreetFood" />
+    </div>
 
-      <p>Time table: (format: HH:MM-HH:MM,HH-MM-HH:MM,...)</p>
-      <div>
-        <label>Monday: </label>
-        <input class="input-custom" type="text" formControlName="monday"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('monday')?.hasError('pattern') && restaurantForm.get('monday')?.touched">
-          Invalid format.
-        </small>
-      </div>
-      <div>
-        <label>Tuesday: </label>
-        <input class="input-custom" type="text" formControlName="tuesday"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('tuesday')?.hasError('pattern') && restaurantForm.get('tuesday')?.touched">
-          Invalid format.
-        </small>
-      </div>
-      <div>
-        <label>Wednesday: </label>
-        <input class="input-custom" type="text" formControlName="wednesday"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('wednesday')?.hasError('pattern') && restaurantForm.get('wednesday')?.touched">
-          Invalid format.
-        </small>
+    <p>Time table: (format: HH:MM-HH:MM,HH-MM-HH:MM,...)</p>
+    <div>
+      <label>Monday: </label>
+      <input class="input-custom" type="text" formControlName="monday" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('monday')?.hasError('pattern') && restaurantForm.get('monday')?.touched">
+        Invalid format.
+      </small>
+    </div>
+    <div>
+      <label>Tuesday: </label>
+      <input class="input-custom" type="text" formControlName="tuesday" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('tuesday')?.hasError('pattern') && restaurantForm.get('tuesday')?.touched">
+        Invalid format.
+      </small>
+    </div>
+    <div>
+      <label>Wednesday: </label>
+      <input class="input-custom" type="text" formControlName="wednesday" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('wednesday')?.hasError('pattern') && restaurantForm.get('wednesday')?.touched">
+        Invalid format.
+      </small>
 
-      </div>
-      <div>
-        <label>Thursday: </label>
-        <input class="input-custom" type="text" formControlName="thursday"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('thursday')?.hasError('pattern') && restaurantForm.get('thursday')?.touched">
-          Invalid format.
-        </small>
+    </div>
+    <div>
+      <label>Thursday: </label>
+      <input class="input-custom" type="text" formControlName="thursday" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('thursday')?.hasError('pattern') && restaurantForm.get('thursday')?.touched">
+        Invalid format.
+      </small>
 
-      </div>
-      <div>
-        <label>Friday: </label>
-        <input class="input-custom" type="text" formControlName="friday"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('friday')?.hasError('pattern') && restaurantForm.get('friday')?.touched">
-          Invalid format.
-        </small>
-      </div>
-      <div>
-        <label>Saturday: </label>
-        <input class="input-custom" type="text" formControlName="saturday"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('saturday')?.hasError('pattern') && restaurantForm.get('saturday')?.touched">
-          Invalid format.
-        </small>
-      </div>
-      <div>
-        <label>Sunday: </label>
-        <input class="input-custom" type="text" formControlName="sunday"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('sunday')?.hasError('pattern') && restaurantForm.get('sunday')?.touched">
-          Invalid format.
-        </small>
-      </div>
+    </div>
+    <div>
+      <label>Friday: </label>
+      <input class="input-custom" type="text" formControlName="friday" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('friday')?.hasError('pattern') && restaurantForm.get('friday')?.touched">
+        Invalid format.
+      </small>
+    </div>
+    <div>
+      <label>Saturday: </label>
+      <input class="input-custom" type="text" formControlName="saturday" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('saturday')?.hasError('pattern') && restaurantForm.get('saturday')?.touched">
+        Invalid format.
+      </small>
+    </div>
+    <div>
+      <label>Sunday: </label>
+      <input class="input-custom" type="text" formControlName="sunday" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('sunday')?.hasError('pattern') && restaurantForm.get('sunday')?.touched">
+        Invalid format.
+      </small>
+    </div>
 
-      <p></p> <!-- to make a \n -->
-      <div>
-        <label>Image URL: </label>
-        <input class="input-custom" type="url" formControlName="imageUrl"/>
-      </div>
+    <p></p> <!-- to make a \n -->
+    <div>
+      <label>Image URL: </label>
+      <input class="input-custom" type="url" formControlName="imageUrl" />
+    </div>
 
-      <div>
-        <label>Phone: </label>
-        <input class="input-custom" type="tel" formControlName="phone"/>
-      </div>
+    <div>
+      <label>Phone: </label>
+      <input class="input-custom" type="tel" formControlName="phone" />
+    </div>
 
-      <div>
-        <label>Email: </label>
-        <input class="input-custom" type="text" formControlName="email"/>
-        <small style="color: red;" *ngIf="restaurantForm.get('email')?.hasError('email') && restaurantForm.get('email')?.touched">
-          Invalid email format.
-        </small>
-      </div>
+    <div>
+      <label>Email: </label>
+      <input class="input-custom" type="text" formControlName="email" />
+      <small style="color: red;"
+        *ngIf="restaurantForm.get('email')?.hasError('email') && restaurantForm.get('email')?.touched">
+        Invalid email format.
+      </small>
+    </div>
 
-      <div>
-        <label>*City: </label>
-        <input class="input-custom" type="text" formControlName="city"/>
-      </div>
+    <div>
+      <label>*City: </label>
+      <input class="input-custom" type="text" formControlName="city" />
+    </div>
 
-      <div>
-        <label>Address: </label>
-        <input class="input-custom" type="text" formControlName="address"/>
-      </div>
+    <div>
+      <label>Address: </label>
+      <input class="input-custom" type="text" formControlName="address" />
+    </div>
 
-      <div>
-        <label>Google Place ID: </label>
-        <input class="input-custom" type="text" formControlName="googlePlaceId"/>
-      </div>
+    <div>
+      <label>Google Place ID: </label>
+      <input class="input-custom" type="text" formControlName="googlePlaceId" />
+    </div>
 
-      <div>
-        <label>*Type: </label>
-        <select class="select-custom" type="text" formControlName="type">
-          <option value="" disabled selected>Select type</option>
-          <option [value]="'Point'">Point</option>
-        </select>
-      </div>
+    <div>
+      <label>*Type: </label>
+      <select class="select-custom" type="text" formControlName="type">
+        <option value="" disabled selected>Select type</option>
+        <option [value]="'Point'">Point</option>
+      </select>
+    </div>
 
-      <div>
-        <label>*Longitude: </label>
-        <input class="input-custom" type="number" formControlName="lon" step="0.0001" max="180" min="-180"/>
-      </div>
+    <div>
+      <label>*Longitude: </label>
+      <input class="input-custom" type="number" formControlName="lon" step="0.0001" max="180" min="-180" />
+    </div>
 
-      <div>
-        <label>*Latitude: </label>
-        <input class="input-custom" type="number" formControlName="lat" step="0.0001" max="90" min="-90"/>
-      </div>
+    <div>
+      <label>*Latitude: </label>
+      <input class="input-custom" type="number" formControlName="lat" step="0.0001" max="90" min="-90" />
+    </div>
 
-      <p></p>
-      <div>
-        <label>Employees: </label>
-        <input class="input-custom" type="text" formControlName="employees"/>
-      </div>
+    <p></p>
+    <div>
+      <label>Employees: </label>
+      <input class="input-custom" type="text" formControlName="employees" />
+    </div>
 
-      <div>
-        <label>Dishes: </label>
-        <input class="input-custom" type="text" formControlName="dishes"/>
-      </div>
+    <div>
+      <label>Dishes: </label>
+      <input class="input-custom" type="text" formControlName="dishes" />
+    </div>
 
-      <div>
-        <label>Statistics: </label>
-        <input class="input-custom" type="text" formControlName="statistics"/>
-      </div>
+    <div>
+      <label>Statistics: </label>
+      <input class="input-custom" type="text" formControlName="statistics" />
+    </div>
 
-      <div>
-        <label>Badges: </label>
-        <input class="input-custom" type="text" formControlName="badges"/>
-      </div>
+    <div>
+      <label>Badges: </label>
+      <input class="input-custom" type="text" formControlName="badges" />
+    </div>
 
-      <button type="submit"
-              class="btn-custom btn-primary"
-              [disabled]="restaurantForm.invalid" (click)="save()">
-        {{ editting ? 'Update' : 'Save' }}
-      </button>
+    <button type="submit" class="btn-custom btn-primary" [disabled]="restaurantForm.invalid" (click)="save()">
+      {{ editting ? 'Update' : 'Save' }}
+    </button>
 
-      <button class="btn-custom btn-primary" type="reset" (click)="toggleShowForm()">Cancel</button>
-    </form>
-  </div>
+    <button class="btn-custom btn-primary" type="reset" (click)="toggleShowForm()">Cancel</button>
+  </form>
+</div>
 }
 
 <ul class="list" *ngIf="pagedRestaurants.length > 0">
@@ -288,14 +296,11 @@
         <div>
           <span class="list-item-name">
             {{
-              expanded[restaurant._id!] || restaurant.profile.name.length <= 30
-                ? restaurant.profile.name
-                : (restaurant.profile.name | slice:0:30) + '...'
-            }}
-          </span>
-          @if (restaurant._id != undefined) {
-            <div class="list-item-id">{{ restaurant._id }}</div>
-          }
+            expanded[restaurant._id!] || restaurant.profile.name.length <= 30 ? restaurant.profile.name :
+              (restaurant.profile.name | slice:0:30) + '...' }} </span>
+              @if (restaurant._id != undefined) {
+              <div class="list-item-id">{{ restaurant._id }}</div>
+              }
         </div>
 
         <div class="list-item-actions">
@@ -304,17 +309,14 @@
           </button>
 
           @if (restaurant._id != undefined) {
-            <button type="button"
-                    class="btn-custom btn-primary btn-sm"
-                    (click)="edit(restaurant)">
-              Edit
-            </button>
+          <button type="button" class="btn-custom btn-primary btn-sm" (click)="edit(restaurant)">
+            Edit
+          </button>
 
-            <button type="button"
-                    class="btn-custom btn-danger btn-sm"
-                    (click)="confirmDelete(restaurant._id, restaurant.profile.name)">
-              ✕
-            </button>
+          <button type="button" class="btn-custom btn-danger btn-sm"
+            (click)="confirmDelete(restaurant._id, restaurant.profile.name)">
+            ✕
+          </button>
           }
         </div>
       </div>
@@ -324,389 +326,369 @@
 
       <!-- Loading state while /full is being fetched -->
       @if (!restaurantFull[restaurant._id]) {
-        <p class="muted">Loading full data...</p>
+      <p class="muted">Loading full data...</p>
       } @else {
 
-        <!-- DASHBOARD GRID -->
-        <div class="dashboard-grid">
+      <!-- DASHBOARD GRID -->
+      <div class="dashboard-grid">
 
-          <!-- General Info card -->
-          <div class="info-card">
-            <span class="info-card-title">⭐ General Info</span>
-            <span class="info-card-value">{{ restaurantFull[restaurant._id].profile.description }}</span>
-            <span class="info-card-value">
-              <strong>Rating:</strong> {{ restaurantFull[restaurant._id].profile.globalRating || '—' }} / 10
-            </span>
-          </div>
-
-          <!-- Contact card -->
-          <div class="info-card">
-            <span class="info-card-title">📞 Contact</span>
-            <span class="info-card-value">
-              <strong>Phone:</strong> {{ restaurantFull[restaurant._id].profile.contact?.phone || '—' }}
-            </span>
-            <span class="info-card-value">
-              <strong>Email:</strong> {{ restaurantFull[restaurant._id].profile.contact?.email || '—' }}
-            </span>
-          </div>
-
-          <!-- Location card -->
-          <div class="info-card">
-            <span class="info-card-title">📍 Location</span>
-            <span class="info-card-value"><strong>City:</strong> {{ restaurantFull[restaurant._id].profile.location.city }}</span>
-            <span class="info-card-value"><strong>Address:</strong> {{ restaurantFull[restaurant._id].profile.location.address || '—' }}</span>
-            <span class="info-card-value">
-              <strong>Coords:</strong>
-              {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }},
-              {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}
-            </span>
-            <span class="info-card-value" *ngIf="restaurantFull[restaurant._id].profile.location.googlePlaceId">
-              <strong>Place ID:</strong> {{ restaurantFull[restaurant._id].profile.location.googlePlaceId }}
-            </span>
-          </div>
-
-          <!-- Statistics card -->
-          @if (restaurantFull[restaurant._id].statistics) {
-            <div class="info-card">
-              <span class="info-card-title">📊 Statistics</span>
-              <ng-container *ngIf="$any(restaurantFull[restaurant._id].statistics)?.totalPointsGiven !== undefined; else statsId">
-                <span class="info-card-value"><strong>Points given:</strong> {{ $any(restaurantFull[restaurant._id].statistics).totalPointsGiven }}</span>
-                <span class="info-card-value"><strong>Loyal customers:</strong> {{ $any(restaurantFull[restaurant._id].statistics).loyalCustomers }}</span>
-                <span class="info-card-value"><strong>Avg pts/visit:</strong> {{ $any(restaurantFull[restaurant._id].statistics).averagePointsPerVisit }}</span>
-              </ng-container>
-              <ng-template #statsId>
-                <span class="info-card-value muted">ID: {{ restaurantFull[restaurant._id].statistics }}</span>
-              </ng-template>
-            </div>
-          }
-
-          <!-- Categories card (full width) -->
-          <div class="info-card info-card-full">
-            <span class="info-card-title">🏷️ Categories</span>
-            <div class="chips-wrap">
-              @for (cat of (restaurantFull[restaurant._id].profile.category || []); track $index) {
-                <span class="chip chip-primary">{{ cat }}</span>
-              }
-              @if (!(restaurantFull[restaurant._id].profile.category?.length)) {
-                <span class="muted">No categories</span>
-              }
-            </div>
-          </div>
-
-
-
-          <!-- Timetable card (full width) -->
-          @if (restaurantFull[restaurant._id].profile.timetable != undefined) {
-            <div class="info-card info-card-full">
-              <span class="info-card-title">🕐 Timetable</span>
-              <div class="timetable-grid">
-                @if (restaurantFull[restaurant._id].profile.timetable?.monday) {
-                  <div class="timetable-day">
-                    <div class="timetable-day-label">Mon</div>
-                    <div class="timetable-day-slots">
-                      <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.monday">{{ time.open }} – {{ time.close }}</div>
-                    </div>
-                  </div>
-                }
-                @if (restaurantFull[restaurant._id].profile.timetable?.tuesday) {
-                  <div class="timetable-day">
-                    <div class="timetable-day-label">Tue</div>
-                    <div class="timetable-day-slots">
-                      <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.tuesday">{{ time.open }} – {{ time.close }}</div>
-                    </div>
-                  </div>
-                }
-                @if (restaurantFull[restaurant._id].profile.timetable?.wednesday) {
-                  <div class="timetable-day">
-                    <div class="timetable-day-label">Wed</div>
-                    <div class="timetable-day-slots">
-                      <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.wednesday">{{ time.open }} – {{ time.close }}</div>
-                    </div>
-                  </div>
-                }
-                @if (restaurantFull[restaurant._id].profile.timetable?.thursday) {
-                  <div class="timetable-day">
-                    <div class="timetable-day-label">Thu</div>
-                    <div class="timetable-day-slots">
-                      <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.thursday">{{ time.open }} – {{ time.close }}</div>
-                    </div>
-                  </div>
-                }
-                @if (restaurantFull[restaurant._id].profile.timetable?.friday) {
-                  <div class="timetable-day">
-                    <div class="timetable-day-label">Fri</div>
-                    <div class="timetable-day-slots">
-                      <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.friday">{{ time.open }} – {{ time.close }}</div>
-                    </div>
-                  </div>
-                }
-                @if (restaurantFull[restaurant._id].profile.timetable?.saturday) {
-                  <div class="timetable-day">
-                    <div class="timetable-day-label">Sat</div>
-                    <div class="timetable-day-slots">
-                      <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.saturday">{{ time.open }} – {{ time.close }}</div>
-                    </div>
-                  </div>
-                }
-                @if (restaurantFull[restaurant._id].profile.timetable?.sunday) {
-                  <div class="timetable-day">
-                    <div class="timetable-day-label">Sun</div>
-                    <div class="timetable-day-slots">
-                      <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.sunday">{{ time.open }} – {{ time.close }}</div>
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- Images card (full width) -->
-          @if (restaurantFull[restaurant._id]?.profile?.image?.length ?? 0 > 0) {
-            <div class="info-card info-card-full">
-              <span class="info-card-title">🖼️ Images</span>
-              <div class="image-gallery">
-                @for (imageUrl of restaurantFull[restaurant._id].profile.image; track $index) {
-                  <img src="{{ imageUrl }}" alt="Restaurant image">
-                }
-              </div>
-            </div>
-          }
-
-        </div><!-- end dashboard-grid -->
-
-        <!-- REWARDS SECTION -->
-        <div class="info-card info-card-full mt-md">
-          <span class="info-card-title">🎁 Rewards</span>
-          @if (restaurantFull[restaurant._id].rewards && restaurantFull[restaurant._id].rewards!.length > 0) {
-            <ul class="data-list">
-              @for (reward of restaurantRewards[restaurant._id!]; track $index) {
-                <li>
-                  <span>{{ $any(reward).name }} — {{ $any(reward).description }}</span>
-                  <span style="display:flex;align-items:center;gap:8px;">
-                    <span class="chip chip-warning">{{ $any(reward).pointsRequired }} pts</span>
-                    <button type="button" class="btn-custom btn-danger btn-sm" (click)="removeReward(restaurant, reward)">✕</button>
-                  </span>
-                </li>
-              }
-            </ul>
-          } @else {
-            <span class="muted">No rewards</span>
-          }
-          <div class="footer" style="margin-top:var(--spacing-sm)">
-            <button class="btn-custom btn-secondary btn-sm" (click)="prevRewardPage(restaurant._id!)" [disabled]="rewardPage[restaurant._id!] < 1">⬅ Prev</button>
-            <span class="muted" style="font-size:13px;">Page {{ (rewardPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit)) }}</span>
-            <button class="btn-custom btn-secondary btn-sm" (click)="nextRewardPage(restaurant._id!)" [disabled]="((rewardPage[restaurant._id!] || 0) + 1) * rewardLimit >= (rewardTotal[restaurant._id!] || 0)">Next ➡</button>
-            <input class="input-custom" id="goToRewardPageInput" type="number" [formControl]="goToRewardPageControl" min="1" [max]="Math.max(1, Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit))" style="width:70px;" />
-            <button class="btn-custom btn-primary btn-sm" type="button" (click)="goToRewardPage(restaurant._id!)">Go</button>
-          </div>
+        <!-- General Info card -->
+        <div class="info-card">
+          <span class="info-card-title">⭐ General Info</span>
+          <span class="info-card-value">{{ restaurantFull[restaurant._id].profile.description }}</span>
+          <span class="info-card-value">
+            <strong>Rating:</strong> {{ restaurantFull[restaurant._id].profile.globalRating || '—' }} / 10
+          </span>
         </div>
 
-        <!-- Add Reward form -->
-        <div style="margin-top:var(--spacing-sm)">
-          <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleRewardForm(restaurant._id!)">
-            {{ showRewardForm[restaurant._id!] ? '✕ Cancel' : '+ Add Reward' }}
-          </button>
-          <form *ngIf="showRewardForm[restaurant._id!]" [formGroup]="newRewardForm" (ngSubmit)="saveReward(restaurant)" class="info-card mt-sm">
-            <div class="form-group">
-              <label class="section-label">Name</label>
-              <input class="input-custom" type="text" formControlName="name" />
-            </div>
-            <div class="form-group">
-              <label class="section-label">Description</label>
-              <input class="input-custom" type="text" formControlName="description" />
-            </div>
-            <div class="form-group">
-              <label class="section-label">Points Required</label>
-              <input class="input-custom" type="number" formControlName="pointsRequired" />
-            </div>
-            <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newRewardForm.invalid">Save Reward</button>
-          </form>
+        <!-- Contact card -->
+        <div class="info-card">
+          <span class="info-card-title">📞 Contact</span>
+          <span class="info-card-value">
+            <strong>Phone:</strong> {{ restaurantFull[restaurant._id].profile.contact?.phone || '—' }}
+          </span>
+          <span class="info-card-value">
+            <strong>Email:</strong> {{ restaurantFull[restaurant._id].profile.contact?.email || '—' }}
+          </span>
         </div>
 
-        <!-- VISITS SECTION -->
-        <div class="info-card info-card-full mt-md">
-          <span class="info-card-title">📅 Received Visits</span>
-          <p *ngIf="loading && expanded[restaurant._id!] && !restaurantVisits[restaurant._id!]" class="muted">Loading visits...</p>
+        <!-- Location card -->
+        <div class="info-card">
+          <span class="info-card-title">📍 Location</span>
+          <span class="info-card-value"><strong>City:</strong> {{ restaurantFull[restaurant._id].profile.location.city
+            }}</span>
+          <span class="info-card-value"><strong>Address:</strong> {{
+            restaurantFull[restaurant._id].profile.location.address || '—' }}</span>
+          <span class="info-card-value">
+            <strong>Coords:</strong>
+            {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }},
+            {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}
+          </span>
+          <span class="info-card-value" *ngIf="restaurantFull[restaurant._id].profile.location.googlePlaceId">
+            <strong>Place ID:</strong> {{ restaurantFull[restaurant._id].profile.location.googlePlaceId }}
+          </span>
+        </div>
 
-          <ul class="data-list" *ngIf="restaurantVisits[restaurant._id!] && restaurantVisits[restaurant._id!].length > 0">
-            <li *ngFor="let visit of restaurantVisits[restaurant._id!]">
-              <ng-container *ngIf="editingVisitId !== (visit._id || visit.id)">
-                <span>
-                  <strong>{{ visit.customer_id?.name || 'Unknown' }}</strong>
-                  &nbsp;·&nbsp; {{ visit.date | date:'dd/MM/yyyy' }}
-                </span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                  <span class="chip chip-neutral">{{ visit.billAmount | number:'1.2-2' }}€</span>
-                  <span class="chip chip-success">+{{ visit.pointsEarned }}pts</span>
-                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="startEditVisit(visit)">Edit</button>
-                  <button type="button" class="btn-custom btn-danger btn-sm" (click)="removeVisit(restaurant._id!, visit)">✕</button>
-                </span>
-              </ng-container>
-              <ng-container *ngIf="editingVisitId === (visit._id || visit.id)">
-                <form [formGroup]="editVisitForm" (ngSubmit)="saveEditedVisit(restaurant._id!)" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%">
-                  <input class="input-custom" type="datetime-local" formControlName="date" style="width:150px;" />
-                  <input class="input-custom" type="number" formControlName="billAmount" placeholder="€" style="width:70px;" step="0.01" />
-                  <input class="input-custom" type="number" formControlName="pointsEarned" placeholder="Pts" style="width:70px;" />
-                  <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="editVisitForm.invalid">Save</button>
-                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="cancelEditVisit()">Cancel</button>
-                </form>
-              </ng-container>
-            </li>
-          </ul>
+        <!-- Statistics card -->
+        @if (restaurantFull[restaurant._id].statistics) {
+        <div class="info-card">
+          <span class="info-card-title">📊 Statistics</span>
+          <ng-container
+            *ngIf="$any(restaurantFull[restaurant._id].statistics)?.totalPointsGiven !== undefined; else statsId">
+            <span class="info-card-value"><strong>Points given:</strong> {{
+              $any(restaurantFull[restaurant._id].statistics).totalPointsGiven }}</span>
+            <span class="info-card-value"><strong>Loyal customers:</strong> {{
+              $any(restaurantFull[restaurant._id].statistics).loyalCustomers }}</span>
+            <span class="info-card-value"><strong>Avg pts/visit:</strong> {{
+              $any(restaurantFull[restaurant._id].statistics).averagePointsPerVisit }}</span>
+          </ng-container>
+          <ng-template #statsId>
+            <span class="info-card-value muted">ID: {{ restaurantFull[restaurant._id].statistics }}</span>
+          </ng-template>
+        </div>
+        }
 
-          @if (restaurantVisits[restaurant._id!] && restaurantVisits[restaurant._id!].length === 0) {
-            <span class="muted">No registered visits.</span>
-          }
-
-          <div class="footer" style="margin-top:var(--spacing-sm)">
-            <button class="btn-custom btn-secondary btn-sm" (click)="prevVisitPage(restaurant._id!)" [disabled]="visitPage[restaurant._id!] < 1">⬅ Prev</button>
-            <span class="muted" style="font-size:13px;">Page {{ (visitPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit)) }}</span>
-            <button class="btn-custom btn-secondary btn-sm" (click)="nextVisitPage(restaurant._id!)" [disabled]="((visitPage[restaurant._id!] || 0) + 1) * visitLimit >= (visitTotal[restaurant._id!] || 0)">Next ➡</button>
-            <input class="input-custom" id="goToVisitPageInput" type="number" [formControl]="goToVisitPageControl" min="1" [max]="Math.max(1, Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit))" style="width:70px;" />
-            <button class="btn-custom btn-primary btn-sm" type="button" (click)="goToVisitPage(restaurant._id!)">Go</button>
-          </div>
-
-          <div style="margin-top:var(--spacing-sm)">
-            <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleVisitForm(restaurant._id!)">
-              {{ showVisitForm[restaurant._id!] ? '✕ Cancel Visit' : '+ Add Visit' }}
-            </button>
-            @if (showVisitForm[restaurant._id!]) {
-              @if (loadingCustomers) { <p class="muted">Loading customers...</p> }
-              @else if (!errorMsg) {
-                <form [formGroup]="newVisitForm" (ngSubmit)="saveVisit(restaurant._id!)" class="info-card mt-sm">
-                  <div class="form-group">
-                    <label class="section-label">Customer</label>
-                    <select class="select-custom" formControlName="customer_id">
-                      <option value="" disabled selected>Select customer</option>
-                      @for (customer of customers; track customer._id) { <option [value]="customer._id">{{ customer.name }}</option> }
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="section-label">Date</label>
-                    <input class="input-custom" type="datetime-local" formControlName="date" />
-                  </div>
-                  <div style="display:flex;gap:var(--spacing-sm)">
-                    <div class="form-group" style="flex:1">
-                      <label class="section-label">Bill Amount (€)</label>
-                      <input class="input-custom" type="number" formControlName="billAmount" step="0.01" />
-                    </div>
-                    <div class="form-group" style="flex:1">
-                      <label class="section-label">Points Earned</label>
-                      <input class="input-custom" type="number" formControlName="pointsEarned" />
-                    </div>
-                  </div>
-                  <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newVisitForm.invalid">Save Visit</button>
-                </form>
-              }
-              @else { <p class="muted">{{ errorMsg }}</p> }
+        <!-- Categories card (full width) -->
+        <div class="info-card info-card-full">
+          <span class="info-card-title">🏷️ Categories</span>
+          <div class="chips-wrap">
+            @for (cat of (restaurantFull[restaurant._id].profile.category || []); track $index) {
+            <span class="chip chip-primary">{{ cat }}</span>
+            }
+            @if (!(restaurantFull[restaurant._id].profile.category?.length)) {
+            <span class="muted">No categories</span>
             }
           </div>
-        </div><!-- end visits section -->
-
-        <!-- DISHES SECTION -->
-        <div class="info-card info-card-full mt-md">
-          <span class="info-card-title">🍽️ Dishes</span>
-          <p *ngIf="loading && expanded[restaurant._id!] && !restaurantDishes[restaurant._id!]" class="muted">Loading dishes...</p>
-
-          <ul class="data-list" *ngIf="restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length > 0">
-            <li *ngFor="let dish of restaurantDishes[restaurant._id!]">
-              <ng-container *ngIf="editingDishId !== $any(dish)._id">
-                <span style="display:flex;flex-direction:column;gap:2px;">
-                  <span>
-                    <strong>{{ dish.name }}</strong>
-                    <span class="chip chip-neutral" style="margin-left:6px;">{{ dish.section }}</span>
-                    <span class="chip" [class.chip-success]="dish.active" [class.chip-neutral]="!dish.active" style="margin-left:4px;">
-                      {{ dish.active ? 'Active' : 'Inactive' }}
-                    </span>
-                    <span *ngIf="dish.portionSize" class="chip chip-primary" style="margin-left:4px;">{{ dish.portionSize }}</span>
-                  </span>
-                  <span class="muted" *ngIf="dish.description">{{ dish.description }}</span>
-                  <span *ngIf="dish.availableAt && dish.availableAt.length > 0">
-                    <span *ngFor="let slot of dish.availableAt" class="chip chip-warning" style="margin-right:2px;">{{ slot }}</span>
-                  </span>
-                </span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                  <span class="chip chip-success">{{ dish.price | number:'1.2-2' }}€</span>
-                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="startEditDish(dish)">Edit</button>
-                  <button type="button" class="btn-custom btn-danger btn-sm" (click)="removeDish(restaurant._id!, dish)">✕</button>
-                </span>
-              </ng-container>
-
-              <!-- Inline edit form -->
-              <ng-container *ngIf="editingDishId === $any(dish)._id">
-                <form [formGroup]="editDishForm" (ngSubmit)="saveEditedDish(restaurant._id!)" style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;width:100%">
-                  <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;">
-                    <input class="input-custom" type="text" formControlName="name" placeholder="Name" />
-                    <input class="input-custom" type="text" formControlName="description" placeholder="Description" />
-                  </div>
-                  <select class="select-custom" formControlName="section" style="width:120px;">
-                    <option value="" disabled>Section</option>
-                    <option value="Starters">Starters</option>
-                    <option value="Mains">Mains</option>
-                    <option value="Desserts">Desserts</option>
-                    <option value="Drinks">Drinks</option>
-                    <option value="Sides">Sides</option>
-                    <option value="Specials">Specials</option>
-                  </select>
-                  <input class="input-custom" type="number" formControlName="price" placeholder="Price€" style="width:80px;" step="0.01" />
-                  <select class="select-custom" formControlName="portionSize" style="width:100px;">
-                    <option value="">Size</option>
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                    <option value="sharing">Sharing</option>
-                  </select>
-                  <label style="display:flex;align-items:center;gap:4px;font-size:13px;">
-                    <input type="checkbox" formControlName="active" /> Active
-                  </label>
-                  <div style="display:flex;flex-wrap:wrap;gap:4px;font-size:12px;">
-                    <label><input type="checkbox" formControlName="availableAtBreakfast" /> Breakfast</label>
-                    <label><input type="checkbox" formControlName="availableAtBrunch" /> Brunch</label>
-                    <label><input type="checkbox" formControlName="availableAtLunch" /> Lunch</label>
-                    <label><input type="checkbox" formControlName="availableAtHappyHour" /> Happy-Hour</label>
-                    <label><input type="checkbox" formControlName="availableAtDinner" /> Dinner</label>
-                    <label><input type="checkbox" formControlName="availableAtAllDay" /> All-Day</label>
-                  </div>
-                  <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="editDishForm.invalid">Save</button>
-                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="cancelEditDish()">Cancel</button>
-                </form>
-              </ng-container>
-            </li>
-          </ul>
-
-          @if (restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length === 0) {
-            <span class="muted">No dishes registered.</span>
-          }
-
-          <!-- Pagination -->
-          <div class="footer" style="margin-top:var(--spacing-sm)">
-            <button class="btn-custom btn-secondary btn-sm" (click)="prevDishPage(restaurant._id!)" [disabled]="dishPage[restaurant._id!] < 1">⬅ Prev</button>
-            <span class="muted" style="font-size:13px;">Page {{ (dishPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit)) }}</span>
-            <button class="btn-custom btn-secondary btn-sm" (click)="nextDishPage(restaurant._id!)" [disabled]="((dishPage[restaurant._id!] || 0) + 1) * dishLimit >= (dishTotal[restaurant._id!] || 0)">Next ➡</button>
-            <input class="input-custom" id="goToDishPageInput" type="number" [formControl]="goToDishPageControl" min="1" [max]="Math.max(1, Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit))" style="width:70px;" />
-            <button class="btn-custom btn-primary btn-sm" type="button" (click)="goToDishPage(restaurant._id!)">Go</button>
-          </div>
         </div>
 
-        <!-- Add Dish form -->
+
+
+        <!-- Timetable card (full width) -->
+        @if (restaurantFull[restaurant._id].profile.timetable != undefined) {
+        <div class="info-card info-card-full">
+          <span class="info-card-title">🕐 Timetable</span>
+          <div class="timetable-grid">
+            @if (restaurantFull[restaurant._id].profile.timetable?.monday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Mon</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.monday">{{ time.open }} – {{
+                  time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (restaurantFull[restaurant._id].profile.timetable?.tuesday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Tue</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.tuesday">{{ time.open }} – {{
+                  time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (restaurantFull[restaurant._id].profile.timetable?.wednesday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Wed</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.wednesday">{{ time.open }} –
+                  {{ time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (restaurantFull[restaurant._id].profile.timetable?.thursday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Thu</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.thursday">{{ time.open }} –
+                  {{ time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (restaurantFull[restaurant._id].profile.timetable?.friday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Fri</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.friday">{{ time.open }} – {{
+                  time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (restaurantFull[restaurant._id].profile.timetable?.saturday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Sat</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.saturday">{{ time.open }} –
+                  {{ time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (restaurantFull[restaurant._id].profile.timetable?.sunday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Sun</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of restaurantFull[restaurant._id].profile.timetable?.sunday">{{ time.open }} – {{
+                  time.close }}</div>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- Images card (full width) -->
+        @if (restaurantFull[restaurant._id]?.profile?.image?.length ?? 0 > 0) {
+        <div class="info-card info-card-full">
+          <span class="info-card-title">🖼️ Images</span>
+          <div class="image-gallery">
+            @for (imageUrl of restaurantFull[restaurant._id].profile.image; track $index) {
+            <img src="{{ imageUrl }}" alt="Restaurant image">
+            }
+          </div>
+        </div>
+        }
+
+      </div><!-- end dashboard-grid -->
+
+      <!-- REWARDS SECTION -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">🎁 Rewards</span>
+        @if (restaurantFull[restaurant._id].rewards && restaurantFull[restaurant._id].rewards!.length > 0) {
+        <ul class="data-list">
+          @for (reward of restaurantRewards[restaurant._id!]; track $index) {
+          <li>
+            <span>{{ $any(reward).name }} — {{ $any(reward).description }}</span>
+            <span style="display:flex;align-items:center;gap:8px;">
+              <span class="chip chip-warning">{{ $any(reward).pointsRequired }} pts</span>
+              <button type="button" class="btn-custom btn-danger btn-sm"
+                (click)="removeReward(restaurant, reward)">✕</button>
+            </span>
+          </li>
+          }
+        </ul>
+        } @else {
+        <span class="muted">No rewards</span>
+        }
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevRewardPage(restaurant._id!)"
+            [disabled]="rewardPage[restaurant._id!] < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (rewardPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextRewardPage(restaurant._id!)"
+            [disabled]="((rewardPage[restaurant._id!] || 0) + 1) * rewardLimit >= (rewardTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+          <input class="input-custom" id="goToRewardPageInput" type="number" [formControl]="goToRewardPageControl"
+            min="1" [max]="Math.max(1, Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToRewardPage(restaurant._id!)">Go</button>
+        </div>
+      </div>
+
+      <!-- Add Reward form -->
+      <div style="margin-top:var(--spacing-sm)">
+        <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleRewardForm(restaurant._id!)">
+          {{ showRewardForm[restaurant._id!] ? '✕ Cancel' : '+ Add Reward' }}
+        </button>
+        <form *ngIf="showRewardForm[restaurant._id!]" [formGroup]="newRewardForm" (ngSubmit)="saveReward(restaurant)"
+          class="info-card mt-sm">
+          <div class="form-group">
+            <label class="section-label">Name</label>
+            <input class="input-custom" type="text" formControlName="name" />
+          </div>
+          <div class="form-group">
+            <label class="section-label">Description</label>
+            <input class="input-custom" type="text" formControlName="description" />
+          </div>
+          <div class="form-group">
+            <label class="section-label">Points Required</label>
+            <input class="input-custom" type="number" formControlName="pointsRequired" />
+          </div>
+          <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newRewardForm.invalid">Save
+            Reward</button>
+        </form>
+      </div>
+
+      <!-- VISITS SECTION -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">📅 Received Visits</span>
+        <p *ngIf="loading && expanded[restaurant._id!] && !restaurantVisits[restaurant._id!]" class="muted">Loading
+          visits...</p>
+
+        <ul class="data-list" *ngIf="restaurantVisits[restaurant._id!] && restaurantVisits[restaurant._id!].length > 0">
+          <li *ngFor="let visit of restaurantVisits[restaurant._id!]">
+            <ng-container *ngIf="editingVisitId !== (visit._id || visit.id)">
+              <span>
+                <strong>{{ visit.customer_id?.name || 'Unknown' }}</strong>
+                &nbsp;·&nbsp; {{ visit.date | date:'dd/MM/yyyy' }}
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span class="chip chip-neutral">{{ visit.billAmount | number:'1.2-2' }}€</span>
+                <span class="chip chip-success">+{{ visit.pointsEarned }}pts</span>
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="startEditVisit(visit)">Edit</button>
+                <button type="button" class="btn-custom btn-danger btn-sm"
+                  (click)="removeVisit(restaurant._id!, visit)">✕</button>
+              </span>
+            </ng-container>
+            <ng-container *ngIf="editingVisitId === (visit._id || visit.id)">
+              <form [formGroup]="editVisitForm" (ngSubmit)="saveEditedVisit(restaurant._id!)"
+                style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%">
+                <input class="input-custom" type="datetime-local" formControlName="date" style="width:150px;" />
+                <input class="input-custom" type="number" formControlName="billAmount" placeholder="€"
+                  style="width:70px;" step="0.01" />
+                <input class="input-custom" type="number" formControlName="pointsEarned" placeholder="Pts"
+                  style="width:70px;" />
+                <button type="submit" class="btn-custom btn-success btn-sm"
+                  [disabled]="editVisitForm.invalid">Save</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="cancelEditVisit()">Cancel</button>
+              </form>
+            </ng-container>
+          </li>
+        </ul>
+
+        @if (restaurantVisits[restaurant._id!] && restaurantVisits[restaurant._id!].length === 0) {
+        <span class="muted">No registered visits.</span>
+        }
+
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevVisitPage(restaurant._id!)"
+            [disabled]="visitPage[restaurant._id!] < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (visitPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextVisitPage(restaurant._id!)"
+            [disabled]="((visitPage[restaurant._id!] || 0) + 1) * visitLimit >= (visitTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+          <input class="input-custom" id="goToVisitPageInput" type="number" [formControl]="goToVisitPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit))" style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToVisitPage(restaurant._id!)">Go</button>
+        </div>
+
         <div style="margin-top:var(--spacing-sm)">
-          <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleDishForm(restaurant._id!)">
-            {{ showDishForm[restaurant._id!] ? '✕ Cancel' : '+ Add Dish' }}
+          <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleVisitForm(restaurant._id!)">
+            {{ showVisitForm[restaurant._id!] ? '✕ Cancel Visit' : '+ Add Visit' }}
           </button>
-          <form *ngIf="showDishForm[restaurant._id!]" [formGroup]="newDishForm" (ngSubmit)="saveDish(restaurant._id!)" class="info-card mt-sm">
+          @if (showVisitForm[restaurant._id!]) {
+          @if (loadingCustomers) { <p class="muted">Loading customers...</p> }
+          @else if (!errorMsg) {
+          <form [formGroup]="newVisitForm" (ngSubmit)="saveVisit(restaurant._id!)" class="info-card mt-sm">
             <div class="form-group">
-              <label class="section-label">*Name</label>
-              <input class="input-custom" type="text" formControlName="name" />
+              <label class="section-label">Customer</label>
+              <select class="select-custom" formControlName="customer_id">
+                <option value="" disabled selected>Select customer</option>
+                @for (customer of customers; track customer._id) { <option [value]="customer._id">{{ customer.name }}
+                </option> }
+              </select>
             </div>
             <div class="form-group">
-              <label class="section-label">Description</label>
-              <input class="input-custom" type="text" formControlName="description" />
+              <label class="section-label">Date</label>
+              <input class="input-custom" type="datetime-local" formControlName="date" />
             </div>
-            <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;">
-              <div class="form-group" style="flex:1;min-width:120px;">
-                <label class="section-label">*Section</label>
-                <select class="select-custom" formControlName="section">
-                  <option value="" disabled selected>Select section</option>
+            <div style="display:flex;gap:var(--spacing-sm)">
+              <div class="form-group" style="flex:1">
+                <label class="section-label">Bill Amount (€)</label>
+                <input class="input-custom" type="number" formControlName="billAmount" step="0.01" />
+              </div>
+              <div class="form-group" style="flex:1">
+                <label class="section-label">Points Earned</label>
+                <input class="input-custom" type="number" formControlName="pointsEarned" />
+              </div>
+            </div>
+            <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newVisitForm.invalid">Save
+              Visit</button>
+          </form>
+          }
+          @else { <p class="muted">{{ errorMsg }}</p> }
+          }
+        </div>
+      </div><!-- end visits section -->
+
+      <!-- DISHES SECTION -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">🍽️ Dishes</span>
+        <p *ngIf="loading && expanded[restaurant._id!] && !restaurantDishes[restaurant._id!]" class="muted">Loading
+          dishes...</p>
+
+        <ul class="data-list" *ngIf="restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length > 0">
+          <li *ngFor="let dish of restaurantDishes[restaurant._id!]">
+            <ng-container *ngIf="editingDishId !== $any(dish)._id">
+              <span style="display:flex;flex-direction:column;gap:2px;">
+                <span>
+                  <strong>{{ dish.name }}</strong>
+                  <span class="chip chip-neutral" style="margin-left:6px;">{{ dish.section }}</span>
+                  <span class="chip" [class.chip-success]="dish.active" [class.chip-neutral]="!dish.active"
+                    style="margin-left:4px;">
+                    {{ dish.active ? 'Active' : 'Inactive' }}
+                  </span>
+                  <span *ngIf="dish.portionSize" class="chip chip-primary" style="margin-left:4px;">{{ dish.portionSize
+                    }}</span>
+                </span>
+                <span class="muted" *ngIf="dish.description">{{ dish.description }}</span>
+                <span *ngIf="dish.availableAt && dish.availableAt.length > 0">
+                  <span *ngFor="let slot of dish.availableAt" class="chip chip-warning" style="margin-right:2px;">{{
+                    slot }}</span>
+                </span>
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span class="chip chip-success">{{ dish.price | number:'1.2-2' }}€</span>
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="startEditDish(dish)">Edit</button>
+                <button type="button" class="btn-custom btn-danger btn-sm"
+                  (click)="removeDish(restaurant._id!, dish)">✕</button>
+              </span>
+            </ng-container>
+
+            <!-- Inline edit form -->
+            <ng-container *ngIf="editingDishId === $any(dish)._id">
+              <form [formGroup]="editDishForm" (ngSubmit)="saveEditedDish(restaurant._id!)"
+                style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;width:100%">
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;">
+                  <input class="input-custom" type="text" formControlName="name" placeholder="Name" />
+                  <input class="input-custom" type="text" formControlName="description" placeholder="Description" />
+                </div>
+                <select class="select-custom" formControlName="section" style="width:120px;">
+                  <option value="" disabled>Section</option>
                   <option value="Starters">Starters</option>
                   <option value="Mains">Mains</option>
                   <option value="Desserts">Desserts</option>
@@ -714,230 +696,336 @@
                   <option value="Sides">Sides</option>
                   <option value="Specials">Specials</option>
                 </select>
-              </div>
-              <div class="form-group" style="flex:1;min-width:100px;">
-                <label class="section-label">*Price (€)</label>
-                <input class="input-custom" type="number" formControlName="price" step="0.01" />
-              </div>
-              <div class="form-group" style="flex:1;min-width:120px;">
-                <label class="section-label">Portion Size</label>
-                <select class="select-custom" formControlName="portionSize">
-                  <option value="">— None —</option>
+                <input class="input-custom" type="number" formControlName="price" placeholder="Price€"
+                  style="width:80px;" step="0.01" />
+                <select class="select-custom" formControlName="portionSize" style="width:100px;">
+                  <option value="">Size</option>
                   <option value="small">Small</option>
                   <option value="medium">Medium</option>
                   <option value="large">Large</option>
                   <option value="sharing">Sharing</option>
                 </select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="section-label">*Available at (select at least one)</label>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px;">
-                <label><input type="checkbox" formControlName="availableAtBreakfast" /> Breakfast</label>
-                <label><input type="checkbox" formControlName="availableAtBrunch" /> Brunch</label>
-                <label><input type="checkbox" formControlName="availableAtLunch" /> Lunch</label>
-                <label><input type="checkbox" formControlName="availableAtHappyHour" /> Happy-Hour</label>
-                <label><input type="checkbox" formControlName="availableAtDinner" /> Dinner</label>
-                <label><input type="checkbox" formControlName="availableAtAllDay" /> All-Day</label>
-              </div>
-            </div>
-            <div class="form-group">
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
-                <input type="checkbox" formControlName="active" /> Active
-              </label>
-            </div>
-            <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newDishForm.invalid">Save Dish</button>
-          </form>
-        </div><!-- end add dish -->
+                <label style="display:flex;align-items:center;gap:4px;font-size:13px;">
+                  <input type="checkbox" formControlName="active" /> Active
+                </label>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;font-size:12px;">
+                  <label><input type="checkbox" formControlName="availableAtBreakfast" /> Breakfast</label>
+                  <label><input type="checkbox" formControlName="availableAtBrunch" /> Brunch</label>
+                  <label><input type="checkbox" formControlName="availableAtLunch" /> Lunch</label>
+                  <label><input type="checkbox" formControlName="availableAtHappyHour" /> Happy-Hour</label>
+                  <label><input type="checkbox" formControlName="availableAtDinner" /> Dinner</label>
+                  <label><input type="checkbox" formControlName="availableAtAllDay" /> All-Day</label>
+                </div>
+                <button type="submit" class="btn-custom btn-success btn-sm"
+                  [disabled]="editDishForm.invalid">Save</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm" (click)="cancelEditDish()">Cancel</button>
+              </form>
+            </ng-container>
+          </li>
+        </ul>
 
-        <!-- EMPLOYEES SECTION -->
-        <div class="info-card info-card-full mt-md">
-          <span class="info-card-title">👤 Employees</span>
-          <p *ngIf="loading && expanded[restaurant._id!] && !restaurantEmployees[restaurant._id!]" class="muted">Loading employees...</p>
+        @if (restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length === 0) {
+        <span class="muted">No dishes registered.</span>
+        }
 
-          <ul class="data-list" *ngIf="restaurantEmployees[restaurant._id!] && restaurantEmployees[restaurant._id!].length > 0">
-            <li *ngFor="let employee of restaurantEmployees[restaurant._id!]">
-              <ng-container *ngIf="editingEmployeeId !== $any(employee)._id">
-                <span style="display:flex;flex-direction:column;gap:2px;">
-                  <span>
-                    <strong>{{ employee.profile.name }}</strong>
-                    <span class="chip chip-neutral" style="margin-left:6px;">{{ employee.profile.role || 'staff' }}</span>
-                    <span class="chip" [class.chip-success]="employee.isActive" [class.chip-neutral]="!employee.isActive" style="margin-left:4px;">
-                      {{ employee.isActive ? 'Active' : 'Inactive' }}
-                    </span>
-                  </span>
-                  <span class="muted" *ngIf="employee.profile.email">{{ employee.profile.email }}</span>
-                  <span class="muted" *ngIf="employee.profile.phone">{{ employee.profile.phone }}</span>
-                </span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="startEditEmployee(employee)">Edit</button>
-                  <button type="button" class="btn-custom btn-danger btn-sm" (click)="removeEmployee(restaurant._id!, employee)">✕</button>
-                </span>
-              </ng-container>
-
-              <!-- Inline edit form -->
-              <ng-container *ngIf="editingEmployeeId === $any(employee)._id">
-                <form [formGroup]="editEmployeeForm" (ngSubmit)="saveEditedEmployee(restaurant._id!)" style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;width:100%">
-                  <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;">
-                    <input class="input-custom" type="text" formControlName="name" placeholder="Name" />
-                    <input class="input-custom" type="email" formControlName="email" placeholder="Email" />
-                  </div>
-                  <input class="input-custom" type="text" formControlName="phone" placeholder="Phone" style="width:120px;" />
-                  <select class="select-custom" formControlName="role" style="width:100px;">
-                    <option value="owner">Owner</option>
-                    <option value="staff">Staff</option>
-                  </select>
-                  <label style="display:flex;align-items:center;gap:4px;font-size:13px;">
-                    <input type="checkbox" formControlName="isActive" /> Active
-                  </label>
-                  <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="editEmployeeForm.invalid">Save</button>
-                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="cancelEditEmployee()">Cancel</button>
-                </form>
-              </ng-container>
-            </li>
-          </ul>
-
-          <div *ngIf="restaurantEmployees[restaurant._id!] && restaurantEmployees[restaurant._id!].length === 0">
-              <span class="muted">No employees registered.</span>
-          </div>
-
-          <!-- Pagination -->
-          <div class="footer" style="margin-top:var(--spacing-sm)">
-            <button class="btn-custom btn-secondary btn-sm" (click)="prevEmployeePage(restaurant._id!)" [disabled]="(employeePage[restaurant._id!] || 0) < 1">⬅ Prev</button>
-            <span class="muted" style="font-size:13px;">Page {{ (employeePage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit)) }}</span>
-            <button class="btn-custom btn-secondary btn-sm" (click)="nextEmployeePage(restaurant._id!)" [disabled]="((employeePage[restaurant._id!] || 0) + 1) * employeeLimit >= (employeeTotal[restaurant._id!] || 0)">Next ➡</button>
-            <input class="input-custom" id="goToEmployeePageInput" type="number" [formControl]="goToEmployeePageControl" min="1" [max]="Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit))" style="width:70px;" />
-            <button class="btn-custom btn-primary btn-sm" type="button" (click)="goToEmployeePage(restaurant._id!)">Go</button>
-          </div>
+        <!-- Pagination -->
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevDishPage(restaurant._id!)"
+            [disabled]="dishPage[restaurant._id!] < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (dishPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextDishPage(restaurant._id!)"
+            [disabled]="((dishPage[restaurant._id!] || 0) + 1) * dishLimit >= (dishTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+          <input class="input-custom" id="goToDishPageInput" type="number" [formControl]="goToDishPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit))" style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDishPage(restaurant._id!)">Go</button>
         </div>
+      </div>
 
-        <!-- Add Employee form -->
-        <div style="margin-top:var(--spacing-sm)">
-          <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleEmployeeForm(restaurant._id!)">
-            {{ showEmployeeForm[restaurant._id!] ? '✕ Cancel' : '+ Add Employee' }}
-          </button>
-          <form *ngIf="showEmployeeForm[restaurant._id!]" [formGroup]="newEmployeeForm" (ngSubmit)="saveEmployee(restaurant._id!)" class="info-card mt-sm">
-            <div class="form-group">
-              <label class="section-label">*Name</label>
-              <input class="input-custom" type="text" formControlName="name" />
+      <!-- Add Dish form -->
+      <div style="margin-top:var(--spacing-sm)">
+        <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleDishForm(restaurant._id!)">
+          {{ showDishForm[restaurant._id!] ? '✕ Cancel' : '+ Add Dish' }}
+        </button>
+        <form *ngIf="showDishForm[restaurant._id!]" [formGroup]="newDishForm" (ngSubmit)="saveDish(restaurant._id!)"
+          class="info-card mt-sm">
+          <div class="form-group">
+            <label class="section-label">*Name</label>
+            <input class="input-custom" type="text" formControlName="name" />
+          </div>
+          <div class="form-group">
+            <label class="section-label">Description</label>
+            <input class="input-custom" type="text" formControlName="description" />
+          </div>
+          <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;min-width:120px;">
+              <label class="section-label">*Section</label>
+              <select class="select-custom" formControlName="section">
+                <option value="" disabled selected>Select section</option>
+                <option value="Starters">Starters</option>
+                <option value="Mains">Mains</option>
+                <option value="Desserts">Desserts</option>
+                <option value="Drinks">Drinks</option>
+                <option value="Sides">Sides</option>
+                <option value="Specials">Specials</option>
+              </select>
             </div>
-            <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;">
-              <div class="form-group" style="flex:1;min-width:120px;">
-                <label class="section-label">Email</label>
-                <input class="input-custom" type="email" formControlName="email" />
-              </div>
-              <div class="form-group" style="flex:1;min-width:120px;">
-                <label class="section-label">Phone</label>
-                <input class="input-custom" type="text" formControlName="phone" />
-              </div>
+            <div class="form-group" style="flex:1;min-width:100px;">
+              <label class="section-label">*Price (€)</label>
+              <input class="input-custom" type="number" formControlName="price" step="0.01" />
             </div>
-            <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;">
-              <div class="form-group" style="flex:1;min-width:120px;">
-                <label class="section-label">Role</label>
-                <select class="select-custom" formControlName="role">
+            <div class="form-group" style="flex:1;min-width:120px;">
+              <label class="section-label">Portion Size</label>
+              <select class="select-custom" formControlName="portionSize">
+                <option value="">— None —</option>
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+                <option value="sharing">Sharing</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="section-label">*Available at (select at least one)</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px;">
+              <label><input type="checkbox" formControlName="availableAtBreakfast" /> Breakfast</label>
+              <label><input type="checkbox" formControlName="availableAtBrunch" /> Brunch</label>
+              <label><input type="checkbox" formControlName="availableAtLunch" /> Lunch</label>
+              <label><input type="checkbox" formControlName="availableAtHappyHour" /> Happy-Hour</label>
+              <label><input type="checkbox" formControlName="availableAtDinner" /> Dinner</label>
+              <label><input type="checkbox" formControlName="availableAtAllDay" /> All-Day</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+              <input type="checkbox" formControlName="active" /> Active
+            </label>
+          </div>
+          <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newDishForm.invalid">Save
+            Dish</button>
+        </form>
+      </div><!-- end add dish -->
+
+      <!-- EMPLOYEES SECTION -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">👤 Employees</span>
+        <p *ngIf="loading && expanded[restaurant._id!] && !restaurantEmployees[restaurant._id!]" class="muted">Loading
+          employees...</p>
+
+        <ul class="data-list"
+          *ngIf="restaurantEmployees[restaurant._id!] && restaurantEmployees[restaurant._id!].length > 0">
+          <li *ngFor="let employee of restaurantEmployees[restaurant._id!]">
+            <ng-container *ngIf="editingEmployeeId !== $any(employee)._id">
+              <span style="display:flex;flex-direction:column;gap:2px;">
+                <span>
+                  <strong>{{ employee.profile.name }}</strong>
+                  <span class="chip chip-neutral" style="margin-left:6px;">{{ employee.profile.role || 'staff' }}</span>
+                  <span class="chip" [class.chip-success]="employee.isActive" [class.chip-neutral]="!employee.isActive"
+                    style="margin-left:4px;">
+                    {{ employee.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </span>
+                <span class="muted" *ngIf="employee.profile.email">{{ employee.profile.email }}</span>
+                <span class="muted" *ngIf="employee.profile.phone">{{ employee.profile.phone }}</span>
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="startEditEmployee(employee)">Edit</button>
+                <button type="button" class="btn-custom btn-danger btn-sm"
+                  (click)="removeEmployee(restaurant._id!, employee)">✕</button>
+              </span>
+            </ng-container>
+
+            <!-- Inline edit form -->
+            <ng-container *ngIf="editingEmployeeId === $any(employee)._id">
+              <form [formGroup]="editEmployeeForm" (ngSubmit)="saveEditedEmployee(restaurant._id!)"
+                style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;width:100%">
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;">
+                  <input class="input-custom" type="text" formControlName="name" placeholder="Name" />
+                  <input class="input-custom" type="email" formControlName="email" placeholder="Email" />
+                </div>
+                <input class="input-custom" type="text" formControlName="phone" placeholder="Phone"
+                  style="width:120px;" />
+                <select class="select-custom" formControlName="role" style="width:100px;">
                   <option value="owner">Owner</option>
                   <option value="staff">Staff</option>
                 </select>
-              </div>
-              <div class="form-group" style="flex:1;min-width:120px;">
-                <label class="section-label">Password</label>
-                <input class="input-custom" type="password" formControlName="password" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
-                <input type="checkbox" formControlName="isActive" /> Active
-              </label>
-            </div>
-            <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newEmployeeForm.invalid">Save Employee</button>
-          </form>
-        </div><!-- end add employee -->
-        
-        <!-- BADGES SECTION -->
-        <div class="info-card info-card-full mt-md">
-          <span class="info-card-title">🏅 Manage Badges</span>
-          <p *ngIf="loading && expanded[restaurant._id!] && !restaurantBadges[restaurant._id!]" class="muted">Loading badges...</p>
+                <label style="display:flex;align-items:center;gap:4px;font-size:13px;">
+                  <input type="checkbox" formControlName="isActive" /> Active
+                </label>
+                <button type="submit" class="btn-custom btn-success btn-sm"
+                  [disabled]="editEmployeeForm.invalid">Save</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="cancelEditEmployee()">Cancel</button>
+              </form>
+            </ng-container>
+          </li>
+        </ul>
 
-          <ul class="data-list" *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length > 0">
-            <li *ngFor="let badge of restaurantBadges[restaurant._id!]">
-              <ng-container *ngIf="editingBadgeId !== $any(badge)._id">
-                <span style="display:flex;flex-direction:column;gap:2px;">
-                  <span>
-                    <strong>{{ badge.title }}</strong>
-                    <span class="chip chip-success" style="margin-left:6px;">{{ badge.type }}</span>
-                  </span>
-                  <span class="muted">{{ badge.description }}</span>
-                </span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="startEditBadge(badge)">Edit</button>
-                  <button type="button" class="btn-custom btn-danger btn-sm" (click)="removeBadge(restaurant._id!, badge)">✕</button>
-                </span>
-              </ng-container>
-
-              <!-- Inline edit form -->
-              <ng-container *ngIf="editingBadgeId === $any(badge)._id">
-                <form [formGroup]="editBadgeForm" (ngSubmit)="saveEditedBadge(restaurant._id!)" style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;width:100%">
-                  <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;">
-                    <input class="input-custom" type="text" formControlName="title" placeholder="Title" />
-                    <input class="input-custom" type="text" formControlName="description" placeholder="Description" />
-                  </div>
-                  <select class="select-custom" formControlName="type" style="width:120px;">
-                    <option value="achievement">Achievement</option>
-                    <option value="status">Status</option>
-                    <option value="special">Special</option>
-                  </select>
-                  <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="editBadgeForm.invalid">Save</button>
-                  <button type="button" class="btn-custom btn-secondary btn-sm" (click)="cancelEditBadge()">Cancel</button>
-                </form>
-              </ng-container>
-            </li>
-          </ul>
-
-          <div *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length === 0">
-            <span class="muted">No badges defined for this restaurant.</span>
-          </div>
-
-          <!-- Pagination -->
-          <div class="footer" style="margin-top:var(--spacing-sm)">
-            <button class="btn-custom btn-secondary btn-sm" (click)="prevBadgePage(restaurant._id!)" [disabled]="badgePage[restaurant._id!] < 1">⬅ Prev</button>
-            <span class="muted" style="font-size:13px;">Page {{ (badgePage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit)) }}</span>
-            <button class="btn-custom btn-secondary btn-sm" (click)="nextBadgePage(restaurant._id!)" [disabled]="((badgePage[restaurant._id!] || 0) + 1) * badgeLimit >= (badgeTotal[restaurant._id!] || 0)">Next ➡</button>
-            <input class="input-custom" id="goToBadgePageInput" type="number" [formControl]="goToBadgePageControl" min="1" [max]="Math.max(1, Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit))" style="width:70px;" />
-            <button class="btn-custom btn-primary btn-sm" type="button" (click)="goToBadgePage(restaurant._id!)">Go</button>
-          </div>
+        <div *ngIf="restaurantEmployees[restaurant._id!] && restaurantEmployees[restaurant._id!].length === 0">
+          <span class="muted">No employees registered.</span>
         </div>
 
-        <div style="margin-top:var(--spacing-sm)">
-          <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleBadgeForm(restaurant._id!)">
-            {{ showBadgeForm[restaurant._id!] ? '✕ Cancel' : '+ Add Badge' }}
-          </button>
-          <form *ngIf="showBadgeForm[restaurant._id!]" [formGroup]="newBadgeForm" (ngSubmit)="saveBadge(restaurant._id!)" class="info-card mt-sm">
-            <div class="form-group">
-              <label class="section-label">*Title</label>
-              <input class="input-custom" type="text" formControlName="title" />
+        <!-- Pagination -->
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevEmployeePage(restaurant._id!)"
+            [disabled]="(employeePage[restaurant._id!] || 0) < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (employeePage[restaurant._id!] || 0) + 1 }} / {{
+            Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextEmployeePage(restaurant._id!)"
+            [disabled]="((employeePage[restaurant._id!] || 0) + 1) * employeeLimit >= (employeeTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+          <input class="input-custom" id="goToEmployeePageInput" type="number" [formControl]="goToEmployeePageControl"
+            min="1" [max]="Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToEmployeePage(restaurant._id!)">Go</button>
+        </div>
+      </div>
+
+      <!-- Add Employee form -->
+      <div style="margin-top:var(--spacing-sm)">
+        <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleEmployeeForm(restaurant._id!)">
+          {{ showEmployeeForm[restaurant._id!] ? '✕ Cancel' : '+ Add Employee' }}
+        </button>
+        <form *ngIf="showEmployeeForm[restaurant._id!]" [formGroup]="newEmployeeForm"
+          (ngSubmit)="saveEmployee(restaurant._id!)" class="info-card mt-sm">
+          <div class="form-group">
+            <label class="section-label">*Name</label>
+            <input class="input-custom" type="text" formControlName="name" />
+          </div>
+          <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;min-width:120px;">
+              <label class="section-label">Email</label>
+              <input class="input-custom" type="email" formControlName="email" />
             </div>
-            <div class="form-group">
-              <label class="section-label">*Description</label>
-              <input class="input-custom" type="text" formControlName="description" />
+            <div class="form-group" style="flex:1;min-width:120px;">
+              <label class="section-label">Phone</label>
+              <input class="input-custom" type="text" formControlName="phone" />
             </div>
-            <div class="form-group">
-              <label class="section-label">*Type</label>
-              <select class="select-custom" formControlName="type">
-                <option value="achievement">Achievement</option>
-                <option value="status">Status</option>
-                <option value="special">Special</option>
+          </div>
+          <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;min-width:120px;">
+              <label class="section-label">Role</label>
+              <select class="select-custom" formControlName="role">
+                <option value="owner">Owner</option>
+                <option value="staff">Staff</option>
               </select>
             </div>
-            <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newBadgeForm.invalid">Save Badge</button>
-          </form>
-        </div><!-- end add badge -->
+            <div class="form-group" style="flex:1;min-width:120px;">
+              <label class="section-label">Password</label>
+              <input class="input-custom" type="password" formControlName="password" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+              <input type="checkbox" formControlName="isActive" /> Active
+            </label>
+          </div>
+          <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newEmployeeForm.invalid">Save
+            Employee</button>
+        </form>
+      </div><!-- end add employee -->
+
+      <!-- BADGES SECTION -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">🏅 Manage Badges</span>
+        <p *ngIf="loading && expanded[restaurant._id!] && !restaurantBadges[restaurant._id!]" class="muted">Loading
+          badges...</p>
+
+        <ul class="data-list" *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length > 0">
+          <li *ngFor="let badge of restaurantBadges[restaurant._id!]">
+            <ng-container *ngIf="editingBadgeId !== $any(badge)._id">
+              <span style="display:flex;flex-direction:column;gap:2px;">
+                <span>
+                  <strong>{{ badge.title }}</strong>
+                  <span class="chip chip-success" style="margin-left:6px;">{{ badge.type }}</span>
+                </span>
+                <span class="muted">{{ badge.description }}</span>
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="startEditBadge(badge)">Edit</button>
+                <button type="button" class="btn-custom btn-danger btn-sm"
+                  (click)="removeBadge(restaurant._id!, badge)">✕</button>
+              </span>
+            </ng-container>
+
+            <!-- Inline edit form -->
+            <ng-container *ngIf="editingBadgeId === $any(badge)._id">
+              <form [formGroup]="editBadgeForm" (ngSubmit)="saveEditedBadge(restaurant._id!)"
+                style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;width:100%">
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;">
+                  <input class="input-custom" type="text" formControlName="title" placeholder="Title" />
+                  <input class="input-custom" type="text" formControlName="description" placeholder="Description" />
+                </div>
+                <select class="select-custom" formControlName="type" style="width:120px;">
+                  <option value="achievement">Achievement</option>
+                  <option value="status">Status</option>
+                  <option value="special">Special</option>
+                </select>
+                <button type="submit" class="btn-custom btn-success btn-sm"
+                  [disabled]="editBadgeForm.invalid">Save</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="cancelEditBadge()">Cancel</button>
+              </form>
+            </ng-container>
+          </li>
+        </ul>
+
+        <div *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length === 0">
+          <span class="muted">No badges defined for this restaurant.</span>
+        </div>
+
+        <!-- Pagination -->
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevBadgePage(restaurant._id!)"
+            [disabled]="badgePage[restaurant._id!] < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (badgePage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextBadgePage(restaurant._id!)"
+            [disabled]="((badgePage[restaurant._id!] || 0) + 1) * badgeLimit >= (badgeTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+          <input class="input-custom" id="goToBadgePageInput" type="number" [formControl]="goToBadgePageControl" min="1"
+            [max]="Math.max(1, Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit))" style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToBadgePage(restaurant._id!)">Go</button>
+        </div>
+      </div>
+
+      <div style="margin-top:var(--spacing-sm)">
+        <button type="button" class="btn-custom btn-primary btn-sm" (click)="toggleBadgeForm(restaurant._id!)">
+          {{ showBadgeForm[restaurant._id!] ? '✕ Cancel' : '+ Add Badge' }}
+        </button>
+        <form *ngIf="showBadgeForm[restaurant._id!]" [formGroup]="newBadgeForm" (ngSubmit)="saveBadge(restaurant._id!)"
+          class="info-card mt-sm">
+          <div class="form-group">
+            <label class="section-label">*Title</label>
+            <input class="input-custom" type="text" formControlName="title" />
+          </div>
+          <div class="form-group">
+            <label class="section-label">*Description</label>
+            <input class="input-custom" type="text" formControlName="description" />
+          </div>
+          <div class="form-group">
+            <label class="section-label">*Type</label>
+            <select class="select-custom" formControlName="type">
+              <option value="achievement">Achievement</option>
+              <option value="status">Status</option>
+              <option value="special">Special</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newBadgeForm.invalid">Save
+            Badge</button>
+        </form>
+      </div><!-- end add badge -->
 
       }
     </div><!-- end .data -->
   </li>
 </ul>
-
-
 
 <div class="footer">
   <button class="btn-custom btn-primary" (click)="leftPage()" [disabled]="currentPage <= 1">
@@ -951,21 +1039,414 @@
   </button>
 
   <label for="goToPageInput" style="margin-left: 8px;">Go to page:</label>
-  <input class="input-custom"
-    id="goToPageInput"
-    type="number"
-    [formControl]="goToPageControl"
-    min="1"
-    [max]="getTotalPages()"
-    style="width: 80px;"
-  />
+  <input class="input-custom" id="goToPageInput" type="number" [formControl]="goToPageControl" min="1"
+    [max]="getTotalPages()" style="width: 80px;" />
   <button class="btn-custom btn-primary" type="button" (click)="goToPage()">Go</button>
 
   <p *ngIf="!loading && !errorMsg && pagedRestaurants.length === 0">
-    No organizations.
+    No restaurants.
   </p>
 
   <button type="button" class="btn-custom btn-primary" (click)="load()">
     Refresh
   </button>
+</div>
+
+
+<!-- DELETED RESTAURANTS SECTION -->
+<h3 *ngIf="pagedDeletedRestaurants.length > 0" style="margin-top:var(--spacing-lg);color:#e65100;">🗑️ Deleted
+  Restaurants</h3>
+<ul class="list" *ngIf="pagedDeletedRestaurants.length > 0">
+  @for (restaurant of visibleDeletedRestaurants; track restaurant._id) {
+  <li>
+    <div class="header" [style.backgroundColor]="'#fff3e0'" [style.border]="'1px solid #ffb74d'">
+      <div class="list-item-row">
+        <div>
+          <span class="list-item-name">
+            🗑️ {{
+            expanded[restaurant._id!] || restaurant.profile.name.length <= 30 ? restaurant.profile.name :
+              (restaurant.profile.name | slice:0:30) + '...' }} </span>
+              @if (restaurant._id != undefined) {
+              <div class="list-item-id">{{ restaurant._id }}</div>
+              }
+        </div>
+
+        <div class="list-item-actions">
+          <button type="button" class="btn-custom btn-secondary btn-sm" (click)="toggleExpandDeleted(restaurant._id!)">
+            {{ expanded[restaurant._id!] ? '▲ Less' : '▼ More' }}
+          </button>
+
+          @if (restaurant._id != undefined) {
+          <button type="button" class="btn-custom btn-success btn-sm" (click)="restoreRestaurant(restaurant._id!)">
+            ↩ Restore
+          </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="data fade-in" *ngIf="restaurant._id != undefined && expanded[restaurant._id]"
+      [style.backgroundColor]="'#fff3e0'" [style.border]="'1px solid #ffb74d'">
+
+      <!-- Loading state while /full is being fetched -->
+      @if (!deletedRestaurantFull[restaurant._id]) {
+      <p class="muted">Loading full data...</p>
+      } @else {
+
+      <!-- DASHBOARD GRID -->
+      <div class="dashboard-grid">
+
+        <!-- General Info card -->
+        <div class="info-card">
+          <span class="info-card-title">⭐ General Info</span>
+          <span class="info-card-value">{{ deletedRestaurantFull[restaurant._id].profile.description }}</span>
+          <span class="info-card-value">
+            <strong>Rating:</strong> {{ deletedRestaurantFull[restaurant._id].profile.globalRating || '—' }} / 10
+          </span>
+        </div>
+
+        <!-- Contact card -->
+        <div class="info-card">
+          <span class="info-card-title">📞 Contact</span>
+          <span class="info-card-value">
+            <strong>Phone:</strong> {{ deletedRestaurantFull[restaurant._id].profile.contact?.phone || '—' }}
+          </span>
+          <span class="info-card-value">
+            <strong>Email:</strong> {{ deletedRestaurantFull[restaurant._id].profile.contact?.email || '—' }}
+          </span>
+        </div>
+
+        <!-- Location card -->
+        <div class="info-card">
+          <span class="info-card-title">📍 Location</span>
+          <span class="info-card-value"><strong>City:</strong> {{
+            deletedRestaurantFull[restaurant._id].profile.location.city
+            }}</span>
+          <span class="info-card-value"><strong>Address:</strong> {{
+            deletedRestaurantFull[restaurant._id].profile.location.address || '—' }}</span>
+          <span class="info-card-value">
+            <strong>Coords:</strong>
+            {{ deletedRestaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }},
+            {{ deletedRestaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}
+          </span>
+          <span class="info-card-value" *ngIf="deletedRestaurantFull[restaurant._id].profile.location.googlePlaceId">
+            <strong>Place ID:</strong> {{ deletedRestaurantFull[restaurant._id].profile.location.googlePlaceId }}
+          </span>
+        </div>
+
+        <!-- Statistics card -->
+        @if (deletedRestaurantFull[restaurant._id].statistics) {
+        <div class="info-card">
+          <span class="info-card-title">📊 Statistics</span>
+          <ng-container
+            *ngIf="$any(deletedRestaurantFull[restaurant._id].statistics)?.totalPointsGiven !== undefined; else deletedStatsId">
+            <span class="info-card-value"><strong>Points given:</strong> {{
+              $any(deletedRestaurantFull[restaurant._id].statistics).totalPointsGiven }}</span>
+            <span class="info-card-value"><strong>Loyal customers:</strong> {{
+              $any(deletedRestaurantFull[restaurant._id].statistics).loyalCustomers }}</span>
+            <span class="info-card-value"><strong>Avg pts/visit:</strong> {{
+              $any(deletedRestaurantFull[restaurant._id].statistics).averagePointsPerVisit }}</span>
+          </ng-container>
+          <ng-template #deletedStatsId>
+            <span class="info-card-value muted">ID: {{ deletedRestaurantFull[restaurant._id].statistics }}</span>
+          </ng-template>
+        </div>
+        }
+
+        <!-- Categories card (full width) -->
+        <div class="info-card info-card-full">
+          <span class="info-card-title">🏷️ Categories</span>
+          <div class="chips-wrap">
+            @for (cat of (deletedRestaurantFull[restaurant._id].profile.category || []); track $index) {
+            <span class="chip chip-primary">{{ cat }}</span>
+            }
+            @if (!(deletedRestaurantFull[restaurant._id].profile.category?.length)) {
+            <span class="muted">No categories</span>
+            }
+          </div>
+        </div>
+
+        <!-- Timetable card (full width) -->
+        @if (deletedRestaurantFull[restaurant._id].profile.timetable != undefined) {
+        <div class="info-card info-card-full">
+          <span class="info-card-title">🕐 Timetable</span>
+          <div class="timetable-grid">
+            @if (deletedRestaurantFull[restaurant._id].profile.timetable?.monday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Mon</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of deletedRestaurantFull[restaurant._id].profile.timetable?.monday">{{ time.open
+                  }} – {{
+                  time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (deletedRestaurantFull[restaurant._id].profile.timetable?.tuesday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Tue</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of deletedRestaurantFull[restaurant._id].profile.timetable?.tuesday">{{ time.open
+                  }} – {{
+                  time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (deletedRestaurantFull[restaurant._id].profile.timetable?.wednesday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Wed</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of deletedRestaurantFull[restaurant._id].profile.timetable?.wednesday">{{
+                  time.open }} –
+                  {{ time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (deletedRestaurantFull[restaurant._id].profile.timetable?.thursday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Thu</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of deletedRestaurantFull[restaurant._id].profile.timetable?.thursday">{{ time.open
+                  }} –
+                  {{ time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (deletedRestaurantFull[restaurant._id].profile.timetable?.friday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Fri</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of deletedRestaurantFull[restaurant._id].profile.timetable?.friday">{{ time.open
+                  }} – {{
+                  time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (deletedRestaurantFull[restaurant._id].profile.timetable?.saturday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Sat</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of deletedRestaurantFull[restaurant._id].profile.timetable?.saturday">{{ time.open
+                  }} –
+                  {{ time.close }}</div>
+              </div>
+            </div>
+            }
+            @if (deletedRestaurantFull[restaurant._id].profile.timetable?.sunday) {
+            <div class="timetable-day">
+              <div class="timetable-day-label">Sun</div>
+              <div class="timetable-day-slots">
+                <div *ngFor="let time of deletedRestaurantFull[restaurant._id].profile.timetable?.sunday">{{ time.open
+                  }} – {{
+                  time.close }}</div>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- Images card (full width) -->
+        @if (deletedRestaurantFull[restaurant._id]?.profile?.image?.length ?? 0 > 0) {
+        <div class="info-card info-card-full">
+          <span class="info-card-title">🖼️ Images</span>
+          <div class="image-gallery">
+            @for (imageUrl of deletedRestaurantFull[restaurant._id].profile.image; track $index) {
+            <img src="{{ imageUrl }}" alt="Restaurant image">
+            }
+          </div>
+        </div>
+        }
+
+      </div><!-- end dashboard-grid -->
+
+      <!-- REWARDS SECTION (read-only) -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">🎁 Rewards</span>
+        @if (restaurantRewards[restaurant._id!] && restaurantRewards[restaurant._id!].length > 0) {
+        <ul class="data-list">
+          @for (reward of restaurantRewards[restaurant._id!]; track $index) {
+          <li>
+            <span>{{ $any(reward).name }} — {{ $any(reward).description }}</span>
+            <span class="chip chip-warning">{{ $any(reward).pointsRequired }} pts</span>
+          </li>
+          }
+        </ul>
+        } @else {
+        <span class="muted">No rewards</span>
+        }
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevRewardPage(restaurant._id!)"
+            [disabled]="rewardPage[restaurant._id!] < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (rewardPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextRewardPage(restaurant._id!)"
+            [disabled]="((rewardPage[restaurant._id!] || 0) + 1) * rewardLimit >= (rewardTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+        </div>
+      </div>
+
+      <!-- VISITS SECTION (read-only) -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">📅 Received Visits</span>
+
+        <ul class="data-list" *ngIf="restaurantVisits[restaurant._id!] && restaurantVisits[restaurant._id!].length > 0">
+          <li *ngFor="let visit of restaurantVisits[restaurant._id!]">
+            <span>
+              <strong>{{ visit.customer_id?.name || 'Unknown' }}</strong>
+              &nbsp;·&nbsp; {{ visit.date | date:'dd/MM/yyyy' }}
+            </span>
+            <span style="display:flex;align-items:center;gap:6px;">
+              <span class="chip chip-neutral">{{ visit.billAmount | number:'1.2-2' }}€</span>
+              <span class="chip chip-success">+{{ visit.pointsEarned }}pts</span>
+            </span>
+          </li>
+        </ul>
+
+        @if (restaurantVisits[restaurant._id!] && restaurantVisits[restaurant._id!].length === 0) {
+        <span class="muted">No registered visits.</span>
+        }
+
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevVisitPage(restaurant._id!)"
+            [disabled]="visitPage[restaurant._id!] < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (visitPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextVisitPage(restaurant._id!)"
+            [disabled]="((visitPage[restaurant._id!] || 0) + 1) * visitLimit >= (visitTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+        </div>
+      </div><!-- end visits section -->
+
+      <!-- DISHES SECTION (read-only) -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">🍽️ Dishes</span>
+
+        <ul class="data-list" *ngIf="restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length > 0">
+          <li *ngFor="let dish of restaurantDishes[restaurant._id!]">
+            <span style="display:flex;flex-direction:column;gap:2px;">
+              <span>
+                <strong>{{ dish.name }}</strong>
+                <span class="chip chip-neutral" style="margin-left:6px;">{{ dish.section }}</span>
+                <span class="chip" [class.chip-success]="dish.active" [class.chip-neutral]="!dish.active"
+                  style="margin-left:4px;">
+                  {{ dish.active ? 'Active' : 'Inactive' }}
+                </span>
+                <span *ngIf="dish.portionSize" class="chip chip-primary" style="margin-left:4px;">{{ dish.portionSize
+                  }}</span>
+              </span>
+              <span class="muted" *ngIf="dish.description">{{ dish.description }}</span>
+              <span *ngIf="dish.availableAt && dish.availableAt.length > 0">
+                <span *ngFor="let slot of dish.availableAt" class="chip chip-warning" style="margin-right:2px;">{{
+                  slot }}</span>
+              </span>
+            </span>
+            <span class="chip chip-success">{{ dish.price | number:'1.2-2' }}€</span>
+          </li>
+        </ul>
+
+        @if (restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length === 0) {
+        <span class="muted">No dishes registered.</span>
+        }
+
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevDishPage(restaurant._id!)"
+            [disabled]="dishPage[restaurant._id!] < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (dishPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextDishPage(restaurant._id!)"
+            [disabled]="((dishPage[restaurant._id!] || 0) + 1) * dishLimit >= (dishTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+        </div>
+      </div>
+
+      <!-- EMPLOYEES SECTION (read-only) -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">👤 Employees</span>
+
+        <ul class="data-list"
+          *ngIf="restaurantEmployees[restaurant._id!] && restaurantEmployees[restaurant._id!].length > 0">
+          <li *ngFor="let employee of restaurantEmployees[restaurant._id!]">
+            <span style="display:flex;flex-direction:column;gap:2px;">
+              <span>
+                <strong>{{ employee.profile.name }}</strong>
+                <span class="chip chip-neutral" style="margin-left:6px;">{{ employee.profile.role || 'staff' }}</span>
+                <span class="chip" [class.chip-success]="employee.isActive" [class.chip-neutral]="!employee.isActive"
+                  style="margin-left:4px;">
+                  {{ employee.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </span>
+              <span class="muted" *ngIf="employee.profile.email">{{ employee.profile.email }}</span>
+              <span class="muted" *ngIf="employee.profile.phone">{{ employee.profile.phone }}</span>
+            </span>
+          </li>
+        </ul>
+
+        <div *ngIf="restaurantEmployees[restaurant._id!] && restaurantEmployees[restaurant._id!].length === 0">
+          <span class="muted">No employees registered.</span>
+        </div>
+
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevEmployeePage(restaurant._id!)"
+            [disabled]="(employeePage[restaurant._id!] || 0) < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (employeePage[restaurant._id!] || 0) + 1 }} / {{
+            Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextEmployeePage(restaurant._id!)"
+            [disabled]="((employeePage[restaurant._id!] || 0) + 1) * employeeLimit >= (employeeTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+        </div>
+      </div>
+
+      <!-- BADGES SECTION (read-only) -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">🏅 Badges</span>
+
+        <ul class="data-list" *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length > 0">
+          <li *ngFor="let badge of restaurantBadges[restaurant._id!]">
+            <span style="display:flex;flex-direction:column;gap:2px;">
+              <span>
+                <strong>{{ badge.title }}</strong>
+                <span class="chip chip-success" style="margin-left:6px;">{{ badge.type }}</span>
+              </span>
+              <span class="muted">{{ badge.description }}</span>
+            </span>
+          </li>
+        </ul>
+
+        <div *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length === 0">
+          <span class="muted">No badges defined for this restaurant.</span>
+        </div>
+
+        <div class="footer" style="margin-top:var(--spacing-sm)">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevBadgePage(restaurant._id!)"
+            [disabled]="badgePage[restaurant._id!] < 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (badgePage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextBadgePage(restaurant._id!)"
+            [disabled]="((badgePage[restaurant._id!] || 0) + 1) * badgeLimit >= (badgeTotal[restaurant._id!] || 0)">Next
+            ➡</button>
+        </div>
+      </div>
+      }
+    </div><!-- end .data -->
+  </li>
+  }
+</ul>
+
+<!-- DELETED RESTAURANTS PAGINATION -->
+<div class="footer" *ngIf="pagedDeletedRestaurants.length > 0">
+  <button class="btn-custom btn-primary" (click)="leftDeletedPage()" [disabled]="deletedCurrentPage <= 1">
+    ⬅ Previous
+  </button>
+
+  <p class="btn-custom btn-primary">Page {{ deletedCurrentPage }} / {{ getTotalDeletedPages() }}</p>
+
+  <button class="btn-custom btn-primary" (click)="rightDeletedPage()"
+    [disabled]="deletedCurrentPage >= getTotalDeletedPages()">
+    Next ➡
+  </button>
+
+  <label for="goToDeletedPageInput" style="margin-left: 8px;">Go to page:</label>
+  <input class="input-custom" id="goToDeletedPageInput" type="number" [formControl]="goToDeletedPageControl" min="1"
+    [max]="getTotalDeletedPages()" style="width: 80px;" />
+  <button class="btn-custom btn-primary" type="button" (click)="goToDeletedPage()">Go</button>
 </div>

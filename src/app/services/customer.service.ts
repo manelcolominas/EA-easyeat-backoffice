@@ -10,7 +10,7 @@ import { environment } from '../../environments/environment';
 export class CustomerService {
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   createCustomer(data: Partial<ICustomer>): Observable<ICustomer> {
     return this.http.post<ICustomer>(`${this.baseUrl}/customers`, data);
@@ -30,17 +30,19 @@ export class CustomerService {
 
 
   updateCustomer(id: string, data: any): Observable<ICustomer> {
-  return this.http.put<ICustomer>(
-    `${this.baseUrl}/customers/${id}`,
-    data   
-  );
-}
-softDeleteCustomer(customerId: string): Observable<ICustomer> {
+    return this.http.put<ICustomer>(
+      `${this.baseUrl}/customers/${id}`,
+      data
+    );
+  }
+
+  softDeleteCustomer(customerId: string): Observable<ICustomer> {
     return this.http.delete<ICustomer>(
       `${this.baseUrl}/customers/${customerId}/soft`
     );
   }
-   restoreCustomer(customerId: string): Observable<ICustomer> {
+
+  restoreCustomer(customerId: string): Observable<ICustomer> {
     return this.http.patch<ICustomer>(
       `${this.baseUrl}/customers/${customerId}/restore`,
       {}
