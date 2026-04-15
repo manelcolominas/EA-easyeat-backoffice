@@ -12,6 +12,7 @@ import { IReward } from '../models/reward.model';
 import { IVisit } from '../models/visit.model';
 import { IDish } from '../models/dish.model';
 import { IEmployee } from '../models/employee.model';
+import { IRestaurantTopDishResponse, ITopDishInfo } from '../models/top-dish.model';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
@@ -89,7 +90,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   dishTotal: { [key: string]: number } = {};
   dishLimit = 5;
   goToDishPageControl = new FormControl<number | null>(1);
-  topDishByRestaurant: { [key: string]: IDish | null } = {};
+  topDishByRestaurant: { [key: string]: ITopDishInfo | null } = {};
   topDishState: { [key: string]: 'idle' | 'loading' | 'success' | 'empty' | 'error' } = {};
   topDishErrorText: { [key: string]: string } = {};
 
@@ -363,18 +364,20 @@ export class RestaurantList implements OnInit, OnDestroy {
     }
   }
 
-  private normalizeTopDishResponse(response: unknown): IDish | null {
-    const raw = response as Record<string, unknown> | null;
-    if (!raw) {
+  private normalizeTopDishResponse(response: IRestaurantTopDishResponse | null | undefined): ITopDishInfo | null {
+    if (!response?.topDish) {
       return null;
     }
 
-    const candidate = (raw['data'] ?? raw['dish'] ?? raw) as Partial<IDish>;
-    if (!candidate || !candidate.name) {
+    const candidate = response.topDish;
+    const hasName = typeof candidate.name === 'string' && candidate.name.trim().length > 0;
+    const hasRatings = Number.isFinite(candidate.totalRatings) && candidate.totalRatings > 0;
+
+    if (!hasName || !hasRatings) {
       return null;
     }
 
-    return candidate as IDish;
+    return candidate;
   }
 
   private loadRestaurantTopDish(restaurantId: string): void {
@@ -383,7 +386,7 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     this.dishApi.getTopDishByRestaurant(restaurantId).subscribe({
-      next: (res: unknown) => {
+      next: (res: IRestaurantTopDishResponse) => {
         const topDish = this.normalizeTopDishResponse(res);
         if (!topDish) {
           this.topDishByRestaurant[restaurantId] = null;
@@ -416,18 +419,11 @@ export class RestaurantList implements OnInit, OnDestroy {
     return this.topDishState[restaurantId] ?? 'idle';
   }
 
-  getTopDish(restaurantId: string): IDish | null {
+  getTopDish(restaurantId: string): ITopDishInfo | null {
     return this.topDishByRestaurant[restaurantId] ?? null;
   }
 
-  getTopDishImage(dish: IDish | null): string | null {
-    if (!dish?.images?.length) {
-      return null;
-    }
-    return dish.images[0] || null;
-  }
-
-  formatTopDishRating(rating: number | undefined): string {
+  formatTopDishRating(rating: number): string {
     if (!Number.isFinite(rating)) {
       return '—';
     }
@@ -435,7 +431,7 @@ export class RestaurantList implements OnInit, OnDestroy {
     return fixed.toString();
   }
 
-  formatTopDishVotes(count: number | undefined): string {
+  formatTopDishVotes(count: number): string {
     if (!Number.isFinite(count)) {
       return '0 valoraciones';
     }

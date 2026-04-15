@@ -99,27 +99,7 @@ h2 {
 
 .top-dish-content,
 .top-dish-skeleton {
-  display: grid;
-  grid-template-columns: 150px 1fr;
-  gap: var(--spacing-md);
-}
-
-.top-dish-image,
-.top-dish-image-fallback,
-.top-dish-skeleton-media {
-  width: 100%;
-  height: 120px;
-  border-radius: var(--border-radius-sm);
-  border: 1px solid var(--border-color);
-  object-fit: cover;
-  background-color: #f8fafc;
-}
-
-.top-dish-image-fallback {
-  display: grid;
-  place-items: center;
-  color: var(--color-text-muted);
-  font-size: 12px;
+  display: block;
 }
 
 .top-dish-meta {
@@ -131,12 +111,6 @@ h2 {
   margin: 0;
   font-size: 17px;
   line-height: 1.25;
-}
-
-.top-dish-description {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 13px;
 }
 
 .top-dish-stats {
