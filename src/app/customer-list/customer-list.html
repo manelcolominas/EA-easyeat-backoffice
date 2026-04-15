@@ -240,7 +240,7 @@
               @if ((reviewsByCustomer[customer._id!] || []).length > 0) {
                 @for (review of reviewsByCustomer[customer._id!]; track review._id) {
                   <div style="border-bottom:1px solid #ccc; margin-bottom:8px; padding-bottom:8px;">
-                    <p><strong>{{ review.restaurant_id.profile.name }}</strong></p>
+                    <p><strong>{{ getReviewRestaurantName(review) }}</strong></p>
                     <div>
                       @for (_ of getStars(review.globalRating); track $index) {
                         <span>⭐</span>

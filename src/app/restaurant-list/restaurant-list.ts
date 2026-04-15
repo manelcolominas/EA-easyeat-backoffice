@@ -7,6 +7,7 @@ import { RewardService } from '../services/reward.service';
 import { VisitService } from '../services/visit.service';
 import { DishService } from '../services/dish.service';
 import { EmployeeService } from '../services/employee.service';
+import { ReviewService, IRestaurantTopDishResponse, ITopDishInfo } from '../services/review.service';
 import { IRestaurant } from '../models/restaurant.model';
 import { IReward } from '../models/reward.model';
 import { IVisit } from '../models/visit.model';
@@ -14,7 +15,6 @@ import { IDish } from '../models/dish.model';
 import { IEmployee } from '../models/employee.model';
 import { IBadge } from '../models/badge.model';
 import { BadgeService } from '../services/badge.service';
-import { IRestaurantTopDishResponse, ITopDishInfo } from '../models/top-dish.model';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
@@ -126,6 +126,7 @@ export class RestaurantList implements OnInit, OnDestroy {
     private rewardApi: RewardService,
     private visitApi: VisitService,
     private dishApi: DishService,
+    private reviewApi: ReviewService,
     private employeeApi: EmployeeService,
     private badgeApi: BadgeService,
     private customerApi: CustomerService,
@@ -412,7 +413,7 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.topDishErrorText[restaurantId] = '';
     this.cdr.markForCheck();
 
-    this.dishApi.getTopDishByRestaurant(restaurantId).subscribe({
+    this.reviewApi.getTopDish(restaurantId).subscribe({
       next: (res: IRestaurantTopDishResponse) => {
         const topDish = this.normalizeTopDishResponse(res);
         if (!topDish) {

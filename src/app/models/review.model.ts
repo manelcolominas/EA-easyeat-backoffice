@@ -2,14 +2,13 @@ export interface IReview {
   _id?: string;
 
   customer_id: string;
+  restaurant_id: string;
+  dish_id?: string;
 
-  restaurant_id: {
-    _id: string;
-    profile: { name: string };
-  };
-
-  date: string; 
   globalRating: number;
+  dishRating?: number;
+
+  images: string[];
 
   ratings?: {
     foodQuality?: number;
@@ -21,5 +20,9 @@ export interface IReview {
   comment?: string;
   likes?: number;
 
-   deleted?: boolean;
+  deletedAt?: string | null;
+  deleted?: boolean;
+
+  createdAt?: string;
+  updatedAt?: string;
 }

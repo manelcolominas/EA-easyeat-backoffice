@@ -20,6 +20,4 @@ export interface IDish {
 
     portionSize?: 'small' | 'medium' | 'large' | 'sharing';
 
-    userRatingAvg?: number;
-    userRatingCount?: number;
 }

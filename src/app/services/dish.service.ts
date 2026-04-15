@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { IDish } from '../models/dish.model';
-import { IRestaurantTopDishResponse } from '../models/top-dish.model';
 
 @Injectable({
   providedIn: 'root',
@@ -19,10 +18,6 @@ export class DishService {
 
   getDish(dishId: string): Observable<IDish> {
     return this.http.get<IDish>(`${this.baseUrl}/dishes/${dishId}`);
-  }
-
-  getTopDishByRestaurant(restaurantId: string): Observable<IRestaurantTopDishResponse> {
-    return this.http.get<IRestaurantTopDishResponse>(`${this.baseUrl}/statistics/restaurants/${restaurantId}/top-dish`);
   }
 
   createDish(data: Partial<IDish>): Observable<IDish> {

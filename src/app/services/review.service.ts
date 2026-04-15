@@ -4,6 +4,48 @@ import { Observable } from 'rxjs';
 import { IReview } from '../models/review.model';
 import { environment } from '../../environments/environment';
 
+// ========================
+// TYPES EXTRA
+// ========================
+
+export interface IPaginatedReviews {
+  data: IReview[];
+  total: number;
+}
+
+export interface ITopDishInfo {
+  dishId: string;
+  name: string;
+  averageRating: number;
+  totalRatings: number;
+}
+
+export interface IRestaurantTopDishResponse {
+  restaurantId: string;
+  restaurantName: string;
+  topDish: ITopDishInfo | null;
+}
+
+export interface IDishWithStats {
+  dishId: string;
+  name: string;
+  images: string[];
+  averageRating: number;
+  totalRatings: number;
+}
+
+export interface IRestaurantDishesResponse {
+  restaurant: {
+    _id: string;
+    name: string | null;
+  };
+  dishes: IDishWithStats[];
+}
+
+// ========================
+// SERVICE
+// ========================
+
 @Injectable({
   providedIn: 'root',
 })
@@ -29,12 +71,33 @@ export class ReviewService {
   }
 
   // ========================
-  // GET BY CUSTOMER - FULL LIST (NO QUERY PARAMS)
+  // GET BY CUSTOMER (PAGINATED)
   // ========================
-  getByCustomer(customerId: string): Observable<IReview[]> {
-    return this.http.get<IReview[]>(
-      `${environment.apiUrl}/customers/${customerId}/reviews`
-    );
+  getByCustomer(
+    customerId: string,
+    limit = 5,
+    skip = 0,
+    minGlobalRating?: number,
+    sortByLikes?: boolean
+  ): Observable<IPaginatedReviews> {
+    let url = `${this.baseUrl}/customer/${customerId}?limit=${limit}&skip=${skip}`;
+
+    if (minGlobalRating !== undefined) {
+      url += `&minGlobalRating=${minGlobalRating}`;
+    }
+
+    if (sortByLikes) {
+      url += `&sortByLikes=true`;
+    }
+
+    return this.http.get<IPaginatedReviews>(url);
+  }
+
+  // ========================
+  // GET ONE
+  // ========================
+  getById(reviewId: string): Observable<IReview> {
+    return this.http.get<IReview>(`${this.baseUrl}/${reviewId}`);
   }
 
   // ========================
@@ -73,6 +136,26 @@ export class ReviewService {
     return this.http.post<IReview>(
       `${this.baseUrl}/${reviewId}/like`,
       {}
+    );
+  }
+
+  // ========================
+  // TOP DISH
+  // ========================
+  getTopDish(restaurantId: string): Observable<IRestaurantTopDishResponse> {
+    return this.http.get<IRestaurantTopDishResponse>(
+      `${environment.apiUrl}/statistics/restaurants/${restaurantId}/top-dish`
+    );
+  }
+
+  // ========================
+  // ALL DISHES WITH RATINGS
+  // ========================
+  getDishesWithRatings(
+    restaurantId: string
+  ): Observable<IRestaurantDishesResponse> {
+    return this.http.get<IRestaurantDishesResponse>(
+      `${this.baseUrl}/restaurant/${restaurantId}/dishes`
     );
   }
 }

@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, F
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { CustomerService } from '../services/customer.service';
-import { ReviewService } from '../services/review.service';
+import { ReviewService, IPaginatedReviews } from '../services/review.service';
 import { RestaurantService } from '../services/restaurant.service';
 import { VisitService } from '../services/visit.service';
 import { BadgeService } from '../services/badge.service';
@@ -330,9 +330,51 @@ export class CustomerList implements OnInit {
   // REVIEWS
   // ========================
 
+  private getReviewRestaurantRecord(review: IReview): Record<string, unknown> | null {
+    const raw = review.restaurant_id as unknown;
+    if (!raw || typeof raw !== 'object') {
+      return null;
+    }
+    return raw as Record<string, unknown>;
+  }
+
+  private getReviewRestaurantId(review: IReview): string {
+    const raw = review.restaurant_id as unknown;
+    if (typeof raw === 'string') {
+      return raw;
+    }
+
+    const record = this.getReviewRestaurantRecord(review);
+    const candidate = record?.['_id'];
+    return typeof candidate === 'string' ? candidate : '';
+  }
+
+  getReviewRestaurantName(review: IReview): string {
+    const raw = review.restaurant_id as unknown;
+    if (typeof raw === 'string') {
+      const restaurant = this.restaurants.find(r => r._id === raw);
+      return restaurant?.profile?.name ?? 'Restaurant';
+    }
+
+    const record = this.getReviewRestaurantRecord(review);
+    const profile = record?.['profile'] as Record<string, unknown> | undefined;
+    const profileName = profile?.['name'];
+    if (typeof profileName === 'string' && profileName.trim().length > 0) {
+      return profileName;
+    }
+
+    const recordName = record?.['name'];
+    if (typeof recordName === 'string' && recordName.trim().length > 0) {
+      return recordName;
+    }
+
+    return 'Restaurant';
+  }
+
   loadReviews(customerId: string): void {
     this.reviewService.getByCustomer(customerId).subscribe({
-      next: (allReviews: IReview[]) => {
+      next: (response: IPaginatedReviews) => {
+        const allReviews = response?.data ?? [];
         // STEP 1: FILTER
         let filtered = this.filterReviews(allReviews);
 
@@ -416,16 +458,14 @@ export class CustomerList implements OnInit {
   }
 
   editReview(review: IReview): void {
-    const customerId = typeof review.customer_id === 'string'
-      ? review.customer_id
-      : review.customer_id;
+    const customerId = review.customer_id;
 
     this.selectedCustomerId = customerId;
     this.editingReviewId = review._id!;
     this.expanded[customerId] = true;
 
     this.reviewForm.patchValue({
-      restaurant_id: review.restaurant_id._id,
+      restaurant_id: this.getReviewRestaurantId(review),
       globalRating: review.globalRating,
       comment: review.comment ?? ''
     });
@@ -446,7 +486,7 @@ export class CustomerList implements OnInit {
 
     const restaurantId = this.reviewForm.value.restaurant_id;
     const exists = this.reviewsByCustomer[this.selectedCustomerId]?.find(
-      r => r.restaurant_id._id === restaurantId
+      r => this.getReviewRestaurantId(r) === restaurantId
     );
 
     if (exists) {
