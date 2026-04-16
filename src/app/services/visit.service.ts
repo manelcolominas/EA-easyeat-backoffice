@@ -17,10 +17,27 @@ export class VisitService {
     return this.http.get<any>(`${this.baseUrl}/visits`, { params });
   }
 
+  getDeletedVisitsByRestaurantId(restaurantId: string): Observable<any> {
+    const params = new HttpParams().set('restaurant_id', restaurantId);
+    return this.http.get<any>(`${this.baseUrl}/visits/deleted`, { params });
+  }
+
   getVisitsByCustomerId(customerId: string): Observable<IVisit[]> {    
-    return this.http.get<IVisit[]>(
-      `${this.baseUrl}/customers/${customerId}/visits`
-    );
+    const params = new HttpParams().set('customer_id', customerId);
+    return this.http.get<any>(`${this.baseUrl}/visits`, { params });
+  }
+
+  getDeletedVisitsByCustomerId(customerId: string): Observable<IVisit[]> {    
+    const params = new HttpParams().set('customer_id', customerId);
+    return this.http.get<any>(`${this.baseUrl}/visits/deleted`, { params });
+  }
+
+  getVisitFull(visitId: string): Observable<IVisit> {
+    return this.http.get<IVisit>(`${this.baseUrl}/visit/${visitId}/full`)
+  }
+
+  getDeletedVisitFull(visitId: string): Observable<IVisit> {
+    return this.http.get<IVisit>(`${this.baseUrl}/visit/${visitId}/full/deleted`)
   }
 
   createVisit(data: Partial<IVisit>): Observable<IVisit> {
@@ -34,7 +51,15 @@ export class VisitService {
     return this.http.put<IVisit>(`${this.baseUrl}/visits/${visitId}`, data);
   }
 
-  deleteVisit(visitId: string): Observable<IVisit> {
-    return this.http.delete<IVisit>(`${this.baseUrl}/visits/${visitId}`);
+  softDeleteVisit(visitId: string): Observable<IVisit> {
+    return this.http.delete<IVisit>(`${this.baseUrl}/visits/${visitId}/soft`);
+  }
+
+  restoreVisit(visitId: string): Observable<IVisit> {
+    return this.http.patch<IVisit>(`${this.baseUrl}/visits/${visitId}/restore`, {});
+  }
+
+  hardDeleteVisit(visitId: string): Observable<IVisit> {
+    return this.http.delete<IVisit>(`${this.baseUrl}/visits/${visitId}/hard`);
   }
 }

@@ -16,8 +16,16 @@ export class DishService {
     return this.http.get<IDish[]>(`${this.baseUrl}/dishes`);
   }
 
+  getDeletedDishes(): Observable<IDish[]> {
+    return this.http.get<IDish[]>(`${this.baseUrl}/dishes/deleted`);
+  }
+
   getDish(dishId: string): Observable<IDish> {
     return this.http.get<IDish>(`${this.baseUrl}/dishes/${dishId}`);
+  }
+
+  getDeletedDish(dishId: string): Observable<IDish> {
+    return this.http.get<IDish>(`${this.baseUrl}/dishes/${dishId}/deleted`);
   }
 
   createDish(data: Partial<IDish>): Observable<IDish> {
@@ -28,7 +36,15 @@ export class DishService {
     return this.http.put<IDish>(`${this.baseUrl}/dishes/${dishId}`, data);
   }
 
-  deleteDish(dishId: string): Observable<IDish> {
-    return this.http.delete<IDish>(`${this.baseUrl}/dishes/${dishId}`);
+  softDeleteDish(dishId: string): Observable<IDish> {
+    return this.http.delete<IDish>(`${this.baseUrl}/dishes/${dishId}/soft`);
+  }
+
+  restoreDish(dishId: string): Observable<IDish> {
+    return this.http.patch<IDish>(`${this.baseUrl}/dishes/${dishId}/restore`, {});
+  }
+
+  hardDeleteDish(dishId: string): Observable<IDish> {
+    return this.http.delete<IDish>(`${this.baseUrl}/dishes/${dishId}/hard`);
   }
 }

@@ -10,13 +10,17 @@ import { environment } from '../../environments/environment';
 export class ReviewService {
   private baseUrl = `${environment.apiUrl}/reviews`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // ========================
   // GET ALL
   // ========================
   getAll(): Observable<IReview[]> {
     return this.http.get<IReview[]>(this.baseUrl);
+  }
+
+  getAllDeleted(): Observable<IReview[]> {
+    return this.http.get<IReview[]>(`${this.baseUrl}/deleted`);
   }
 
   // ========================
@@ -28,12 +32,24 @@ export class ReviewService {
     );
   }
 
+  getByDeletedRestaurant(restaurantId: string): Observable<IReview[]> {
+    return this.http.get<IReview[]>(
+      `${this.baseUrl}/restaurant/${restaurantId}/deleted`
+    );
+  }
+
   // ========================
   // GET BY CUSTOMER - FULL LIST (NO QUERY PARAMS)
   // ========================
   getByCustomer(customerId: string): Observable<IReview[]> {
     return this.http.get<IReview[]>(
-      `${environment.apiUrl}/customers/${customerId}/reviews`
+      `${this.baseUrl}/customers/${customerId}`
+    );
+  }
+
+  getDeletedByCustomer(customerId: string): Observable<IReview[]> {
+    return this.http.get<IReview[]>(
+      `${environment}/customers/${customerId}/deleted`
     );
   }
 
@@ -60,9 +76,21 @@ export class ReviewService {
   // ========================
   // DELETE
   // ========================
-  delete(reviewId: string): Observable<IReview> {
+  softDelete(reviewId: string): Observable<IReview> {
     return this.http.delete<IReview>(
-      `${this.baseUrl}/${reviewId}`
+      `${this.baseUrl}/${reviewId}/soft`
+    );
+  }
+
+  restoreDelete(reviewId: string): Observable<IReview> {
+    return this.http.patch<IReview>(
+      `${this.baseUrl}/${reviewId}/restore`, {}
+    );
+  }
+
+  hardDelete(reviewId: string): Observable<IReview> {
+    return this.http.delete<IReview>(
+      `${this.baseUrl}/${reviewId}/hard`
     );
   }
 

@@ -816,7 +816,7 @@ export class RestaurantList implements OnInit {
         this.loading = true;
         this.cdr.markForCheck();
 
-        this.rewardApi.deleteReward(rewardId).subscribe({
+        this.rewardApi.softDeleteReward(rewardId).subscribe({
           next: () => {
             this.loadRestaurantRewards(restaurant._id!);
 
@@ -1009,7 +1009,7 @@ export class RestaurantList implements OnInit {
         this.loading = true;
         this.cdr.markForCheck();
 
-        this.visitApi.deleteVisit(visitId).subscribe({
+        this.visitApi.softDeleteVisit(visitId).subscribe({
           next: () => {
             this.restaurantVisits[restaurantId] = this.restaurantVisits[restaurantId]
               .filter((v: IVisit) => (v._id || v.id) !== visitId);
@@ -1205,7 +1205,7 @@ export class RestaurantList implements OnInit {
         if (!dishId) return;
         this.loading = true;
         this.cdr.markForCheck();
-        this.dishApi.deleteDish(dishId).subscribe({
+        this.dishApi.softDeleteDish(dishId).subscribe({
           next: () => {
             this.loadRestaurantDishes(restaurantId);
           },
@@ -1372,7 +1372,7 @@ export class RestaurantList implements OnInit {
         if (!employeeId) return;
         this.loading = true;
         this.cdr.markForCheck();
-        this.employeeApi.deleteEmployee(employeeId).subscribe({
+        this.employeeApi.softDeleteEmployee(employeeId).subscribe({
           next: () => { this.loadRestaurantEmployees(restaurantId); },
           error: () => {
             this.errorMsg = 'Could not remove employee.';
@@ -1533,7 +1533,7 @@ export class RestaurantList implements OnInit {
         this.api.updateRestaurant(restaurantId, { badges: updatedIds as any }).subscribe({
           next: () => {
             // Then delete the global badge
-            this.badgeApi.deleteBadge(badgeId).subscribe({
+            this.badgeApi.softDeleteBadge(badgeId).subscribe({
               next: () => {
                 this.loading = false;
                 this.refreshRestaurantFull(restaurantId);

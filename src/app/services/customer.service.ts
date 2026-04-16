@@ -22,12 +22,35 @@ export class CustomerService {
     );
   }
 
+  getDeletedCustomerById(customerId: string): Observable<ICustomer> {
+    return this.http.get<ICustomer>(
+      `${this.baseUrl}/customers/${customerId}/deleted`
+    );
+  }
+
   getCustomers(): Observable<ICustomer[]> {
     return this.http.get<ICustomer[]>(
       `${this.baseUrl}/customers`
     );
   }
 
+  getDeletedCustomers(): Observable<ICustomer[]> {
+    return this.http.get<ICustomer[]>(
+      `${this.baseUrl}/customers/deleted`
+    );
+  }
+
+  getFullCustomer(customerId: string): Observable<ICustomer> {
+    return this.http.get<ICustomer>(
+      `${this.baseUrl}/customers/${customerId}/full`
+    );
+  }
+
+  getFullDeletedCustomer(customerId: string): Observable<ICustomer> {
+    return this.http.get<ICustomer>(
+      `${this.baseUrl}/customers/${customerId}/full/deleted`
+    );
+  }
 
   updateCustomer(id: string, data: any): Observable<ICustomer> {
     return this.http.put<ICustomer>(

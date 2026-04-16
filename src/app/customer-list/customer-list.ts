@@ -478,7 +478,7 @@ export class CustomerList implements OnInit {
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.reviewService.delete(reviewId)
+        this.reviewService.softDelete(reviewId)
           .subscribe(() => this.loadReviews(customerId));
       }
     });
@@ -665,7 +665,7 @@ export class CustomerList implements OnInit {
 
   deleteVisit(visitId: string, customerId: string): void {
     if (confirm('¿Seguro que quieres borrar permanentemente (Hard Delete)?')) {
-      this.visitService.deleteVisit(visitId).subscribe(() => {
+      this.visitService.softDeleteVisit(visitId).subscribe(() => {
         this.loadVisits(customerId);
       });
     }
