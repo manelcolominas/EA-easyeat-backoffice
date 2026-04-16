@@ -3,14 +3,18 @@ export interface IReview {
 
   customer_id: string;
 
-  restaurant_id: {
+  restaurant_id: string | {
     _id: string;
     profile: { name: string };
   };
 
   dish_id?: string;
+  dishRatings?: {
+    dish_id: string;
+    rating: number;
+  }[];
 
-  date: string; 
+  date: string | Date;
   globalRating: number;
   dishRating?: number;
 

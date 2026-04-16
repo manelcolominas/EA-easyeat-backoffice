@@ -685,10 +685,7 @@ export class CustomerList implements OnInit {
     this.editingReviewId = review._id!;
     this.expanded[customerId] = true;
 
-    const reviewRecord = review as unknown as {
-      dishRatings?: Array<{ dish_id?: string; rating?: number }>;
-    };
-    const dishRatings = Array.isArray(reviewRecord.dishRatings) ? reviewRecord.dishRatings : [];
+    const dishRatings = Array.isArray(review.dishRatings) ? review.dishRatings : [];
     const images = Array.isArray(review.images) ? review.images : [];
 
     this.reviewForm.patchValue({
