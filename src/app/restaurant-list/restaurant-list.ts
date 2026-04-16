@@ -39,13 +39,18 @@ import {
 })
 export class RestaurantList implements OnInit, OnDestroy {
   Math = Math;
-  
+
   restaurants: IRestaurant[] = [];
+  deletedRestaurants: IRestaurant[] = [];
   customers: ICustomer[] = [];
   filteredRestaurants: IRestaurant[] = [];
+  filteredDeletedRestaurants: IRestaurant[] = [];
   pagedRestaurants: IRestaurant[] = [];
+  pagedDeletedRestaurants: IRestaurant[] = [];
   searchControl = new FormControl('');
+  searchDeletedControl = new FormControl('');
   search: boolean = false;
+  searchDeleted: boolean = false;
   loading: boolean = true;
   errorMsg: string = '';
   showForm = false;
@@ -54,11 +59,16 @@ export class RestaurantList implements OnInit, OnDestroy {
   restaurantEditId: string | undefined;
   expanded: { [key: string]: boolean } = {};
   restaurantFull: { [key: string]: IRestaurant } = {};
+  deletedRestaurantFull: { [key: string]: IRestaurant } = {};
   limit = 3;
   currentPage = 1;
+  deletedCurrentPage = 1;
   showAllRestaurants = false;
+  showAllDeletedRestaurants = false;
   showAllData = false;
+  showDeletedAllData: boolean = false;
   goToPageControl = new FormControl<number | null>(1);
+  goToDeletedPageControl = new FormControl<number | null>(1);
 
   restaurantRewards: { [key: string]: IReward[] } = {};
   showRewardForm: { [key: string]: boolean } = {};
@@ -176,13 +186,13 @@ export class RestaurantList implements OnInit, OnDestroy {
       categoryEstrellaMichelin: [false],
       categoryStreetFood: [false],
       globalRating: [0, [Validators.pattern('^[0-5]+(\\.[0-9]+)?$'), Validators.min(0), Validators.max(5)]],
-      monday:    ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      tuesday:   ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      monday: ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      tuesday: ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
       wednesday: ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      thursday:  ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      friday:    ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      saturday:  ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
-      sunday:    ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      thursday: ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      friday: ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      saturday: ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
+      sunday: ['', [Validators.pattern('(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d(?:,(?:[01]\\d|2[0-3]):[0-5]\\d-(?:[01]\\d|2[0-3]):[0-5]\\d)*')]],
       imageUrl: ['', Validators.pattern('^http[^,\\s]*(,http[^,\\s]*)*$')],
       phone: [''],
       email: [''],
@@ -295,6 +305,16 @@ export class RestaurantList implements OnInit, OnDestroy {
       this.currentPage = 1;
       this.updatePagedRestaurants();
     });
+
+    this.searchDeletedControl.valueChanges.subscribe(value => {
+      const term = value?.toLowerCase() ?? '';
+      term ? this.searchDeleted = true : this.searchDeleted = false;
+      this.filteredDeletedRestaurants = this.deletedRestaurants.filter(restaurant =>
+        restaurant.profile.name.toLowerCase().includes(term)
+      );
+      this.deletedCurrentPage = 1;
+      this.updatePagedDeletedRestaurants();
+    });
   }
 
   ngOnDestroy(): void {
@@ -325,6 +345,22 @@ export class RestaurantList implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
     });
+
+    this.api.getDeletedRestaurants().subscribe({
+      next: (res: any) => {
+        const data = res?.data ?? res ?? [];
+        this.deletedRestaurants = data;
+        this.filteredDeletedRestaurants = [...data];
+        this.updatePagedDeletedRestaurants();
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.errorMsg = 'Could not load deleted restaurants.';
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   trackById(_index: number, restaurant: IRestaurant): string | undefined {
@@ -349,6 +385,13 @@ export class RestaurantList implements OnInit, OnDestroy {
       return this.filteredRestaurants;
     }
     return this.pagedRestaurants;
+  }
+
+  get visibleDeletedRestaurants(): IRestaurant[] {
+    if (this.search) {
+      return this.filteredDeletedRestaurants;
+    }
+    return this.pagedDeletedRestaurants;
   }
 
   private refreshRestaurantFull(restaurantId: string) {
@@ -535,6 +578,62 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.mapLoadError[restaurantId] = false;
   }
 
+  private refreshDeletedRestaurantFull(restaurantId: string) {
+    this.api.getDeletedRestaurantFull(restaurantId).subscribe({
+      next: (full) => {
+        this.deletedRestaurantFull[restaurantId] = full;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.errorMsg = 'Could not load full deleted restaurant data.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  toggleExpandDeleted(restaurantId: string): void {
+    this.expanded[restaurantId] = !this.expanded[restaurantId];
+
+    if (this.expanded[restaurantId]) {
+      this.refreshDeletedRestaurantFull(restaurantId);
+
+      this.rewardPage[restaurantId] = 0;
+      this.loadRestaurantRewards(restaurantId);
+
+      this.visitPage[restaurantId] = 0;
+      this.loadRestaurantVisits(restaurantId);
+
+      this.dishPage[restaurantId] = 0;
+      this.loadRestaurantDishes(restaurantId);
+
+      this.employeePage[restaurantId] = 0;
+      this.loadRestaurantEmployees(restaurantId);
+
+      this.badgePage[restaurantId] = 0;
+      this.loadRestaurantBadges(restaurantId);
+    }
+  }
+
+  restoreRestaurant(restaurantId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'restore this restaurant'
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loading = true;
+        this.cdr.markForCheck();
+        this.api.restoreRestaurant(restaurantId).subscribe({
+          next: () => this.load(),
+          error: () => {
+            this.errorMsg = 'Could not restore restaurant.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          }
+        });
+      }
+    });
+  }
+
   private formatRelationValue(value: unknown): string {
     if (Array.isArray(value)) {
       return value
@@ -602,13 +701,13 @@ export class RestaurantList implements OnInit, OnDestroy {
       categoryGelateria: restaurant.profile.category?.includes('Gelateria'),
       categoryEstrellaMichelin: restaurant.profile.category?.includes('Estrella Michelin'),
       categoryStreetFood: restaurant.profile.category?.includes('Street Food'),
-      monday:    restaurant.profile.timetable?.monday    ? restaurant.profile.timetable.monday.map(s => `${s.open}-${s.close}`).join(',') : '',
-      tuesday:   restaurant.profile.timetable?.tuesday   ? restaurant.profile.timetable.tuesday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      monday: restaurant.profile.timetable?.monday ? restaurant.profile.timetable.monday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      tuesday: restaurant.profile.timetable?.tuesday ? restaurant.profile.timetable.tuesday.map(s => `${s.open}-${s.close}`).join(',') : '',
       wednesday: restaurant.profile.timetable?.wednesday ? restaurant.profile.timetable.wednesday.map(s => `${s.open}-${s.close}`).join(',') : '',
-      thursday:  restaurant.profile.timetable?.thursday  ? restaurant.profile.timetable.thursday.map(s => `${s.open}-${s.close}`).join(',') : '',
-      friday:    restaurant.profile.timetable?.friday    ? restaurant.profile.timetable.friday.map(s => `${s.open}-${s.close}`).join(',') : '',
-      saturday:  restaurant.profile.timetable?.saturday  ? restaurant.profile.timetable.saturday.map(s => `${s.open}-${s.close}`).join(',') : '',
-      sunday:    restaurant.profile.timetable?.sunday    ? restaurant.profile.timetable.sunday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      thursday: restaurant.profile.timetable?.thursday ? restaurant.profile.timetable.thursday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      friday: restaurant.profile.timetable?.friday ? restaurant.profile.timetable.friday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      saturday: restaurant.profile.timetable?.saturday ? restaurant.profile.timetable.saturday.map(s => `${s.open}-${s.close}`).join(',') : '',
+      sunday: restaurant.profile.timetable?.sunday ? restaurant.profile.timetable.sunday.map(s => `${s.open}-${s.close}`).join(',') : '',
       imageUrl: restaurant.profile.image?.join(',') ?? '',
       phone: restaurant.profile.contact?.phone ?? '',
       email: restaurant.profile.contact?.email ?? '',
@@ -700,13 +799,13 @@ export class RestaurantList implements OnInit, OnDestroy {
     const newRestaurant: Partial<IRestaurant> = {
       profile: {
         timetable: {
-          monday:    parseDay(v.monday),
-          tuesday:   parseDay(v.tuesday),
+          monday: parseDay(v.monday),
+          tuesday: parseDay(v.tuesday),
           wednesday: parseDay(v.wednesday),
-          thursday:  parseDay(v.thursday),
-          friday:    parseDay(v.friday),
-          saturday:  parseDay(v.saturday),
-          sunday:    parseDay(v.sunday),
+          thursday: parseDay(v.thursday),
+          friday: parseDay(v.friday),
+          saturday: parseDay(v.saturday),
+          sunday: parseDay(v.sunday),
         },
         contact: {
           phone: v.phone || undefined,
@@ -717,21 +816,21 @@ export class RestaurantList implements OnInit, OnDestroy {
             type: v.type || undefined,
             coordinates: [v.lon || undefined, v.lat || undefined],
           },
-          city:          v.city || undefined,
-          address:       v.address || undefined,
+          city: v.city || undefined,
+          address: v.address || undefined,
           googlePlaceId: v.googlePlaceId || undefined,
         },
-        name:        v.name,
+        name: v.name,
         description: v.description,
         globalRating: v.globalRating,
         category,
         image: v.imageUrl ? v.imageUrl.split(',') : undefined,
       },
-      employees:  undefined,
-      dishes:     undefined,
-      rewards:    undefined,
+      employees: undefined,
+      dishes: undefined,
+      rewards: undefined,
       statistics: v.statistics || undefined,
-      badges:     undefined,
+      badges: undefined,
     };
 
     if (this.editting && this.restaurantEditId) {
@@ -755,7 +854,7 @@ export class RestaurantList implements OnInit, OnDestroy {
         }
       });
     }
-}
+  }
 
   resetForm(): void {
     this.showForm = false;
@@ -765,7 +864,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   }
 
   confirmDelete(id: string, name?: string): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: name });
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: `soft delete the restaurant ${name}` });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.delete(id);
     });
@@ -776,7 +875,7 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.loading = true;
     this.cdr.markForCheck();
 
-    this.api.deleteRestaurant(id).subscribe({
+    this.api.softDeleteRestaurant(id).subscribe({
       next: () => this.load(),
       error: () => {
         this.errorMsg = 'Error delete';
@@ -891,7 +990,7 @@ export class RestaurantList implements OnInit, OnDestroy {
 
   removeReward(restaurant: IRestaurant, reward: any): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete ${reward.name || 'this reward'}?`
+      data: `soft delete ${reward.name || 'this reward'}`
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -902,10 +1001,10 @@ export class RestaurantList implements OnInit, OnDestroy {
         this.loading = true;
         this.cdr.markForCheck();
 
-        this.rewardApi.deleteReward(rewardId).subscribe({
+        this.rewardApi.softDeleteReward(rewardId).subscribe({
           next: () => {
             this.loadRestaurantRewards(restaurant._id!);
-            
+
             this.loading = false;
             this.cdr.markForCheck();
           },
@@ -1084,7 +1183,7 @@ export class RestaurantList implements OnInit, OnDestroy {
 
   removeVisit(restaurantId: string, visit: IVisit): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete visit from ${visit.customer_id?.name || 'this customer'}?`
+      data: `soft delete visit from ${visit.customer_id?.name || 'this customer'}`
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -1095,7 +1194,7 @@ export class RestaurantList implements OnInit, OnDestroy {
         this.loading = true;
         this.cdr.markForCheck();
 
-        this.visitApi.deleteVisit(visitId).subscribe({
+        this.visitApi.softDeleteVisit(visitId).subscribe({
           next: () => {
             this.restaurantVisits[restaurantId] = this.restaurantVisits[restaurantId]
               .filter((v: IVisit) => (v._id || v.id) !== visitId);
@@ -1283,7 +1382,7 @@ export class RestaurantList implements OnInit, OnDestroy {
 
   removeDish(restaurantId: string, dish: any): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete "${dish.name || 'this dish'}"?`
+      data: `soft delete "${dish.name || 'this dish'}"`
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
@@ -1291,7 +1390,7 @@ export class RestaurantList implements OnInit, OnDestroy {
         if (!dishId) return;
         this.loading = true;
         this.cdr.markForCheck();
-        this.dishApi.deleteDish(dishId).subscribe({
+        this.dishApi.softDeleteDish(dishId).subscribe({
           next: () => {
             this.loadRestaurantDishes(restaurantId);
           },
@@ -1450,7 +1549,7 @@ export class RestaurantList implements OnInit, OnDestroy {
 
   removeEmployee(restaurantId: string, employee: any): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete "${employee.profile?.name || 'this employee'}"?`
+      data: `soft delete "${employee.profile?.name || 'this employee'}"`
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
@@ -1458,7 +1557,7 @@ export class RestaurantList implements OnInit, OnDestroy {
         if (!employeeId) return;
         this.loading = true;
         this.cdr.markForCheck();
-        this.employeeApi.deleteEmployee(employeeId).subscribe({
+        this.employeeApi.softDeleteEmployee(employeeId).subscribe({
           next: () => { this.loadRestaurantEmployees(restaurantId); },
           error: () => {
             this.errorMsg = 'Could not remove employee.';
@@ -1601,7 +1700,7 @@ export class RestaurantList implements OnInit, OnDestroy {
 
   removeBadge(restaurantId: string, badge: any): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete badge "${badge.title || 'this badge'}"?`
+      data: `soft delete badge "${badge.title || 'this badge'}"`
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
@@ -1619,7 +1718,7 @@ export class RestaurantList implements OnInit, OnDestroy {
         this.api.updateRestaurant(restaurantId, { badges: updatedIds as any }).subscribe({
           next: () => {
             // Then delete the global badge
-            this.badgeApi.deleteBadge(badgeId).subscribe({
+            this.badgeApi.softDeleteBadge(badgeId).subscribe({
               next: () => {
                 this.loading = false;
                 this.refreshRestaurantFull(restaurantId);
@@ -1717,5 +1816,46 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.pagedRestaurants = this.filteredRestaurants.slice(start, end);
     this.goToPageControl.setValue(this.currentPage, { emitEvent: false });
     this.cdr.markForCheck();
+  }
+
+  getTotalDeletedPages(): number {
+    return Math.max(1, Math.ceil(this.filteredDeletedRestaurants.length / this.limit));
+  }
+
+  private updatePagedDeletedRestaurants(): void {
+    const totalPages = this.getTotalDeletedPages();
+    this.deletedCurrentPage = Math.min(Math.max(1, this.deletedCurrentPage), totalPages);
+
+    const start = (this.deletedCurrentPage - 1) * this.limit;
+    const end = start + this.limit;
+    this.pagedDeletedRestaurants = this.filteredDeletedRestaurants.slice(start, end);
+    this.goToDeletedPageControl.setValue(this.deletedCurrentPage, { emitEvent: false });
+    this.cdr.markForCheck();
+  }
+
+  leftDeletedPage(): void {
+    if (this.deletedCurrentPage > 1) {
+      this.deletedCurrentPage--;
+      this.updatePagedDeletedRestaurants();
+    }
+  }
+
+  rightDeletedPage(): void {
+    if (this.deletedCurrentPage < this.getTotalDeletedPages()) {
+      this.deletedCurrentPage++;
+      this.updatePagedDeletedRestaurants();
+    }
+  }
+
+  goToDeletedPage(): void {
+    const requestedPage = Number(this.goToDeletedPageControl.value);
+    if (!Number.isFinite(requestedPage)) return;
+
+    const totalPages = this.getTotalDeletedPages();
+    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
+
+    this.deletedCurrentPage = safePage;
+    this.goToDeletedPageControl.setValue(safePage, { emitEvent: false });
+    this.updatePagedDeletedRestaurants();
   }
 }

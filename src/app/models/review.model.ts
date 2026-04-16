@@ -2,9 +2,15 @@ export interface IReview {
   _id?: string;
 
   customer_id: string;
-  restaurant_id: string;
+
+  restaurant_id: {
+    _id: string;
+    profile: { name: string };
+  };
+
   dish_id?: string;
 
+  date: string; 
   globalRating: number;
   dishRating?: number;
 

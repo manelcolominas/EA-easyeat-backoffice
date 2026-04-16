@@ -16,8 +16,16 @@ export class EmployeeService {
     return this.http.get<IEmployee[]>(`${this.baseUrl}/employees`);
   }
 
+  getDeletedEmployees(): Observable<IEmployee[]> {
+    return this.http.get<IEmployee[]>(`${this.baseUrl}/employees/deleted`);
+  }
+
   getEmployee(employeeId: string): Observable<IEmployee> {
     return this.http.get<IEmployee>(`${this.baseUrl}/employees/${employeeId}`);
+  }
+
+  getDeletedEmployee(employeeId: string): Observable<IEmployee> {
+    return this.http.get<IEmployee>(`${this.baseUrl}/employees/${employeeId}/deleted`);
   }
 
   createEmployee(data: Partial<IEmployee>): Observable<IEmployee> {
@@ -28,7 +36,15 @@ export class EmployeeService {
     return this.http.put<IEmployee>(`${this.baseUrl}/employees/${employeeId}`, data);
   }
 
-  deleteEmployee(employeeId: string): Observable<IEmployee> {
-    return this.http.delete<IEmployee>(`${this.baseUrl}/employees/${employeeId}`);
+  softDeleteEmployee(employeeId: string): Observable<IEmployee> {
+    return this.http.delete<IEmployee>(`${this.baseUrl}/employees/${employeeId}/soft`);
+  }
+
+  restoreEmployee(employeeId: string): Observable<IEmployee> {
+    return this.http.patch<IEmployee>(`${this.baseUrl}/employees/${employeeId}/restore`, {});
+  }
+
+  hardDeleteEmployee(employeeId: string): Observable<IEmployee> {
+    return this.http.delete<IEmployee>(`${this.baseUrl}/employees/${employeeId}/hard`);
   }
 }

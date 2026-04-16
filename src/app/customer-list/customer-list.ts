@@ -33,20 +33,29 @@ export class CustomerList implements OnInit {
   // CUSTOMERS
   // ========================
   customers: ICustomer[] = [];
+  deletedCustomers: ICustomer[] = [];
   filteredCustomers: ICustomer[] = [];
+  filteredDeletedCustomers: ICustomer[] = [];
   pagedCustomers: ICustomer[] = [];
+  pagedDeletedCustomers: ICustomer[] = [];
   customerEditId?: string;
   searching: boolean = false;
+  searchDeleted: boolean = false;
   loading: boolean = true;
+  loadingDeleted: boolean = false;
   errorMsg: string = '';
   searchControl = new FormControl('');
+  searchDeletedControl = new FormControl('');
   customerForm!: FormGroup;
   editting = false;
   showForm = false;
   limit = 2;
   currentPage = 1;
+  deletedCurrentPage = 1;
   expanded: { [key: string]: boolean } = {};
+  expandedDeleted: { [key: string]: boolean } = {};
   goToPageControl = new FormControl<number | null>(1);
+  goToDeletedPageControl = new FormControl<number | null>(1);
 
   // ========================
   // REVIEWS
@@ -143,6 +152,16 @@ export class CustomerList implements OnInit {
       this.currentPage = 1;
       this.updatePagedCustomers();
     });
+
+    this.searchDeletedControl.valueChanges.subscribe(value => {
+      const term = value?.toLowerCase().trim() ?? '';
+      term ? this.searchDeleted = true : this.searchDeleted = false;
+      this.filteredDeletedCustomers = this.deletedCustomers.filter(c =>
+        c.name.toLowerCase().includes(term)
+      );
+      this.deletedCurrentPage = 1;
+      this.updatePagedDeletedCustomers();
+    });
   }
 
   // ========================
@@ -168,6 +187,26 @@ export class CustomerList implements OnInit {
         this.customers = [];
         this.filteredCustomers = [];
         this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.loadingDeleted = true;
+
+    this.api.getDeletedCustomers().subscribe({
+      next: (res: any) => {
+        const data = res?.data ?? res ?? [];
+        this.deletedCustomers = data;
+        this.filteredDeletedCustomers = [...data];
+        this.updatePagedDeletedCustomers();
+        this.loadingDeleted = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error(err);
+        this.deletedCustomers = [];
+        this.filteredDeletedCustomers = [];
+        this.loadingDeleted = false;
         this.cdr.markForCheck();
       }
     });
@@ -203,25 +242,36 @@ export class CustomerList implements OnInit {
     return Boolean(state.disabled ?? state.deleted ?? state.isDeleted);
   }
 
-  toggleCustomerStatus(customer: ICustomer): void {
+  toggleCustomerStatus(customerId: string, customer: ICustomer): void {
     if (!customer._id) return;
 
-    const wasDisabled = this.isCustomerDisabled(customer);
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `disable the customer ${customer.name}`
+    });
 
-    const request = wasDisabled
-      ? this.api.restoreCustomer(customer._id)
-      : this.api.softDeleteCustomer(customer._id);
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
 
-    request.subscribe({
-      next: () => {
-        (customer as ICustomer & { active?: boolean }).active = wasDisabled;
-        this.filteredCustomers = [...this.filteredCustomers];
-        this.pagedCustomers = [... this.pagedCustomers];
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error(err);
-        this.errorMsg = 'Error updating customer status';
+        const wasDisabled = this.isCustomerDisabled(customer);
+
+        const request = wasDisabled
+          ? this.api.restoreCustomer(customerId)
+          : this.api.softDeleteCustomer(customerId);
+
+        request.subscribe({
+          next: () => {
+            (customer as ICustomer & { active?: boolean }).active = wasDisabled;
+            this.filteredCustomers = [...this.filteredCustomers];
+            this.pagedCustomers = [... this.pagedCustomers];
+            this.cdr.markForCheck();
+
+            this.load();
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error updating customer status';
+          }
+        });
       }
     });
   }
@@ -266,6 +316,13 @@ export class CustomerList implements OnInit {
       return this.filteredCustomers;
     }
     return this.pagedCustomers;
+  }
+
+  get visibleDeletedCustomers(): ICustomer[] {
+    if (this.searchDeleted) {
+      return this.filteredDeletedCustomers;
+    }
+    return this.pagedDeletedCustomers;
   }
 
   get totalPages(): number {
@@ -364,7 +421,7 @@ export class CustomerList implements OnInit {
     if (this.expanded[id]) {
       this.reviewPage[id] = 0;
       this.loadReviews(id);
-      
+
       // NEW: Load visits on expand
       this.visitPage[id] = 0;
       this.loadVisits(id);
@@ -383,6 +440,83 @@ export class CustomerList implements OnInit {
     this.currentPage = safePage;
     this.goToPageControl.setValue(safePage, { emitEvent: false });
     this.updatePagedCustomers();
+  }
+
+  // ========================
+  // DELETED CUSTOMERS PAGINATION
+  // ========================
+
+  get totalDeletedPages(): number {
+    return Math.max(1, Math.ceil(this.filteredDeletedCustomers.length / this.limit));
+  }
+
+  nextDeletedPage(): void {
+    if (this.deletedCurrentPage < this.totalDeletedPages) {
+      this.deletedCurrentPage++;
+      this.updatePagedDeletedCustomers();
+    }
+  }
+
+  prevDeletedPage(): void {
+    if (this.deletedCurrentPage > 1) {
+      this.deletedCurrentPage--;
+      this.updatePagedDeletedCustomers();
+    }
+  }
+
+  goToDeletedPage(): void {
+    const requestedPage = Number(this.goToDeletedPageControl.value);
+    if (!Number.isFinite(requestedPage)) return;
+
+    const totalPages = this.totalDeletedPages;
+    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
+
+    this.deletedCurrentPage = safePage;
+    this.goToDeletedPageControl.setValue(safePage, { emitEvent: false });
+    this.updatePagedDeletedCustomers();
+  }
+
+  private updatePagedDeletedCustomers(): void {
+    const totalPages = this.totalDeletedPages;
+    this.deletedCurrentPage = Math.min(Math.max(1, this.deletedCurrentPage), totalPages);
+
+    const start = (this.deletedCurrentPage - 1) * this.limit;
+    const end = start + this.limit;
+    this.pagedDeletedCustomers = this.filteredDeletedCustomers.slice(start, end);
+    this.cdr.markForCheck();
+  }
+
+  toggleExpandDeleted(id: string): void {
+    this.expandedDeleted[id] = !this.expandedDeleted[id];
+
+    if (this.expandedDeleted[id]) {
+      this.reviewPage[id] = 0;
+      this.loadReviews(id);
+
+      this.visitPage[id] = 0;
+      this.loadVisits(id);
+
+      this.loadCustomerBadges(id);
+    }
+  }
+
+  restoreDeletedCustomer(customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'restore this customer'
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.api.restoreCustomer(customerId).subscribe({
+          next: () => {
+            this.load();
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error restoring customer';
+          }
+        });
+      }
+    });
   }
 
   private updatePagedCustomers(): void {
@@ -443,8 +577,9 @@ export class CustomerList implements OnInit {
 
   loadReviews(customerId: string): void {
     this.reviewService.getByCustomer(customerId).subscribe({
-      next: (response: IPaginatedReviews) => {
-        const allReviews = response?.data ?? [];
+      next: (data: { data: IReview[], total: number }) => {
+        const allReviews = data.data ?? [];
+
         // STEP 1: FILTER
         let filtered = this.filterReviews(allReviews);
 
@@ -477,7 +612,7 @@ export class CustomerList implements OnInit {
     if (!this.minGlobalRatingFilter) {
       return reviews;
     }
-    return reviews.filter(r =>r.globalRating >= this.minGlobalRatingFilter!);
+    return reviews.filter(r => r.globalRating >= this.minGlobalRatingFilter!);
   }
 
   /**
@@ -681,7 +816,7 @@ export class CustomerList implements OnInit {
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.reviewService.delete(reviewId)
+        this.reviewService.softDelete(reviewId)
           .subscribe(() => this.loadReviews(customerId));
       }
     });
@@ -717,9 +852,9 @@ export class CustomerList implements OnInit {
 
   loadVisits(customerId: string): void {
     this.visitService.getVisitsByCustomerId(customerId).subscribe({
-      next: (allVisits: IVisit[]) => {
+      next: (allVisits: { data: IVisit[], pagination: { total: number, page: number, limit: number, pages: number } }) => {
         // STEP 1: FILTER
-        let filtered = this.filterVisits(allVisits);
+        let filtered = this.filterVisits(allVisits.data);
 
         // STEP 2: SORT
         let sorted = this.sortVisits(filtered);
@@ -868,7 +1003,7 @@ export class CustomerList implements OnInit {
 
   deleteVisit(visitId: string, customerId: string): void {
     if (confirm('¿Seguro que quieres borrar permanentemente (Hard Delete)?')) {
-      this.visitService.deleteVisit(visitId).subscribe(() => {
+      this.visitService.softDeleteVisit(visitId).subscribe(() => {
         this.loadVisits(customerId);
       });
     }

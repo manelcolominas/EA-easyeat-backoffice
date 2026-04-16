@@ -10,10 +10,10 @@ import { IBadge } from '../models/badge.model';
 export class BadgeService {
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getBadges(): Observable<IBadge[]> {
-    return this.http.get<IBadge[]>(`${this.baseUrl}/badges`);
+    return this.http.get<IBadge[]>(`${this.baseUrl}`);
   }
 
   /** Gets all badges belonging to a restaurant via the restaurant endpoint */
@@ -29,7 +29,7 @@ export class BadgeService {
 
   /** Gets badges earned by a customer */
   getBadgesByCustomer(customerId: string): Observable<IBadge[]> {
-    return this.http.get<any>(`${this.baseUrl}/badges/customer/${customerId}`).pipe(
+    return this.http.get<any>(`${this.baseUrl}/customers/${customerId}/badges`).pipe(
       map(res => res?.data ?? res ?? [])
     );
   }
@@ -46,7 +46,15 @@ export class BadgeService {
     return this.http.put<IBadge>(`${this.baseUrl}/badges/${badgeId}`, data);
   }
 
-  deleteBadge(badgeId: string): Observable<IBadge> {
-    return this.http.delete<IBadge>(`${this.baseUrl}/badges/${badgeId}`);
+  softDeleteBadge(badgeId: string): Observable<IBadge> {
+    return this.http.delete<IBadge>(`${this.baseUrl}/badges/${badgeId}/soft`);
+  }
+
+  restoreBadge(badgeId: string): Observable<IBadge> {
+    return this.http.patch<IBadge>(`${this.baseUrl}/badges/${badgeId}/restore`, {});
+  }
+
+  hardDeleteBadge(badgeId: string): Observable<IBadge> {
+    return this.http.delete<IBadge>(`${this.baseUrl}/badges/${badgeId}/hard`);
   }
 }

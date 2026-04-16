@@ -52,7 +52,7 @@ export interface IRestaurantDishesResponse {
 export class ReviewService {
   private baseUrl = `${environment.apiUrl}/reviews`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // ========================
   // GET ALL
@@ -61,12 +61,22 @@ export class ReviewService {
     return this.http.get<IReview[]>(this.baseUrl);
   }
 
+  getAllDeleted(): Observable<IReview[]> {
+    return this.http.get<IReview[]>(`${this.baseUrl}/deleted`);
+  }
+
   // ========================
   // GET BY RESTAURANT
   // ========================
   getByRestaurant(restaurantId: string): Observable<IReview[]> {
     return this.http.get<IReview[]>(
       `${this.baseUrl}/restaurant/${restaurantId}`
+    );
+  }
+
+  getByDeletedRestaurant(restaurantId: string): Observable<IReview[]> {
+    return this.http.get<IReview[]>(
+      `${this.baseUrl}/restaurant/${restaurantId}/deleted`
     );
   }
 
@@ -93,11 +103,24 @@ export class ReviewService {
     return this.http.get<IPaginatedReviews>(url);
   }
 
-  // ========================
-  // GET ONE
-  // ========================
-  getById(reviewId: string): Observable<IReview> {
-    return this.http.get<IReview>(`${this.baseUrl}/${reviewId}`);
+  getByDeletedCustomer(
+    customerId: string,
+    limit = 5,
+    skip = 0,
+    minGlobalRating?: number,
+    sortByLikes?: boolean
+  ): Observable<IPaginatedReviews> {
+    let url = `${this.baseUrl}/customer/${customerId}/deleted?limit=${limit}&skip=${skip}`;
+
+    if (minGlobalRating !== undefined) {
+      url += `&minGlobalRating=${minGlobalRating}`;
+    }
+
+    if (sortByLikes) {
+      url += `&sortByLikes=true`;
+    }
+
+    return this.http.get<IPaginatedReviews>(url);
   }
 
   // ========================
@@ -123,9 +146,21 @@ export class ReviewService {
   // ========================
   // DELETE
   // ========================
-  delete(reviewId: string): Observable<IReview> {
+  softDelete(reviewId: string): Observable<IReview> {
     return this.http.delete<IReview>(
-      `${this.baseUrl}/${reviewId}`
+      `${this.baseUrl}/${reviewId}/soft`
+    );
+  }
+
+  restoreDelete(reviewId: string): Observable<IReview> {
+    return this.http.patch<IReview>(
+      `${this.baseUrl}/${reviewId}/restore`, {}
+    );
+  }
+
+  hardDelete(reviewId: string): Observable<IReview> {
+    return this.http.delete<IReview>(
+      `${this.baseUrl}/${reviewId}/hard`
     );
   }
 
