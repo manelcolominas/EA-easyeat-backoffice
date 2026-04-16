@@ -760,14 +760,6 @@ export class CustomerList implements OnInit {
     });
   }
 
-  like(review: IReview): void {
-    this.reviewService.like(review._id!, review.likes ?? 0)
-      .subscribe(updated => {
-        review.likes = updated.likes;
-        this.cdr.markForCheck();
-      });
-  }
-
   getStars(globalRating: number): number[] {
     return Array(globalRating).fill(0);
   }

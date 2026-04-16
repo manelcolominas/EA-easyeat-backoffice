@@ -3,7 +3,6 @@ import { Observable, map } from 'rxjs';
 import { IReview } from '../models/review.model';
 import { ApiClientService } from './api-client.service';
 import { normalizeArrayResponse } from './api-response.util';
-import { IDish } from '../models/dish.model';
 
 // ========================
 // TYPES EXTRA
@@ -23,22 +22,6 @@ export interface ITopDishInfo {
 
 export interface IRestaurantTopDishResponse {
   topDish: ITopDishInfo | null;
-}
-
-export interface IDishWithStats {
-  dishId: string;
-  name: string;
-  images: string[];
-  averageRating: number;
-  totalRatings: number;
-}
-
-export interface IRestaurantDishesResponse {
-  restaurant: {
-    _id: string;
-    name: string | null;
-  };
-  dishes: IDishWithStats[];
 }
 
 // ========================
@@ -139,13 +122,6 @@ export class ReviewService {
   }
 
   // ========================
-  // LIKE
-  // ========================
-  like(reviewId: string, currentLikes: number): Observable<IReview> {
-    return this.update(reviewId, { likes: currentLikes + 1 });
-  }
-
-  // ========================
   // TOP DISH
   // ========================
   getTopDish(restaurantId: string): Observable<IRestaurantTopDishResponse> {
@@ -159,29 +135,6 @@ export class ReviewService {
               totalRatings: dish.totalRatings ?? null,
             }
           : null,
-      }))
-    );
-  }
-
-  // ========================
-  // ALL DISHES WITH RATINGS
-  // ========================
-  getDishesWithRatings(
-    restaurantId: string
-  ): Observable<IRestaurantDishesResponse> {
-    return this.api.get<{ _id?: string; dishes?: IDish[] }>(`/restaurants/${restaurantId}/dishes`).pipe(
-      map((response) => ({
-        restaurant: {
-          _id: restaurantId,
-          name: null,
-        },
-        dishes: (response?.dishes ?? []).map((dish) => ({
-          dishId: dish._id ?? '',
-          name: dish.name,
-          images: dish.images ?? [],
-          averageRating: 0,
-          totalRatings: 0,
-        })),
       }))
     );
   }

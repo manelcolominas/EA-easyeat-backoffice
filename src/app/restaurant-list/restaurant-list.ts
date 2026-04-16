@@ -494,18 +494,18 @@ export class RestaurantList implements OnInit, OnDestroy {
   }
 
   formatTopDishRating(rating: number | null | undefined): string {
-    if (!Number.isFinite(rating as number)) {
+    if (rating === null || rating === undefined || !Number.isFinite(rating)) {
       return '—';
     }
-    const fixed = Number((rating as number).toFixed(2));
+    const fixed = Number(rating.toFixed(2));
     return fixed.toString();
   }
 
   formatTopDishVotes(count: number | null | undefined): string {
-    if (!Number.isFinite(count as number)) {
+    if (count === null || count === undefined || !Number.isFinite(count)) {
       return '— valoraciones';
     }
-    const safeCount = Math.max(0, Math.trunc(count as number));
+    const safeCount = Math.max(0, Math.trunc(count));
     return `${safeCount} valoraciones`;
   }
 

@@ -243,7 +243,7 @@
                       }
                     </div>
                     <p>{{ review.comment }}</p>
-                    <button class="btn-custom btn-primary" type="button" (click)="like(review)">👍 {{ review.likes || 0 }}</button>
+                    <span class="chip chip-primary">👍 {{ review.likes || 0 }}</span>
                     <div style="margin-top:5px;">
                       <button class="btn-custom btn-primary" type="button" (click)="editReview(review)">Edit</button>
                       <button class="btn-custom btn-danger" type="button" (click)="deleteReview(review._id!, customer._id!)">✕</button>
@@ -488,7 +488,7 @@
             }
           </div>
           <p>{{ review.comment }}</p>
-          <span class="btn-custom btn-primary" style="cursor:default;">👍 {{ review.likes || 0 }}</span>
+          <span class="chip chip-primary">👍 {{ review.likes || 0 }}</span>
         </div>
         }
         } @else {
