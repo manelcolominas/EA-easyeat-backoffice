@@ -10,10 +10,10 @@ import { IBadge } from '../models/badge.model';
 export class BadgeService {
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getBadges(): Observable<IBadge[]> {
-    return this.http.get<IBadge[]>(`${this.baseUrl}/badges`);
+    return this.http.get<IBadge[]>(`${this.baseUrl}`);
   }
 
   /** Gets all badges belonging to a restaurant via the restaurant endpoint */
@@ -29,7 +29,7 @@ export class BadgeService {
 
   /** Gets badges earned by a customer */
   getBadgesByCustomer(customerId: string): Observable<IBadge[]> {
-    return this.http.get<any>(`${this.baseUrl}/customer/${customerId}/badges`).pipe(
+    return this.http.get<any>(`${this.baseUrl}/customers/${customerId}/badges`).pipe(
       map(res => res?.data ?? res ?? [])
     );
   }

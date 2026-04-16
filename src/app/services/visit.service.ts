@@ -10,7 +10,7 @@ import { IVisit } from '../models/visit.model';
 export class VisitService {
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getVisitsByRestaurantId(restaurantId: string): Observable<any> {
     const params = new HttpParams().set('restaurant_id', restaurantId);
@@ -22,12 +22,12 @@ export class VisitService {
     return this.http.get<any>(`${this.baseUrl}/visits/deleted`, { params });
   }
 
-  getVisitsByCustomerId(customerId: string): Observable<IVisit[]> {    
+  getVisitsByCustomerId(customerId: string): Observable<any> {
     const params = new HttpParams().set('customer_id', customerId);
     return this.http.get<any>(`${this.baseUrl}/visits`, { params });
   }
 
-  getDeletedVisitsByCustomerId(customerId: string): Observable<IVisit[]> {    
+  getDeletedVisitsByCustomerId(customerId: string): Observable<any> {
     const params = new HttpParams().set('customer_id', customerId);
     return this.http.get<any>(`${this.baseUrl}/visits/deleted`, { params });
   }

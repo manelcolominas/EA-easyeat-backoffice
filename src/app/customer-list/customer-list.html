@@ -7,8 +7,8 @@
     <button class="btn-custom btn-primary" (click)="toggleShowForm()">
       {{ showForm ? '✕ Cancel' : '+ Add Customer' }}
     </button>
-    @if (!loading && !errorMsg && customers.length > 0) {
-      <button class="btn-custom btn-secondary" (click)="load()">↻ Refresh</button>
+    @if (!loading) {
+    <button class="btn-custom btn-secondary" (click)="load()">↻ Refresh</button>
     }
   </div>
 </div>
@@ -22,318 +22,483 @@
 @if (!loading && errorMsg) { <p class="error mt-sm">{{ errorMsg }}</p> }
 
 @if (showForm) {
-  <div class="card-custom form-card">
-    <h3>{{ editting ? 'Edit customer' : 'New customer' }}</h3>
-    <form [formGroup]="customerForm" (ngSubmit)="guardar()">
-      <div class="form-group">
-        <label>Name:</label>
-        <input class="input-custom" type="text" formControlName="name" />
-        @if (customerForm.get('name')?.invalid && customerForm.get('name')?.touched) {
-          <small class="error-text">Name is required</small>
-        }
-      </div>
-      <div class="form-group">
-        <label>Email:</label>
-        <input class="input-custom" type="text" formControlName="email" />
-        <small style="color: red;" *ngIf="customerForm.get('email')?.hasError('email') && customerForm.get('email')?.touched">
-          El email debe ser correcto.
-        </small>
-      </div>
-      <div class="form-group">
-        <label>Password:</label>
-        <input class="input-custom" type="password" formControlName="password" />
-        <small style="color: red;" *ngIf="customerForm.get('password')?.hasError('pattern') && customerForm.get('password')?.touched">
-          La contraseña debe tener al menos 8 caracteres y una mayúscula.
-        </small>
-      </div>
-      <div class="form-buttons">
-        <button type="submit" class="btn-custom btn-primary" [disabled]="customerForm.invalid">{{ editting ? 'Update' : 'Save' }}</button>
-        <button class="btn-custom btn-secondary" type="button" (click)="toggleShowForm()">Cancel</button>
-      </div>
-    </form>
-  </div>
+<div class="card-custom form-card">
+  <h3>{{ editting ? 'Edit customer' : 'New customer' }}</h3>
+  <form [formGroup]="customerForm" (ngSubmit)="guardar()">
+    <div class="form-group">
+      <label>Name:</label>
+      <input class="input-custom" type="text" formControlName="name" />
+      @if (customerForm.get('name')?.invalid && customerForm.get('name')?.touched) {
+      <small class="error-text">Name is required</small>
+      }
+    </div>
+    <div class="form-group">
+      <label>Email:</label>
+      <input class="input-custom" type="text" formControlName="email" />
+      <small style="color: red;"
+        *ngIf="customerForm.get('email')?.hasError('email') && customerForm.get('email')?.touched">
+        El email debe ser correcto.
+      </small>
+    </div>
+    <div class="form-group">
+      <label>Password:</label>
+      <input class="input-custom" type="password" formControlName="password" />
+      <small style="color: red;"
+        *ngIf="customerForm.get('password')?.hasError('pattern') && customerForm.get('password')?.touched">
+        La contraseña debe tener al menos 8 caracteres y una mayúscula.
+      </small>
+    </div>
+    <div class="form-buttons">
+      <button type="submit" class="btn-custom btn-primary" [disabled]="customerForm.invalid">{{ editting ? 'Update' :
+        'Save' }}</button>
+      <button class="btn-custom btn-secondary" type="button" (click)="toggleShowForm()">Cancel</button>
+    </div>
+  </form>
+</div>
 }
 
 @if (!loading && !errorMsg && customers.length > 0) {
-  <ul class="list">
-    @for (customer of visibleCustomers; track customer._id) {
-      <li
-        class="card-custom"
-        [style.backgroundColor]="isCustomerDisabled(customer) ? '#fff3e0' : null"
-        [style.border]="isCustomerDisabled(customer) ? '1px solid #ffb74d' : null"
-      >
+<ul class="list">
+  @for (customer of visibleCustomers; track customer._id) {
+  <li class="card-custom" [style.backgroundColor]="isCustomerDisabled(customer) ? '#fff3e0' : null"
+    [style.border]="isCustomerDisabled(customer) ? '1px solid #ffb74d' : null">
 
-        <div class="list-item-row">
-          <div>
-            <span
-              class="list-item-name"
-              [style.color]="isCustomerDisabled(customer) ? '#e65100' : null"
-            >
-              {{
-                expanded[customer._id!] || customer.name.length <= 30
-                  ? customer.name
-                  : (customer.name | slice:0:30) + '...'
-              }}
-            </span>
+    <div class="list-item-row">
+      <div>
+        <span class="list-item-name" [style.color]="isCustomerDisabled(customer) ? '#e65100' : null">
+          {{
+          expanded[customer._id!] || customer.name.length <= 30 ? customer.name : (customer.name | slice:0:30) + '...'
+            }} </span>
             <div class="list-item-id">{{ customer._id }}</div>
-          </div>
+      </div>
 
-          <div class="list-item-actions">
-            <button class="btn-custom btn-secondary btn-sm" type="button" (click)="toggleExpand(customer._id!)">
-              {{ expanded[customer._id!] ? '▲ Less' : '▼ More' }}
-            </button>
+      <div class="list-item-actions">
+        <button class="btn-custom btn-secondary btn-sm" type="button" (click)="toggleExpand(customer._id!)">
+          {{ expanded[customer._id!] ? '▲ Less' : '▼ More' }}
+        </button>
 
-            @if (isCustomerDisabled(customer)) {
-              <span style="font-size:12px;font-weight:700;color:#e65100;padding:0 4px;">DISABLED</span>
-            }
+        @if (isCustomerDisabled(customer)) {
+        <span style="font-size:12px;font-weight:700;color:#e65100;padding:0 4px;">DISABLED</span>
+        }
 
-            <button class="btn-custom btn-primary btn-sm" type="button" (click)="edit(customer)" [disabled]="isCustomerDisabled(customer)">
-              Edit
-            </button>
+        <button class="btn-custom btn-primary btn-sm" type="button" (click)="edit(customer)"
+          [disabled]="isCustomerDisabled(customer)">
+          Edit
+        </button>
 
-            <button
-              class="btn-custom btn-sm"
-              [class.btn-danger]="!isCustomerDisabled(customer)"
-              [class.btn-success]="isCustomerDisabled(customer)"
-              type="button"
-              (click)="toggleCustomerStatus(customer)"
-            >
-              {{ isCustomerDisabled(customer) ? '✓ Enable' : 'Disable' }}
-            </button>
+        <button class="btn-custom btn-sm" [class.btn-danger]="!isCustomerDisabled(customer)"
+          [class.btn-success]="isCustomerDisabled(customer)" type="button"
+          (click)="toggleCustomerStatus(customer._id!, customer)">
+          {{ isCustomerDisabled(customer) ? '✓ Enable' : 'Disable' }}
+        </button>
 
-            <button class="btn-custom btn-secondary btn-sm" type="button" (click)="openReviewForm(customer._id!)" [disabled]="isCustomerDisabled(customer)">
-              ➕ Review
-            </button>
-          </div>
+        <button class="btn-custom btn-secondary btn-sm" type="button" (click)="openReviewForm(customer._id!)"
+          [disabled]="isCustomerDisabled(customer)">
+          ➕ Review
+        </button>
+      </div>
+    </div>
+
+    @if (expanded[customer._id!]) {
+    <div class="data card-details">
+      <hr>
+      <p><strong>Email:</strong> {{ customer.email }}</p>
+      <p><strong>ID:</strong> {{ customer._id }}</p>
+
+      <!-- Filtros de reviews -->
+      <div class="card-custom" style="margin-top:10px;">
+        <label>Min globalRating:</label>
+        <select class="select-custom" [(ngModel)]="minGlobalRatingFilter" (change)="loadReviews(customer._id!)">
+          <option [ngValue]="null">All</option>
+          <option [ngValue]="5">5+</option>
+          <option [ngValue]="7">7+</option>
+          <option [ngValue]="9">9+</option>
+        </select>
+        <label style="margin-left:10px;">
+          <input class="checkbox-custom" type="checkbox" [(ngModel)]="sortByLikes"
+            (change)="loadReviews(customer._id!)" />
+          Sort by likes
+        </label>
+      </div>
+
+      <!-- Sección de Visitas -->
+      <div class="visits-section" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h4>Visits History</h4>
+          <button class="btn-custom btn-primary btn-sm" (click)="prepareNewVisit(customer._id!)">+ Add Visit</button>
         </div>
 
-        @if (expanded[customer._id!]) {
-          <div class="data card-details">
-            <hr>
-            <p><strong>Email:</strong> {{ customer.email }}</p>
-            <p><strong>ID:</strong> {{ customer._id }}</p>
-
-            <!-- Filtros de reviews -->
-            <div class="card-custom" style="margin-top:10px;">
-              <label>Min globalRating:</label>
-              <select class="select-custom" [(ngModel)]="minGlobalRatingFilter" (change)="loadReviews(customer._id!)">
-                <option [ngValue]="null">All</option>
-                <option [ngValue]="5">5+</option>
-                <option [ngValue]="7">7+</option>
-                <option [ngValue]="9">9+</option>
-              </select>
-              <label style="margin-left:10px;">
-                <input class="checkbox-custom" type="checkbox" [(ngModel)]="sortByLikes" (change)="loadReviews(customer._id!)" />
-                Sort by likes
-              </label>
-            </div>
-
-            <!-- Sección de Visitas -->
-            <div class="visits-section" style="margin-top: 20px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h4>Visits History</h4>
-                <button class="btn-custom btn-primary btn-sm" (click)="prepareNewVisit(customer._id!)">+ Add Visit</button>
-              </div>
-
-              @if (activeVisitForm && currentCustomerId === customer._id) {
-                <div class="card-custom form-card" style="background: #f9f9f9; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
-                  <h5>{{ isEditingVisit ? 'Edit Visit' : 'New Visit' }}</h5>
-                  <form [formGroup]="visitForm" (ngSubmit)="saveVisit()">
-                    <div class="form-group">
-                      <label>Restaurant:</label>
-                      <select class="select-custom" formControlName="restaurant_id">
-                        <option value="">Select a restaurant</option>
-                        @for (restaurant of restaurants; track restaurant._id) {
-                          <option [value]="restaurant._id">{{ restaurant.profile.name }}</option>
-                        }
-                      </select>
-                    </div>
-                    <div class="form-row" style="display: flex; gap: 10px;">
-                      <div class="form-group" style="flex: 1;">
-                        <label>Amount (€):</label>
-                        <input class="input-custom" type="number" formControlName="billAmount" />
-                      </div>
-                      <div class="form-group" style="flex: 1;">
-                        <label>Points:</label>
-                        <input class="input-custom" type="number" formControlName="pointsEarned" />
-                      </div>
-                    </div>
-                    <div class="form-buttons">
-                      <button type="submit" class="btn-custom btn-primary btn-sm" [disabled]="visitForm.invalid">{{ isEditingVisit ? 'Update' : 'Save' }}</button>
-                      <button type="button" class="btn-custom btn-secondary btn-sm" (click)="cancelVisitForm()">Cancel</button>
-                    </div>
-                  </form>
-                </div>
-              }
-
-              @if (loadingVisits[customer._id!]) {
-                <p class="muted italic">Cargando...</p>
-              } @else if (customerVisits[customer._id!]?.length) {
-                <table class="visits-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                  <thead>
-                    <tr style="text-align: left; border-bottom: 1px solid #ddd;">
-                      <th>Restaurant</th>
-                      <th>Date</th>
-                      <th>Spent</th>
-                      <th>Points</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (visit of customerVisits[customer._id!]; track visit._id) {
-                      <tr style="border-bottom: 1px solid #eee;">
-                        <td>{{ visit.restaurant_id?.profile?.name || '---' }}</td>
-                        <td>{{ visit.date | date:'dd/MM/yyyy' }}</td>
-                        <td>{{ visit.billAmount }}€</td>
-                        <td style="color: green;">+{{ visit.pointsEarned }}</td>
-                        <td style="display: flex; gap: 5px; padding: 5px 0;">
-                          <button class="btn-custom btn-primary btn-sm" (click)="editVisit(visit, customer._id!)" title="Edit">Edit</button>
-                          <button class="btn-custom btn-primary btn-sm" style="background: #ff9800;" (click)="softDeleteVisit(visit._id!, customer._id!)" title="Soft Delete">🗑️</button>
-                          <button class="btn-custom btn-danger btn-sm" (click)="deleteVisit(visit._id!, customer._id!)" title="Hard Delete">X</button>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              } @else {
-                <p class="muted italic">No hay visitas activas.</p>
-              }
-              <div style="margin-top:10px; display:flex; gap:10px;">
-                <button class="btn-custom btn-primary" type="button" (click)="prevVisitPage(customer._id!)" [disabled]="(visitPage[customer._id!] || 0) === 0">⬅ Prev</button>
-                <span>Page {{ (visitPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit)) }}</span>
-                <button class="btn-custom btn-primary" type="button" (click)="nextVisitPage(customer._id!)" [disabled]="((visitPage[customer._id!] || 0) + 1) * visitLimit >= (visitTotal[customer._id!] || 0)">Next ➡</button>
-              </div>
-              <label for="goToVisitPageInput" style="margin-left: 8px;">Go to page:</label>
-              <input class="input-custom"
-                id="goToVisitPageInput"
-                type="number"
-                [formControl]="goToVisitPageControl"
-                min="1"
-                [max]="Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit))"
-                style="width: 80px;"
-              />
-              <button class="btn-custom btn-primary" type="button" (click)="goToVisitPage(customer._id!)">Go</button>
-            </div>
-
-            <!-- Sección de Badges -->
-            <div class="badges-section" style="margin-top: 20px;">
-              <h4>Earned Badges</h4>
-              @if (loadingBadges[customer._id!]) {
-                <p class="muted italic">Cargando...</p>
-              } @else if (customerBadges[customer._id!]?.length) {
-                <div class="chips-wrap" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
-                  @for (badge of customerBadges[customer._id!]; track badge._id) {
-                    <div class="chip chip-success" [title]="badge.description" style="cursor: help;">
-                      🏅 {{ badge.title }}
-                    </div>
-                  }
-                </div>
-              } @else {
-                <p class="muted italic">Este cliente aún no ha ganado insignias.</p>
-              }
-            </div>
-
-            <!-- Sección de Reviews -->
-            <div class="card-custom" style="margin-top:10px;">
-              <h4>Reviews</h4>
-
-              @if ((reviewsByCustomer[customer._id!] || []).length > 0) {
-                @for (review of reviewsByCustomer[customer._id!]; track review._id) {
-                  <div style="border-bottom:1px solid #ccc; margin-bottom:8px; padding-bottom:8px;">
-                    <p><strong>{{ review.restaurant_id.profile.name }}</strong></p>
-                    <div>
-                      @for (_ of getStars(review.globalRating); track $index) {
-                        <span>⭐</span>
-                      }
-                    </div>
-                    <p>{{ review.comment }}</p>
-                    <button class="btn-custom btn-primary" type="button" (click)="like(review)">👍 {{ review.likes || 0 }}</button>
-                    <div style="margin-top:5px;">
-                      <button class="btn-custom btn-primary" type="button" (click)="editReview(review)">Edit</button>
-                      <button class="btn-custom btn-danger" type="button" (click)="deleteReview(review._id!, customer._id!)">✕</button>
-                    </div>
-                  </div>
+        @if (activeVisitForm && currentCustomerId === customer._id) {
+        <div class="card-custom form-card"
+          style="background: #f9f9f9; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+          <h5>{{ isEditingVisit ? 'Edit Visit' : 'New Visit' }}</h5>
+          <form [formGroup]="visitForm" (ngSubmit)="saveVisit()">
+            <div class="form-group">
+              <label>Restaurant:</label>
+              <select class="select-custom" formControlName="restaurant_id">
+                <option value="">Select a restaurant</option>
+                @for (restaurant of restaurants; track restaurant._id) {
+                <option [value]="restaurant._id">{{ restaurant.profile.name }}</option>
                 }
-              } @else {
-                <p>No reviews yet</p>
-              }
-
-              <div style="margin-top:10px; display:flex; gap:10px;">
-                <button class="btn-custom btn-primary" type="button" (click)="prevPage(customer._id!)" [disabled]="(reviewPage[customer._id!] || 0) === 0">⬅ Prev</button>
-                <span>Page {{ (reviewPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((reviewTotal[customer._id!] || 0) / reviewLimit)) }}</span>
-                <button class="btn-custom btn-primary" type="button" (click)="nextPage(customer._id!)" [disabled]="((reviewPage[customer._id!] || 0) + 1) * reviewLimit >= (reviewTotal[customer._id!] || 0)">Next ➡</button>
-              </div>
-              <label for="goToReviewPageInput" style="margin-left: 8px;">Go to page:</label>
-              <input class="input-custom"
-                id="goToReviewPageInput"
-                type="number"
-                [formControl]="goToReviewPageControl"
-                min="1"
-                [max]="Math.max(1, Math.ceil((reviewTotal[customer._id!] || 0) / reviewLimit))"
-                style="width: 80px;"
-              />
-              <button class="btn-custom btn-primary" type="button" (click)="goToReviewPage(customer._id!)">Go</button>
+              </select>
             </div>
-          </div>
+            <div class="form-row" style="display: flex; gap: 10px;">
+              <div class="form-group" style="flex: 1;">
+                <label>Amount (€):</label>
+                <input class="input-custom" type="number" formControlName="billAmount" />
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label>Points:</label>
+                <input class="input-custom" type="number" formControlName="pointsEarned" />
+              </div>
+            </div>
+            <div class="form-buttons">
+              <button type="submit" class="btn-custom btn-primary btn-sm" [disabled]="visitForm.invalid">{{
+                isEditingVisit ? 'Update' : 'Save' }}</button>
+              <button type="button" class="btn-custom btn-secondary btn-sm" (click)="cancelVisitForm()">Cancel</button>
+            </div>
+          </form>
+        </div>
         }
 
-        <!-- Formulario de review inline -->
-        @if (selectedCustomerId === customer._id) {
-          <div class="card-custom" style="margin-top:10px;">
-            <h4>{{ editingReviewId ? 'Edit Review' : 'New Review' }}</h4>
-            <form [formGroup]="reviewForm" (ngSubmit)="createReview()">
-              <div>
-                <label>Restaurant:</label>
-                <select class="select-custom" formControlName="restaurant_id">
-                  <option value="">Select a restaurant</option>
-                  @for (restaurant of restaurants; track restaurant._id) {
-                    <option [value]="restaurant._id">{{ restaurant.profile.name }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label>globalRating:</label>
-                <input class="input-custom" type="number" min="1" max="10" formControlName="globalRating" />
-              </div>
-              <div>
-                <label>Comment:</label>
-                <textarea formControlName="comment"></textarea>
-              </div>
-              <button class="btn-custom btn-primary" type="submit">{{ editingReviewId ? 'Update' : 'Save' }}</button>
-              <button class="btn-custom btn-primary" type="button" (click)="finishReviewAction()">Cancel</button>
-            </form>
+        @if (loadingVisits[customer._id!]) {
+        <p class="muted italic">Cargando...</p>
+        } @else if (customerVisits[customer._id!]?.length) {
+        <table class="visits-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <thead>
+            <tr style="text-align: left; border-bottom: 1px solid #ddd;">
+              <th>Restaurant</th>
+              <th>Date</th>
+              <th>Spent</th>
+              <th>Points</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (visit of customerVisits[customer._id!]; track visit._id) {
+            <tr style="border-bottom: 1px solid #eee;">
+              <td>{{ visit.restaurant_id?.profile?.name || '---' }}</td>
+              <td>{{ visit.date | date:'dd/MM/yyyy' }}</td>
+              <td>{{ visit.billAmount }}€</td>
+              <td style="color: green;">+{{ visit.pointsEarned }}</td>
+              <td style="display: flex; gap: 5px; padding: 5px 0;">
+                <button class="btn-custom btn-primary btn-sm" (click)="editVisit(visit, customer._id!)"
+                  title="Edit">Edit</button>
+                <button class="btn-custom btn-primary btn-sm" style="background: #ff9800;"
+                  (click)="softDeleteVisit(visit._id!, customer._id!)" title="Soft Delete">🗑️</button>
+                <button class="btn-custom btn-danger btn-sm" (click)="deleteVisit(visit._id!, customer._id!)"
+                  title="Hard Delete">X</button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        } @else {
+        <p class="muted italic">No active visits.</p>
+        }
+        <div style="margin-top:10px; display:flex; gap:10px;">
+          <button class="btn-custom btn-primary" type="button" (click)="prevVisitPage(customer._id!)"
+            [disabled]="(visitPage[customer._id!] || 0) === 0">⬅ Prev</button>
+          <span>Page {{ (visitPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((visitTotal[customer._id!] ||
+            0) / visitLimit)) }}</span>
+          <button class="btn-custom btn-primary" type="button" (click)="nextVisitPage(customer._id!)"
+            [disabled]="((visitPage[customer._id!] || 0) + 1) * visitLimit >= (visitTotal[customer._id!] || 0)">Next
+            ➡</button>
+        </div>
+        <label for="goToVisitPageInput" style="margin-left: 8px;">Go to page:</label>
+        <input class="input-custom" id="goToVisitPageInput" type="number" [formControl]="goToVisitPageControl" min="1"
+          [max]="Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit))" style="width: 80px;" />
+        <button class="btn-custom btn-primary" type="button" (click)="goToVisitPage(customer._id!)">Go</button>
+      </div>
+
+      <!-- Sección de Badges -->
+      <div class="badges-section" style="margin-top: 20px;">
+        <h4>Earned Badges</h4>
+        @if (loadingBadges[customer._id!]) {
+        <p class="muted italic">Cargando...</p>
+        } @else if (customerBadges[customer._id!]?.length) {
+        <div class="chips-wrap" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+          @for (badge of customerBadges[customer._id!]; track badge._id) {
+          <div class="chip chip-success" [title]="badge.description" style="cursor: help;">
+            🏅 {{ badge.title }}
           </div>
+          }
+        </div>
+        } @else {
+        <p class="muted italic">This customer has not earned any badges yet.</p>
+        }
+      </div>
+
+      <!-- Sección de Reviews -->
+      <div class="card-custom" style="margin-top:10px;">
+        <h4>Reviews</h4>
+
+        @if ((reviewsByCustomer[customer._id!] || []).length > 0) {
+        @for (review of reviewsByCustomer[customer._id!]; track review._id) {
+        <div style="border-bottom:1px solid #ccc; margin-bottom:8px; padding-bottom:8px;">
+          <p><strong>{{ review.restaurant_id.name }}</strong></p>
+          <div>
+            @for (_ of getStars(review.globalRating); track $index) {
+            <span>⭐</span>
+            }
+          </div>
+          <p>{{ review.comment }}</p>
+          <button class="btn-custom btn-primary" type="button" (click)="like(review)">👍 {{ review.likes || 0
+            }}</button>
+          <div style="margin-top:5px;">
+            <button class="btn-custom btn-primary" type="button" (click)="editReview(review)">Edit</button>
+            <button class="btn-custom btn-danger" type="button"
+              (click)="deleteReview(review._id!, customer._id!)">✕</button>
+          </div>
+        </div>
+        }
+        } @else {
+        <p>No reviews yet</p>
         }
 
-      </li>
+        <div style="margin-top:10px; display:flex; gap:10px;">
+          <button class="btn-custom btn-primary" type="button" (click)="prevPage(customer._id!)"
+            [disabled]="(reviewPage[customer._id!] || 0) === 0">⬅ Prev</button>
+          <span>Page {{ (reviewPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((reviewTotal[customer._id!]
+            || 0) / reviewLimit)) }}</span>
+          <button class="btn-custom btn-primary" type="button" (click)="nextPage(customer._id!)"
+            [disabled]="((reviewPage[customer._id!] || 0) + 1) * reviewLimit >= (reviewTotal[customer._id!] || 0)">Next
+            ➡</button>
+        </div>
+        <label for="goToReviewPageInput" style="margin-left: 8px;">Go to page:</label>
+        <input class="input-custom" id="goToReviewPageInput" type="number" [formControl]="goToReviewPageControl" min="1"
+          [max]="Math.max(1, Math.ceil((reviewTotal[customer._id!] || 0) / reviewLimit))" style="width: 80px;" />
+        <button class="btn-custom btn-primary" type="button" (click)="goToReviewPage(customer._id!)">Go</button>
+      </div>
+    </div>
     }
-  </ul>
+
+    <!-- Formulario de review inline -->
+    @if (selectedCustomerId === customer._id) {
+    <div class="card-custom" style="margin-top:10px;">
+      <h4>{{ editingReviewId ? 'Edit Review' : 'New Review' }}</h4>
+      <form [formGroup]="reviewForm" (ngSubmit)="createReview()">
+        <div>
+          <label>Restaurant:</label>
+          <select class="select-custom" formControlName="restaurant_id">
+            <option value="">Select a restaurant</option>
+            @for (restaurant of restaurants; track restaurant._id) {
+            <option [value]="restaurant._id">{{ restaurant.profile.name }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label>globalRating:</label>
+          <input class="input-custom" type="number" min="1" max="10" formControlName="globalRating" />
+        </div>
+        <div>
+          <label>Comment:</label>
+          <textarea formControlName="comment"></textarea>
+        </div>
+        <button class="btn-custom btn-primary" type="submit">{{ editingReviewId ? 'Update' : 'Save' }}</button>
+        <button class="btn-custom btn-primary" type="button" (click)="finishReviewAction()">Cancel</button>
+      </form>
+    </div>
+    }
+
+  </li>
+  }
+</ul>
 }
 
 @if (!loading && !errorMsg && filteredCustomers.length > 0) {
-  <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
-    <button class="btn-custom btn-primary" type="button" (click)="prevCustomersPage()" [disabled]="currentPage === 1">
-      ⬅ Prev
-    </button>
+<div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+  <button class="btn-custom btn-primary" type="button" (click)="prevCustomersPage()" [disabled]="currentPage === 1">
+    ⬅ Prev
+  </button>
 
-    <span>Page {{ currentPage }} / {{ totalPages }}</span>
+  <span>Page {{ currentPage }} / {{ totalPages }}</span>
 
-    <button class="btn-custom btn-primary" type="button" (click)="nextCustomersPage()" [disabled]="currentPage >= totalPages">
-      Next ➡
-    </button>
-  </div>
-  <label for="goToPageInput" style="margin-left: 8px;">Go to page:</label>
-  <input class="input-custom"
-    id="goToPageInput"
-    type="number"
-    [formControl]="goToPageControl"
-    min="1"
-    [max]="totalPages"
-    style="width: 80px;"
-  />
-  <button class="btn-custom btn-primary" type="button" (click)="goToPage()">Go</button>
+  <button class="btn-custom btn-primary" type="button" (click)="nextCustomersPage()"
+    [disabled]="currentPage >= totalPages">
+    Next ➡
+  </button>
+</div>
+<label for="goToPageInput" style="margin-left: 8px;">Go to page:</label>
+<input class="input-custom" id="goToPageInput" type="number" [formControl]="goToPageControl" min="1" [max]="totalPages"
+  style="width: 80px;" />
+<button class="btn-custom btn-primary" type="button" (click)="goToPage()">Go</button>
 }
 
 @if (!loading && !errorMsg && customers.length === 0) {
-  <p>No customers.</p>
+<p>No customers.</p>
+}
+
+<!-- ======================== -->
+<!-- DELETED CUSTOMERS SECTION -->
+<!-- ======================== -->
+
+@if (deletedCustomers.length > 0) {
+<div class="page-header" style="margin-top: 40px;">
+  <div>
+    <h2 class="page-title">🗑️ Deleted Customers</h2>
+    <p class="page-subtitle">Soft-deleted customers (read-only). You can restore them.</p>
+  </div>
+</div>
+
+<div class="search-wrap">
+  <span class="search-icon">🔍</span>
+  <input type="text" [formControl]="searchDeletedControl" placeholder="Search deleted by name..."
+    class="input-custom" />
+</div>
+
+@if (loadingDeleted) { <p class="muted mt-sm">Loading deleted customers...</p> }
+
+@if (!loadingDeleted && filteredDeletedCustomers.length > 0) {
+<ul class="list">
+  @for (customer of visibleDeletedCustomers; track customer._id) {
+  <li class="card-custom" style="background-color: #fff3e0; border: 1px solid #ffb74d;">
+
+    <div class="list-item-row">
+      <div>
+        <span class="list-item-name" style="color: #e65100;">
+          {{
+          expandedDeleted[customer._id!] || customer.name.length <= 30 ? customer.name : (customer.name | slice:0:30)
+            + '...' }} </span>
+            <div class="list-item-id">{{ customer._id }}</div>
+      </div>
+
+      <div class="list-item-actions">
+        <button class="btn-custom btn-secondary btn-sm" type="button" (click)="toggleExpandDeleted(customer._id!)">
+          {{ expandedDeleted[customer._id!] ? '▲ Less' : '▼ More' }}
+        </button>
+
+        <span style="font-size:12px;font-weight:700;color:#e65100;padding:0 4px;">DELETED</span>
+
+        <button class="btn-custom btn-success btn-sm" type="button" (click)="restoreDeletedCustomer(customer._id!)">
+          ✓ Restore
+        </button>
+      </div>
+    </div>
+
+    @if (expandedDeleted[customer._id!]) {
+    <div class="data card-details">
+      <hr>
+      <p><strong>Email:</strong> {{ customer.email }}</p>
+      <p><strong>ID:</strong> {{ customer._id }}</p>
+
+      <!-- Visits (read-only) -->
+      <div class="visits-section" style="margin-top: 20px;">
+        <h4>Visits History</h4>
+
+        @if (loadingVisits[customer._id!]) {
+        <p class="muted italic">Loading...</p>
+        } @else if (customerVisits[customer._id!]?.length) {
+        <table class="visits-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <thead>
+            <tr style="text-align: left; border-bottom: 1px solid #ddd;">
+              <th>Restaurant</th>
+              <th>Date</th>
+              <th>Spent</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (visit of customerVisits[customer._id!]; track visit._id) {
+            <tr style="border-bottom: 1px solid #eee;">
+              <td>{{ visit.restaurant_id?.profile?.name || '---' }}</td>
+              <td>{{ visit.date | date:'dd/MM/yyyy' }}</td>
+              <td>{{ visit.billAmount }}€</td>
+              <td style="color: green;">+{{ visit.pointsEarned }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        } @else {
+        <p class="muted italic">No visits.</p>
+        }
+        <div style="margin-top:10px; display:flex; gap:10px;">
+          <button class="btn-custom btn-primary" type="button" (click)="prevVisitPage(customer._id!)"
+            [disabled]="(visitPage[customer._id!] || 0) === 0">⬅ Prev</button>
+          <span>Page {{ (visitPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((visitTotal[customer._id!] ||
+            0) / visitLimit)) }}</span>
+          <button class="btn-custom btn-primary" type="button" (click)="nextVisitPage(customer._id!)"
+            [disabled]="((visitPage[customer._id!] || 0) + 1) * visitLimit >= (visitTotal[customer._id!] || 0)">Next
+            ➡</button>
+        </div>
+      </div>
+
+      <!-- Badges (read-only) -->
+      <div class="badges-section" style="margin-top: 20px;">
+        <h4>Earned Badges</h4>
+        @if (loadingBadges[customer._id!]) {
+        <p class="muted italic">Loading...</p>
+        } @else if (customerBadges[customer._id!]?.length) {
+        <div class="chips-wrap" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+          @for (badge of customerBadges[customer._id!]; track badge._id) {
+          <div class="chip chip-success" [title]="badge.description" style="cursor: help;">
+            🏅 {{ badge.title }}
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="muted italic">No badges.</p>
+        }
+      </div>
+
+      <!-- Reviews (read-only) -->
+      <div class="card-custom" style="margin-top:10px;">
+        <h4>Reviews</h4>
+
+        @if ((reviewsByCustomer[customer._id!] || []).length > 0) {
+        @for (review of reviewsByCustomer[customer._id!]; track review._id) {
+        <div style="border-bottom:1px solid #ccc; margin-bottom:8px; padding-bottom:8px;">
+          <p><strong>{{ review.restaurant_id.name }}</strong></p>
+          <div>
+            @for (_ of getStars(review.globalRating); track $index) {
+            <span>⭐</span>
+            }
+          </div>
+          <p>{{ review.comment }}</p>
+          <span class="btn-custom btn-primary" style="cursor:default;">👍 {{ review.likes || 0 }}</span>
+        </div>
+        }
+        } @else {
+        <p>No reviews yet</p>
+        }
+
+        <div style="margin-top:10px; display:flex; gap:10px;">
+          <button class="btn-custom btn-primary" type="button" (click)="prevPage(customer._id!)"
+            [disabled]="(reviewPage[customer._id!] || 0) === 0">⬅ Prev</button>
+          <span>Page {{ (reviewPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((reviewTotal[customer._id!]
+            || 0) / reviewLimit)) }}</span>
+          <button class="btn-custom btn-primary" type="button" (click)="nextPage(customer._id!)"
+            [disabled]="((reviewPage[customer._id!] || 0) + 1) * reviewLimit >= (reviewTotal[customer._id!] || 0)">Next
+            ➡</button>
+        </div>
+      </div>
+    </div>
+    }
+  </li>
+  }
+</ul>
+
+<!-- Deleted customers pagination -->
+<div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+  <button class="btn-custom btn-primary" type="button" (click)="prevDeletedPage()"
+    [disabled]="deletedCurrentPage === 1">
+    ⬅ Prev
+  </button>
+
+  <span>Page {{ deletedCurrentPage }} / {{ totalDeletedPages }}</span>
+
+  <button class="btn-custom btn-primary" type="button" (click)="nextDeletedPage()"
+    [disabled]="deletedCurrentPage >= totalDeletedPages">
+    Next ➡
+  </button>
+</div>
+<label for="goToDeletedPageInput" style="margin-left: 8px;">Go to page:</label>
+<input class="input-custom" id="goToDeletedPageInput" type="number" [formControl]="goToDeletedPageControl" min="1"
+  [max]="totalDeletedPages" style="width: 80px;" />
+<button class="btn-custom btn-primary" type="button" (click)="goToDeletedPage()">Go</button>
+}
+
+@if (!loadingDeleted && filteredDeletedCustomers.length === 0) {
+<p class="muted">No deleted customers found.</p>
+}
 }

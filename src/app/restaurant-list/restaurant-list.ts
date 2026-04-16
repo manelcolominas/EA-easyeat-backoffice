@@ -36,6 +36,7 @@ export class RestaurantList implements OnInit {
   pagedRestaurants: IRestaurant[] = [];
   pagedDeletedRestaurants: IRestaurant[] = [];
   searchControl = new FormControl('');
+  searchDeletedControl = new FormControl('');
   search: boolean = false;
   searchDeleted: boolean = false;
   loading: boolean = true;
@@ -279,11 +280,18 @@ export class RestaurantList implements OnInit {
       this.filteredRestaurants = this.restaurants.filter(restaurant =>
         restaurant.profile.name.toLowerCase().includes(term)
       );
+      this.currentPage = 1;
+      this.updatePagedRestaurants();
+    });
+
+    this.searchDeletedControl.valueChanges.subscribe(value => {
+      const term = value?.toLowerCase() ?? '';
+      term ? this.searchDeleted = true : this.searchDeleted = false;
       this.filteredDeletedRestaurants = this.deletedRestaurants.filter(restaurant =>
         restaurant.profile.name.toLowerCase().includes(term)
       );
-      this.currentPage = 1;
-      this.updatePagedRestaurants();
+      this.deletedCurrentPage = 1;
+      this.updatePagedDeletedRestaurants();
     });
   }
 
@@ -431,7 +439,7 @@ export class RestaurantList implements OnInit {
 
   restoreRestaurant(restaurantId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: 'Restore this restaurant?'
+      data: 'restore this restaurant'
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
@@ -679,7 +687,7 @@ export class RestaurantList implements OnInit {
   }
 
   confirmDelete(id: string, name?: string): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: name });
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: `soft delete the restaurant ${name}` });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.delete(id);
     });
@@ -805,7 +813,7 @@ export class RestaurantList implements OnInit {
 
   removeReward(restaurant: IRestaurant, reward: any): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete ${reward.name || 'this reward'}?`
+      data: `soft delete ${reward.name || 'this reward'}`
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -998,7 +1006,7 @@ export class RestaurantList implements OnInit {
 
   removeVisit(restaurantId: string, visit: IVisit): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete visit from ${visit.customer_id?.name || 'this customer'}?`
+      data: `soft delete visit from ${visit.customer_id?.name || 'this customer'}`
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -1197,7 +1205,7 @@ export class RestaurantList implements OnInit {
 
   removeDish(restaurantId: string, dish: any): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete "${dish.name || 'this dish'}"?`
+      data: `soft delete "${dish.name || 'this dish'}"`
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
@@ -1364,7 +1372,7 @@ export class RestaurantList implements OnInit {
 
   removeEmployee(restaurantId: string, employee: any): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete "${employee.profile?.name || 'this employee'}"?`
+      data: `soft delete "${employee.profile?.name || 'this employee'}"`
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
@@ -1515,7 +1523,7 @@ export class RestaurantList implements OnInit {
 
   removeBadge(restaurantId: string, badge: any): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `Delete badge "${badge.title || 'this badge'}"?`
+      data: `soft delete badge "${badge.title || 'this badge'}"`
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {

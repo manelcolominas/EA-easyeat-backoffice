@@ -5,10 +5,10 @@ export interface IReview {
 
   restaurant_id: {
     _id: string;
-    profile: { name: string };
+    name: string;
   };
 
-  date: string; 
+  date: string;
   globalRating: number;
 
   ratings?: {
@@ -21,5 +21,5 @@ export interface IReview {
   comment?: string;
   likes?: number;
 
-   deleted?: boolean;
+  deleted?: boolean;
 }

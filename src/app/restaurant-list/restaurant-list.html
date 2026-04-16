@@ -1054,8 +1054,17 @@
 
 
 <!-- DELETED RESTAURANTS SECTION -->
-<h3 *ngIf="pagedDeletedRestaurants.length > 0" style="margin-top:var(--spacing-lg);color:#e65100;">🗑️ Deleted
-  Restaurants</h3>
+<h2 *ngIf="pagedDeletedRestaurants.length > 0" style="margin-top:var(--spacing-lg);color:#e65100;">🗑️ Deleted
+  Restaurants</h2>
+
+@if (deletedRestaurants.length > 0) {
+<div class="search-wrap">
+  <span class="search-icon">🔍</span>
+  <input type="text" [formControl]="searchDeletedControl" placeholder="Search deleted by name..."
+    class="input-custom" />
+</div>
+}
+
 <ul class="list" *ngIf="pagedDeletedRestaurants.length > 0">
   @for (restaurant of visibleDeletedRestaurants; track restaurant._id) {
   <li>

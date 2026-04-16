@@ -41,15 +41,15 @@ export class ReviewService {
   // ========================
   // GET BY CUSTOMER - FULL LIST (NO QUERY PARAMS)
   // ========================
-  getByCustomer(customerId: string): Observable<IReview[]> {
-    return this.http.get<IReview[]>(
-      `${this.baseUrl}/customers/${customerId}`
+  getByCustomer(customerId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.baseUrl}/customer/${customerId}`
     );
   }
 
-  getDeletedByCustomer(customerId: string): Observable<IReview[]> {
-    return this.http.get<IReview[]>(
-      `${environment}/customers/${customerId}/deleted`
+  getDeletedByCustomer(customerId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.baseUrl}/customer/${customerId}/deleted`
     );
   }
 
