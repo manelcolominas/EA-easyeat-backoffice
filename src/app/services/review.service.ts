@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { IReview } from '../models/review.model';
-import { environment } from '../../environments/environment';
+import { ApiClientService } from './api-client.service';
+import { normalizeArrayResponse } from './api-response.util';
 
 // ========================
 // TYPES EXTRA
@@ -16,30 +16,12 @@ export interface IPaginatedReviews {
 export interface ITopDishInfo {
   dishId: string;
   name: string;
-  averageRating: number;
-  totalRatings: number;
+  averageRating?: number | null;
+  totalRatings?: number | null;
 }
 
 export interface IRestaurantTopDishResponse {
-  restaurantId: string;
-  restaurantName: string;
   topDish: ITopDishInfo | null;
-}
-
-export interface IDishWithStats {
-  dishId: string;
-  name: string;
-  images: string[];
-  averageRating: number;
-  totalRatings: number;
-}
-
-export interface IRestaurantDishesResponse {
-  restaurant: {
-    _id: string;
-    name: string | null;
-  };
-  dishes: IDishWithStats[];
 }
 
 // ========================
@@ -50,34 +32,28 @@ export interface IRestaurantDishesResponse {
   providedIn: 'root',
 })
 export class ReviewService {
-  private baseUrl = `${environment.apiUrl}/reviews`;
-
-  constructor(private http: HttpClient) { }
+  constructor(private api: ApiClientService) {}
 
   // ========================
   // GET ALL
   // ========================
   getAll(): Observable<IReview[]> {
-    return this.http.get<IReview[]>(this.baseUrl);
+    return this.api.get<unknown>('/reviews').pipe(map((res) => normalizeArrayResponse<IReview>(res)));
   }
 
   getAllDeleted(): Observable<IReview[]> {
-    return this.http.get<IReview[]>(`${this.baseUrl}/deleted`);
+    return this.api.get<unknown>('/reviews/deleted').pipe(map((res) => normalizeArrayResponse<IReview>(res)));
   }
 
   // ========================
   // GET BY RESTAURANT
   // ========================
   getByRestaurant(restaurantId: string): Observable<IReview[]> {
-    return this.http.get<IReview[]>(
-      `${this.baseUrl}/restaurant/${restaurantId}`
-    );
+    return this.api.get<unknown>(`/reviews/restaurant/${restaurantId}`).pipe(map((res) => normalizeArrayResponse<IReview>(res)));
   }
 
   getByDeletedRestaurant(restaurantId: string): Observable<IReview[]> {
-    return this.http.get<IReview[]>(
-      `${this.baseUrl}/restaurant/${restaurantId}/deleted`
-    );
+    return this.api.get<unknown>(`/reviews/restaurant/${restaurantId}/deleted`).pipe(map((res) => normalizeArrayResponse<IReview>(res)));
   }
 
   // ========================
@@ -90,17 +66,12 @@ export class ReviewService {
     minGlobalRating?: number,
     sortByLikes?: boolean
   ): Observable<IPaginatedReviews> {
-    let url = `${this.baseUrl}/customer/${customerId}?limit=${limit}&skip=${skip}`;
-
-    if (minGlobalRating !== undefined) {
-      url += `&minGlobalRating=${minGlobalRating}`;
-    }
-
-    if (sortByLikes) {
-      url += `&sortByLikes=true`;
-    }
-
-    return this.http.get<IPaginatedReviews>(url);
+    return this.api.get<IPaginatedReviews>(`/reviews/customer/${customerId}`, {
+      limit,
+      skip,
+      minGlobalRating,
+      sortByLikes: sortByLikes ? true : undefined,
+    });
   }
 
   getByDeletedCustomer(
@@ -110,24 +81,19 @@ export class ReviewService {
     minGlobalRating?: number,
     sortByLikes?: boolean
   ): Observable<IPaginatedReviews> {
-    let url = `${this.baseUrl}/customer/${customerId}/deleted?limit=${limit}&skip=${skip}`;
-
-    if (minGlobalRating !== undefined) {
-      url += `&minGlobalRating=${minGlobalRating}`;
-    }
-
-    if (sortByLikes) {
-      url += `&sortByLikes=true`;
-    }
-
-    return this.http.get<IPaginatedReviews>(url);
+    return this.api.get<IPaginatedReviews>(`/reviews/customer/${customerId}/deleted`, {
+      limit,
+      skip,
+      minGlobalRating,
+      sortByLikes: sortByLikes ? true : undefined,
+    });
   }
 
   // ========================
   // CREATE
   // ========================
   create(review: Partial<IReview>): Observable<IReview> {
-    return this.http.post<IReview>(this.baseUrl, review);
+    return this.api.post<IReview>('/reviews', review);
   }
 
   // ========================
@@ -137,60 +103,39 @@ export class ReviewService {
     reviewId: string,
     review: Partial<IReview>
   ): Observable<IReview> {
-    return this.http.put<IReview>(
-      `${this.baseUrl}/${reviewId}`,
-      review
-    );
+    return this.api.put<IReview>(`/reviews/${reviewId}`, review);
   }
 
   // ========================
   // DELETE
   // ========================
   softDelete(reviewId: string): Observable<IReview> {
-    return this.http.delete<IReview>(
-      `${this.baseUrl}/${reviewId}/soft`
-    );
+    return this.api.delete<IReview>(`/reviews/${reviewId}/soft`);
   }
 
   restoreDelete(reviewId: string): Observable<IReview> {
-    return this.http.patch<IReview>(
-      `${this.baseUrl}/${reviewId}/restore`, {}
-    );
+    return this.api.patch<IReview>(`/reviews/${reviewId}/restore`, {});
   }
 
   hardDelete(reviewId: string): Observable<IReview> {
-    return this.http.delete<IReview>(
-      `${this.baseUrl}/${reviewId}/hard`
-    );
-  }
-
-  // ========================
-  // LIKE
-  // ========================
-  like(reviewId: string): Observable<IReview> {
-    return this.http.post<IReview>(
-      `${this.baseUrl}/${reviewId}/like`,
-      {}
-    );
+    return this.api.delete<IReview>(`/reviews/${reviewId}/hard`);
   }
 
   // ========================
   // TOP DISH
   // ========================
   getTopDish(restaurantId: string): Observable<IRestaurantTopDishResponse> {
-    return this.http.get<IRestaurantTopDishResponse>(
-      `${environment.apiUrl}/statistics/restaurants/${restaurantId}/top-dish`
-    );
-  }
-
-  // ========================
-  // ALL DISHES WITH RATINGS
-  // ========================
-  getDishesWithRatings(
-    restaurantId: string
-  ): Observable<IRestaurantDishesResponse> {
-    return this.http.get<IRestaurantDishesResponse>(
-      `${this.baseUrl}/restaurant/${restaurantId}/dishes`
+    return this.api.get<any>(`/restaurants/${restaurantId}/top-dish`).pipe(
+      map((dish) => ({
+        topDish: dish
+          ? {
+              dishId: dish._id,
+              name: dish.name ?? 'Unknown dish',
+              averageRating: dish.averageRating ?? null,
+              totalRatings: dish.totalRatings ?? null,
+            }
+          : null,
+      }))
     );
   }
 }

@@ -332,7 +332,7 @@ export class RestaurantList implements OnInit, OnDestroy {
 
     this.api.getRestaurants().subscribe({
       next: (res: any) => {
-        const data = res?.data ?? res ?? [];
+        const data = res ?? [];
         this.restaurants = data;
         this.filteredRestaurants = [...data];
         this.updatePagedRestaurants();
@@ -348,7 +348,7 @@ export class RestaurantList implements OnInit, OnDestroy {
 
     this.api.getDeletedRestaurants().subscribe({
       next: (res: any) => {
-        const data = res?.data ?? res ?? [];
+        const data = res ?? [];
         this.deletedRestaurants = data;
         this.filteredDeletedRestaurants = [...data];
         this.updatePagedDeletedRestaurants();
@@ -442,9 +442,8 @@ export class RestaurantList implements OnInit, OnDestroy {
 
     const candidate = response.topDish;
     const hasName = typeof candidate.name === 'string' && candidate.name.trim().length > 0;
-    const hasRatings = Number.isFinite(candidate.totalRatings) && candidate.totalRatings > 0;
 
-    if (!hasName || !hasRatings) {
+    if (!hasName) {
       return null;
     }
 
@@ -494,19 +493,19 @@ export class RestaurantList implements OnInit, OnDestroy {
     return this.topDishByRestaurant[restaurantId] ?? null;
   }
 
-  formatTopDishRating(rating: number): string {
-    if (!Number.isFinite(rating)) {
+  formatTopDishRating(rating: number | null | undefined): string {
+    if (rating === null || rating === undefined || !Number.isFinite(rating)) {
       return '—';
     }
-    const fixed = Number((rating as number).toFixed(2));
+    const fixed = Number(rating.toFixed(2));
     return fixed.toString();
   }
 
-  formatTopDishVotes(count: number): string {
-    if (!Number.isFinite(count)) {
-      return '0 valoraciones';
+  formatTopDishVotes(count: number | null | undefined): string {
+    if (count === null || count === undefined || !Number.isFinite(count)) {
+      return '— valoraciones';
     }
-    const safeCount = Math.max(0, Math.trunc(count as number));
+    const safeCount = Math.max(0, Math.trunc(count));
     return `${safeCount} valoraciones`;
   }
 
@@ -1068,12 +1067,12 @@ export class RestaurantList implements OnInit, OnDestroy {
   // VISITS
   // ========================
 
-  private loadRestaurantVisits(restaurantId: string): void {  console.log('ID QUE SE ENVÍA A /visits:', restaurantId);
+  private loadRestaurantVisits(restaurantId: string): void {
     this.visitApi.getVisitsByRestaurantId(restaurantId).subscribe({
-      next: (res: any) => {
+      next: (visits: IVisit[]) => {
         this.restaurantVisits = {
           ...this.restaurantVisits,
-          [restaurantId]: this.paginateVisits(res.data, restaurantId) ?? []
+          [restaurantId]: this.paginateVisits(visits, restaurantId) ?? []
         };
         this.loading = false;
         this.cdr.markForCheck();
@@ -1138,9 +1137,9 @@ export class RestaurantList implements OnInit, OnDestroy {
 
       this.errorMsg = '';
       this.loadingCustomers = true;
-      this.customerApi.getCustomers().subscribe({
-        next: (res: any) => {
-          const data = res?.data ?? res ?? [];
+        this.customerApi.getCustomers().subscribe({
+        next: (res: ICustomer[]) => {
+          const data = res ?? [];
           this.customers = data;
           this.loadingCustomers = false;
           this.cdr.markForCheck();
