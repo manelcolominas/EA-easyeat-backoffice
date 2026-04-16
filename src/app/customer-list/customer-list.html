@@ -314,29 +314,6 @@
                 </div>
               </div>
 
-              <div formArrayName="dishRatings" style="margin-top: 10px;">
-                <h5>Dish Ratings</h5>
-                @for (dishRating of dishRatingsControls.controls; track $index) {
-                  <div [formGroupName]="$index" style="display:flex; gap:10px; align-items:flex-end; margin-bottom:8px; flex-wrap: wrap;">
-                    <div>
-                      <label>Dish:</label>
-                      <select class="select-custom" formControlName="dish_id">
-                        <option value="">Select a dish</option>
-                        @for (dish of dishesForSelectedRestaurant; track dish._id) {
-                          <option [value]="dish._id">{{ dish.name }}</option>
-                        }
-                      </select>
-                    </div>
-                    <div>
-                      <label>Rating (0-10):</label>
-                      <input class="input-custom" type="number" min="0" max="10" formControlName="rating" />
-                    </div>
-                    <button class="btn-custom btn-danger" type="button" (click)="removeDishRating($index)">Remove</button>
-                  </div>
-                }
-                <button class="btn-custom btn-primary" type="button" (click)="addDishRating()">Add dish rating</button>
-              </div>
-
               <div formArrayName="images" style="margin-top: 10px;">
                 <h5>Images</h5>
                 @for (imageControl of imagesControls.controls; track $index) {

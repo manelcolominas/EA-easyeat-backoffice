@@ -1,50 +1,49 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
 import { IDish } from '../models/dish.model';
+import { ApiClientService } from './api-client.service';
+import { normalizeArrayResponse } from './api-response.util';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DishService {
-  private baseUrl = environment.apiUrl;
-
-  constructor(private http: HttpClient) {}
+  constructor(private api: ApiClientService) {}
 
   getDishes(): Observable<IDish[]> {
-    return this.http.get<IDish[]>(`${this.baseUrl}/dishes`);
+    return this.api.get<unknown>('/dishes').pipe(map((res) => normalizeArrayResponse<IDish>(res)));
   }
 
   getDeletedDishes(): Observable<IDish[]> {
-    return this.http.get<IDish[]>(`${this.baseUrl}/dishes/deleted`);
+    return this.api.get<unknown>('/dishes/deleted').pipe(map((res) => normalizeArrayResponse<IDish>(res)));
   }
 
   getDish(dishId: string): Observable<IDish> {
-    return this.http.get<IDish>(`${this.baseUrl}/dishes/${dishId}`);
+    return this.api.get<IDish>(`/dishes/${dishId}`);
   }
 
   getDeletedDish(dishId: string): Observable<IDish> {
-    return this.http.get<IDish>(`${this.baseUrl}/dishes/${dishId}/deleted`);
+    return this.api.get<IDish>(`/dishes/${dishId}/deleted`);
   }
 
   createDish(data: Partial<IDish>): Observable<IDish> {
-    return this.http.post<IDish>(`${this.baseUrl}/dishes`, data);
+    return this.api.post<IDish>('/dishes', data);
   }
 
   updateDish(dishId: string, data: Partial<IDish>): Observable<IDish> {
-    return this.http.put<IDish>(`${this.baseUrl}/dishes/${dishId}`, data);
+    return this.api.put<IDish>(`/dishes/${dishId}`, data);
   }
 
   softDeleteDish(dishId: string): Observable<IDish> {
-    return this.http.delete<IDish>(`${this.baseUrl}/dishes/${dishId}/soft`);
+    return this.api.delete<IDish>(`/dishes/${dishId}/soft`);
   }
 
   restoreDish(dishId: string): Observable<IDish> {
-    return this.http.patch<IDish>(`${this.baseUrl}/dishes/${dishId}/restore`, {});
+    return this.api.patch<IDish>(`/dishes/${dishId}/restore`, {});
   }
 
   hardDeleteDish(dishId: string): Observable<IDish> {
-    return this.http.delete<IDish>(`${this.baseUrl}/dishes/${dishId}/hard`);
+    return this.api.delete<IDish>(`/dishes/${dishId}/hard`);
   }
 }

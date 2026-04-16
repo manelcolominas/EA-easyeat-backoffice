@@ -8,14 +8,12 @@ import { ReviewService, IPaginatedReviews } from '../services/review.service';
 import { RestaurantService } from '../services/restaurant.service';
 import { VisitService } from '../services/visit.service';
 import { BadgeService } from '../services/badge.service';
-import { DishService } from '../services/dish.service';
 
 import { ICustomer } from '../models/customer.model';
 import { IReview } from '../models/review.model';
 import { IRestaurant } from '../models/restaurant.model';
 import { IVisit } from '../models/visit.model';
 import { IBadge } from '../models/badge.model';
-import { IDish } from '../models/dish.model';
 
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 
@@ -63,7 +61,6 @@ export class CustomerList implements OnInit {
   reviews: IReview[] = [];
   reviewsByCustomer: { [key: string]: IReview[] } = {};
   restaurants: IRestaurant[] = [];
-  dishes: IDish[] = [];
   reviewForm!: FormGroup;
   selectedCustomerId: string | null = null;
   editingReviewId: string | null = null;
@@ -99,7 +96,6 @@ export class CustomerList implements OnInit {
     private api: CustomerService,
     private reviewService: ReviewService,
     private restaurantService: RestaurantService,
-    private dishService: DishService,
     private visitService: VisitService,
     private badgeService: BadgeService,
     private fb: FormBuilder,
@@ -122,7 +118,6 @@ export class CustomerList implements OnInit {
         cleanliness: [null, [Validators.min(0), Validators.max(10)]],
         environment: [null, [Validators.min(0), Validators.max(10)]],
       }),
-      dishRatings: this.fb.array([]),
       images: this.fb.array([])
     });
 
@@ -141,7 +136,6 @@ export class CustomerList implements OnInit {
   ngOnInit(): void {
     this.load();
     this.loadRestaurants();
-    this.loadDishes();
 
     this.searchControl.valueChanges.subscribe(value => {
       const term = value?.toLowerCase().trim() ?? '';
@@ -173,8 +167,8 @@ export class CustomerList implements OnInit {
     this.errorMsg = '';
 
     this.api.getCustomers().subscribe({
-      next: (res: any) => {
-        const data = res?.data ?? res ?? [];
+      next: (res: ICustomer[]) => {
+        const data = res ?? [];
         this.customers = data;
         this.filteredCustomers = [...data];
         this.updatePagedCustomers();
@@ -194,8 +188,8 @@ export class CustomerList implements OnInit {
     this.loadingDeleted = true;
 
     this.api.getDeletedCustomers().subscribe({
-      next: (res: any) => {
-        const data = res?.data ?? res ?? [];
+      next: (res: ICustomer[]) => {
+        const data = res ?? [];
         this.deletedCustomers = data;
         this.filteredDeletedCustomers = [...data];
         this.updatePagedDeletedCustomers();
@@ -345,8 +339,8 @@ export class CustomerList implements OnInit {
 
   loadRestaurants(): void {
     this.restaurantService.getRestaurants().subscribe({
-      next: (res: any) => {
-        this.restaurants = res?.data ?? res ?? [];
+      next: (res: IRestaurant[]) => {
+        this.restaurants = res ?? [];
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -357,48 +351,10 @@ export class CustomerList implements OnInit {
     });
   }
 
-  loadDishes(): void {
-    this.dishService.getDishes().subscribe({
-      next: (res: any) => {
-        this.dishes = res?.data ?? res ?? [];
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error(err);
-        this.dishes = [];
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  get dishRatingsControls(): FormArray {
-    return this.reviewForm.get('dishRatings') as FormArray;
-  }
-
   get imagesControls(): FormArray {
     return this.reviewForm.get('images') as FormArray;
   }
 
-  get dishesForSelectedRestaurant(): IDish[] {
-    const restaurantId = this.reviewForm.get('restaurant_id')?.value;
-    if (!restaurantId) {
-      return this.dishes;
-    }
-    return this.dishes.filter(d => d.restaurant_id === restaurantId);
-  }
-
-  addDishRating(initial?: { dish_id?: string; rating?: number }): void {
-    this.dishRatingsControls.push(
-      this.fb.group({
-        dish_id: [initial?.dish_id ?? '', Validators.required],
-        rating: [initial?.rating ?? null, [Validators.required, Validators.min(0), Validators.max(10)]],
-      })
-    );
-  }
-
-  removeDishRating(index: number): void {
-    this.dishRatingsControls.removeAt(index);
-  }
 
   addImage(initialUrl: string = ''): void {
     this.imagesControls.push(this.fb.control(initialUrl));
@@ -674,7 +630,6 @@ export class CustomerList implements OnInit {
         environment: null,
       }
     });
-    this.clearFormArray(this.dishRatingsControls);
     this.clearFormArray(this.imagesControls);
   }
 
@@ -685,7 +640,6 @@ export class CustomerList implements OnInit {
     this.editingReviewId = review._id!;
     this.expanded[customerId] = true;
 
-    const dishRatings = Array.isArray(review.dishRatings) ? review.dishRatings : [];
     const images = Array.isArray(review.images) ? review.images : [];
 
     this.reviewForm.patchValue({
@@ -699,12 +653,6 @@ export class CustomerList implements OnInit {
         environment: review.ratings?.environment ?? null,
       }
     });
-
-    this.clearFormArray(this.dishRatingsControls);
-    dishRatings.forEach(d => this.addDishRating({
-      dish_id: d.dish_id,
-      rating: d.rating,
-    }));
 
     this.clearFormArray(this.imagesControls);
     images.forEach(url => this.addImage(url));
@@ -720,7 +668,6 @@ export class CustomerList implements OnInit {
       cleanliness: number;
       environment: number;
     };
-    dishRatings: Array<{ dish_id: string; rating: number }>;
     images: string[];
   } {
     const formValue = this.reviewForm.value;
@@ -736,12 +683,6 @@ export class CustomerList implements OnInit {
         cleanliness: Number(ratingValues.cleanliness ?? 0),
         environment: Number(ratingValues.environment ?? 0),
       },
-      dishRatings: (formValue.dishRatings ?? [])
-        .filter((item: { dish_id?: string }) => Boolean(item?.dish_id))
-        .map((item: { dish_id: string; rating: number }) => ({
-          dish_id: item.dish_id,
-          rating: Number(item.rating),
-        })),
       images: (formValue.images ?? [])
         .map((url: string) => String(url ?? '').trim())
         .filter((url: string) => url.length > 0)
@@ -820,7 +761,7 @@ export class CustomerList implements OnInit {
   }
 
   like(review: IReview): void {
-    this.reviewService.like(review._id!)
+    this.reviewService.like(review._id!, review.likes ?? 0)
       .subscribe(updated => {
         review.likes = updated.likes;
         this.cdr.markForCheck();
@@ -849,9 +790,9 @@ export class CustomerList implements OnInit {
 
   loadVisits(customerId: string): void {
     this.visitService.getVisitsByCustomerId(customerId).subscribe({
-      next: (allVisits: { data: IVisit[], pagination: { total: number, page: number, limit: number, pages: number } }) => {
+      next: (allVisits: IVisit[]) => {
         // STEP 1: FILTER
-        let filtered = this.filterVisits(allVisits.data);
+        let filtered = this.filterVisits(allVisits);
 
         // STEP 2: SORT
         let sorted = this.sortVisits(filtered);
