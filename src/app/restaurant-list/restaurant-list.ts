@@ -969,7 +969,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   // VISITS
   // ========================
 
-  private loadRestaurantVisits(restaurantId: string): void {
+  private loadRestaurantVisits(restaurantId: string): void {  console.log('ID QUE SE ENVÍA A /visits:', restaurantId);
     this.visitApi.getVisitsByRestaurantId(restaurantId).subscribe({
       next: (res: any) => {
         this.restaurantVisits = {

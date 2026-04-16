@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl, FormArray } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { CustomerService } from '../services/customer.service';
@@ -8,12 +8,14 @@ import { ReviewService, IPaginatedReviews } from '../services/review.service';
 import { RestaurantService } from '../services/restaurant.service';
 import { VisitService } from '../services/visit.service';
 import { BadgeService } from '../services/badge.service';
+import { DishService } from '../services/dish.service';
 
 import { ICustomer } from '../models/customer.model';
 import { IReview } from '../models/review.model';
 import { IRestaurant } from '../models/restaurant.model';
 import { IVisit } from '../models/visit.model';
 import { IBadge } from '../models/badge.model';
+import { IDish } from '../models/dish.model';
 
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 
@@ -52,6 +54,7 @@ export class CustomerList implements OnInit {
   reviews: IReview[] = [];
   reviewsByCustomer: { [key: string]: IReview[] } = {};
   restaurants: IRestaurant[] = [];
+  dishes: IDish[] = [];
   reviewForm!: FormGroup;
   selectedCustomerId: string | null = null;
   editingReviewId: string | null = null;
@@ -87,6 +90,7 @@ export class CustomerList implements OnInit {
     private api: CustomerService,
     private reviewService: ReviewService,
     private restaurantService: RestaurantService,
+    private dishService: DishService,
     private visitService: VisitService,
     private badgeService: BadgeService,
     private fb: FormBuilder,
@@ -102,7 +106,15 @@ export class CustomerList implements OnInit {
     this.reviewForm = this.fb.group({
       restaurant_id: ['', Validators.required],
       globalRating: [null, [Validators.required, Validators.min(1), Validators.max(10)]],
-      comment: ['']
+      comment: [''],
+      ratings: this.fb.group({
+        foodQuality: [null, [Validators.min(0), Validators.max(10)]],
+        staffService: [null, [Validators.min(0), Validators.max(10)]],
+        cleanliness: [null, [Validators.min(0), Validators.max(10)]],
+        environment: [null, [Validators.min(0), Validators.max(10)]],
+      }),
+      dishRatings: this.fb.array([]),
+      images: this.fb.array([])
     });
 
     this.visitForm = this.fb.group({
@@ -120,6 +132,7 @@ export class CustomerList implements OnInit {
   ngOnInit(): void {
     this.load();
     this.loadRestaurants();
+    this.loadDishes();
 
     this.searchControl.valueChanges.subscribe(value => {
       const term = value?.toLowerCase().trim() ?? '';
@@ -285,6 +298,63 @@ export class CustomerList implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  loadDishes(): void {
+    this.dishService.getDishes().subscribe({
+      next: (res: any) => {
+        this.dishes = res?.data ?? res ?? [];
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error(err);
+        this.dishes = [];
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  get dishRatingsControls(): FormArray {
+    return this.reviewForm.get('dishRatings') as FormArray;
+  }
+
+  get imagesControls(): FormArray {
+    return this.reviewForm.get('images') as FormArray;
+  }
+
+  get dishesForSelectedRestaurant(): IDish[] {
+    const restaurantId = this.reviewForm.get('restaurant_id')?.value;
+    if (!restaurantId) {
+      return this.dishes;
+    }
+    return this.dishes.filter(d => d.restaurant_id === restaurantId);
+  }
+
+  addDishRating(initial?: { dish_id?: string; rating?: number }): void {
+    this.dishRatingsControls.push(
+      this.fb.group({
+        dish_id: [initial?.dish_id ?? '', Validators.required],
+        rating: [initial?.rating ?? null, [Validators.required, Validators.min(0), Validators.max(10)]],
+      })
+    );
+  }
+
+  removeDishRating(index: number): void {
+    this.dishRatingsControls.removeAt(index);
+  }
+
+  addImage(initialUrl: string = ''): void {
+    this.imagesControls.push(this.fb.control(initialUrl));
+  }
+
+  removeImage(index: number): void {
+    this.imagesControls.removeAt(index);
+  }
+
+  private clearFormArray(array: FormArray): void {
+    while (array.length > 0) {
+      array.removeAt(0);
+    }
   }
 
   toggleExpand(id: string): void {
@@ -454,7 +524,23 @@ export class CustomerList implements OnInit {
   openReviewForm(customerId: string): void {
     this.selectedCustomerId = customerId;
     this.editingReviewId = null;
-    this.reviewForm.reset();
+    this.resetReviewForm();
+  }
+
+  private resetReviewForm(): void {
+    this.reviewForm.reset({
+      restaurant_id: '',
+      globalRating: null,
+      comment: '',
+      ratings: {
+        foodQuality: null,
+        staffService: null,
+        cleanliness: null,
+        environment: null,
+      }
+    });
+    this.clearFormArray(this.dishRatingsControls);
+    this.clearFormArray(this.imagesControls);
   }
 
   editReview(review: IReview): void {
@@ -464,49 +550,126 @@ export class CustomerList implements OnInit {
     this.editingReviewId = review._id!;
     this.expanded[customerId] = true;
 
+    const reviewRecord = review as unknown as {
+      dishRatings?: Array<{ dish_id?: string; rating?: number }>;
+    };
+    const dishRatings = Array.isArray(reviewRecord.dishRatings) ? reviewRecord.dishRatings : [];
+    const images = Array.isArray(review.images) ? review.images : [];
+
     this.reviewForm.patchValue({
       restaurant_id: this.getReviewRestaurantId(review),
       globalRating: review.globalRating,
-      comment: review.comment ?? ''
+      comment: review.comment ?? '',
+      ratings: {
+        foodQuality: review.ratings?.foodQuality ?? null,
+        staffService: review.ratings?.staffService ?? null,
+        cleanliness: review.ratings?.cleanliness ?? null,
+        environment: review.ratings?.environment ?? null,
+      }
     });
+
+    this.clearFormArray(this.dishRatingsControls);
+    dishRatings.forEach(d => this.addDishRating({
+      dish_id: d.dish_id,
+      rating: d.rating,
+    }));
+
+    this.clearFormArray(this.imagesControls);
+    images.forEach(url => this.addImage(url));
   }
 
-  createReview(): void {
+  private buildReviewPayload(): {
+    restaurant_id: string;
+    globalRating: number;
+    comment: string;
+    ratings: {
+      foodQuality: number;
+      staffService: number;
+      cleanliness: number;
+      environment: number;
+    };
+    dishRatings: Array<{ dish_id: string; rating: number }>;
+    images: string[];
+  } {
+    const formValue = this.reviewForm.value;
+    const ratingValues = formValue.ratings ?? {};
+
+    return {
+      restaurant_id: String(formValue.restaurant_id ?? ''),
+      globalRating: Number(formValue.globalRating),
+      comment: String(formValue.comment ?? ''),
+      ratings: {
+        foodQuality: Number(ratingValues.foodQuality ?? 0),
+        staffService: Number(ratingValues.staffService ?? 0),
+        cleanliness: Number(ratingValues.cleanliness ?? 0),
+        environment: Number(ratingValues.environment ?? 0),
+      },
+      dishRatings: (formValue.dishRatings ?? [])
+        .filter((item: { dish_id?: string }) => Boolean(item?.dish_id))
+        .map((item: { dish_id: string; rating: number }) => ({
+          dish_id: item.dish_id,
+          rating: Number(item.rating),
+        })),
+      images: (formValue.images ?? [])
+        .map((url: string) => String(url ?? '').trim())
+        .filter((url: string) => url.length > 0)
+    };
+  }
+
+  saveReview(): void {
     if (this.reviewForm.invalid || !this.selectedCustomerId) return;
 
+    const reviewPayload = this.buildReviewPayload();
+
     if (this.editingReviewId) {
-      const data = {
-        globalRating: this.reviewForm.value.globalRating,
-        comment: this.reviewForm.value.comment
-      };
-      this.reviewService.update(this.editingReviewId, data)
-        .subscribe(() => this.finishReviewAction());
+      // UPDATE mode
+      this.reviewService.update(this.editingReviewId, reviewPayload).subscribe({
+        next: () => {
+          this.finishReviewAction();
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error updating review:', err);
+          alert('Error updating review');
+          this.cdr.markForCheck();
+        }
+      });
       return;
     }
 
-    const restaurantId = this.reviewForm.value.restaurant_id;
+    // CREATE mode
+    const restaurantId = reviewPayload.restaurant_id;
     const exists = this.reviewsByCustomer[this.selectedCustomerId]?.find(
       r => this.getReviewRestaurantId(r) === restaurantId
     );
 
     if (exists) {
-      alert('Already reviewed');
+      alert('Already reviewed this restaurant');
       return;
     }
 
     const data = {
-      ...this.reviewForm.value,
+      ...reviewPayload,
       customer_id: this.selectedCustomerId,
       date: new Date()
     };
 
-    this.reviewService.create(data)
-      .subscribe(() => this.finishReviewAction());
+    this.reviewService.create(data).subscribe({
+      next: () => {
+        this.finishReviewAction();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error creating review:', err);
+        alert('Error creating review: ' + (err.error?.message || 'Please try again'));
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   finishReviewAction(): void {
     const id = this.selectedCustomerId;
-    this.reviewForm.reset();
+    this.resetReviewForm();
     this.selectedCustomerId = null;
     this.editingReviewId = null;
     if (id) this.loadReviews(id);
