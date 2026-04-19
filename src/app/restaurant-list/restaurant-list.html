@@ -753,8 +753,8 @@
                   <div class="top-dish-meta">
                     <h4 class="top-dish-name">{{ topDish.name }}</h4>
                     <div class="top-dish-stats" aria-label="Top dish stats">
-                      <span class="chip chip-success">⭐ {{ formatTopDishRating(topDish.averageRating) }}</span>
-                      <span class="chip chip-neutral">{{ formatTopDishVotes(topDish.totalRatings) }}</span>
+                      <span class="chip chip-success">⭐ {{ formatTopDishRating(getTopDish(restaurant._id)?.avgRating) }}</span>
+                      <span class="chip chip-neutral">{{ formatTopDishVotes(getTopDish(restaurant._id)?.ratingsCount) }}</span>
                     </div>
                   </div>
                 </article>

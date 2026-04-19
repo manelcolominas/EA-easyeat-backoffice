@@ -3,6 +3,8 @@ import { Observable, map } from 'rxjs';
 import { IReview } from '../models/review.model';
 import { ApiClientService } from './api-client.service';
 import { normalizeArrayResponse } from './api-response.util';
+import { IDish } from '../models/dish.model';
+
 
 // ========================
 // TYPES EXTRA
@@ -11,17 +13,6 @@ import { normalizeArrayResponse } from './api-response.util';
 export interface IPaginatedReviews {
   data: IReview[];
   total: number;
-}
-
-export interface ITopDishInfo {
-  dishId: string;
-  name: string;
-  averageRating?: number | null;
-  totalRatings?: number | null;
-}
-
-export interface IRestaurantTopDishResponse {
-  topDish: ITopDishInfo | null;
 }
 
 // ========================
@@ -38,22 +29,30 @@ export class ReviewService {
   // GET ALL
   // ========================
   getAll(): Observable<IReview[]> {
-    return this.api.get<unknown>('/reviews').pipe(map((res) => normalizeArrayResponse<IReview>(res)));
+    return this.api
+      .get<unknown>('/reviews')
+      .pipe(map((res) => normalizeArrayResponse<IReview>(res)));
   }
 
   getAllDeleted(): Observable<IReview[]> {
-    return this.api.get<unknown>('/reviews/deleted').pipe(map((res) => normalizeArrayResponse<IReview>(res)));
+    return this.api
+      .get<unknown>('/reviews/deleted')
+      .pipe(map((res) => normalizeArrayResponse<IReview>(res)));
   }
 
   // ========================
   // GET BY RESTAURANT
   // ========================
   getByRestaurant(restaurantId: string): Observable<IReview[]> {
-    return this.api.get<unknown>(`/reviews/restaurant/${restaurantId}`).pipe(map((res) => normalizeArrayResponse<IReview>(res)));
+    return this.api
+      .get<unknown>(`/reviews/restaurant/${restaurantId}`)
+      .pipe(map((res) => normalizeArrayResponse<IReview>(res)));
   }
 
   getByDeletedRestaurant(restaurantId: string): Observable<IReview[]> {
-    return this.api.get<unknown>(`/reviews/restaurant/${restaurantId}/deleted`).pipe(map((res) => normalizeArrayResponse<IReview>(res)));
+    return this.api
+      .get<unknown>(`/reviews/restaurant/${restaurantId}/deleted`)
+      .pipe(map((res) => normalizeArrayResponse<IReview>(res)));
   }
 
   // ========================
@@ -64,7 +63,7 @@ export class ReviewService {
     limit = 5,
     skip = 0,
     minGlobalRating?: number,
-    sortByLikes?: boolean
+    sortByLikes?: boolean,
   ): Observable<IPaginatedReviews> {
     return this.api.get<IPaginatedReviews>(`/reviews/customer/${customerId}`, {
       limit,
@@ -79,7 +78,7 @@ export class ReviewService {
     limit = 5,
     skip = 0,
     minGlobalRating?: number,
-    sortByLikes?: boolean
+    sortByLikes?: boolean,
   ): Observable<IPaginatedReviews> {
     return this.api.get<IPaginatedReviews>(`/reviews/customer/${customerId}/deleted`, {
       limit,
@@ -99,10 +98,7 @@ export class ReviewService {
   // ========================
   // UPDATE
   // ========================
-  update(
-    reviewId: string,
-    review: Partial<IReview>
-  ): Observable<IReview> {
+  update(reviewId: string, review: Partial<IReview>): Observable<IReview> {
     return this.api.put<IReview>(`/reviews/${reviewId}`, review);
   }
 
@@ -124,18 +120,11 @@ export class ReviewService {
   // ========================
   // TOP DISH
   // ========================
-  getTopDish(restaurantId: string): Observable<IRestaurantTopDishResponse> {
-    return this.api.get<any>(`/restaurants/${restaurantId}/top-dish`).pipe(
-      map((dish) => ({
-        topDish: dish
-          ? {
-              dishId: dish._id,
-              name: dish.name ?? 'Unknown dish',
-              averageRating: dish.averageRating ?? null,
-              totalRatings: dish.totalRatings ?? null,
-            }
-          : null,
-      }))
+  getTopDish(restaurantId: string): Observable<IDish | null> {
+    return this.api.get<IDish | null>(`/restaurants/${restaurantId}/top-dish`).pipe(
+      map((dish) => {
+        return dish;
+      }),
     );
   }
 }
