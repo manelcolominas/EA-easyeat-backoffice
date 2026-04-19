@@ -14,7 +14,7 @@ import { IReview } from '../models/review.model';
 import { IRestaurant } from '../models/restaurant.model';
 import { IVisit } from '../models/visit.model';
 import { IBadge } from '../models/badge.model';
-
+import { PaginationUtils } from '../services/pagination.util';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 
 @Component({
@@ -24,7 +24,6 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
   templateUrl: './customer-list.html',
 })
 export class CustomerList implements OnInit {
-
   Math = Math;
 
   // ========================
@@ -47,9 +46,8 @@ export class CustomerList implements OnInit {
   customerForm!: FormGroup;
   editting = false;
   showForm = false;
-  limit = 2;
-  currentPage = 1;
-  deletedCurrentPage = 1;
+  customerPager = { page: 1, limit: 2 };
+  deletedPager = { page: 1, limit: 2 };
   expanded: { [key: string]: boolean } = {};
   expandedDeleted: { [key: string]: boolean } = {};
   goToPageControl = new FormControl<number | null>(1);
@@ -98,14 +96,18 @@ export class CustomerList implements OnInit {
     private restaurantService: RestaurantService,
     private visitService: VisitService,
     private badgeService: BadgeService,
-    private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private paginationUtils: PaginationUtils,
+    private fb: FormBuilder,
   ) {
     this.customerForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/)]],
+      password: [
+        '',
+        [Validators.required, Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/)],
+      ],
     });
 
     this.reviewForm = this.fb.group({
@@ -118,14 +120,14 @@ export class CustomerList implements OnInit {
         cleanliness: [null, [Validators.min(0), Validators.max(10)]],
         environment: [null, [Validators.min(0), Validators.max(10)]],
       }),
-      images: this.fb.array([])
+      images: this.fb.array([]),
     });
 
     this.visitForm = this.fb.group({
       restaurant_id: ['', [Validators.required, Validators.pattern(/^[0-9a-fA-F]{24}$/)]],
       billAmount: [0, [Validators.required, Validators.min(1)]],
       pointsEarned: [0, [Validators.required, Validators.min(0)]],
-      date: [new Date().toISOString().substring(0, 10), Validators.required]
+      date: [new Date().toISOString().substring(0, 10), Validators.required],
     });
   }
 
@@ -137,23 +139,21 @@ export class CustomerList implements OnInit {
     this.load();
     this.loadRestaurants();
 
-    this.searchControl.valueChanges.subscribe(value => {
+    this.searchControl.valueChanges.subscribe((value) => {
       const term = value?.toLowerCase().trim() ?? '';
-      term ? this.searching = true : this.searching = false;
-      this.filteredCustomers = this.customers.filter(c =>
-        c.name.toLowerCase().includes(term)
-      );
-      this.currentPage = 1;
+      term ? (this.searching = true) : (this.searching = false);
+      this.filteredCustomers = this.customers.filter((c) => c.name.toLowerCase().includes(term));
+      this.customerPager.page = 1;
       this.updatePagedCustomers();
     });
 
-    this.searchDeletedControl.valueChanges.subscribe(value => {
+    this.searchDeletedControl.valueChanges.subscribe((value) => {
       const term = value?.toLowerCase().trim() ?? '';
-      term ? this.searchDeleted = true : this.searchDeleted = false;
-      this.filteredDeletedCustomers = this.deletedCustomers.filter(c =>
-        c.name.toLowerCase().includes(term)
+      term ? (this.searchDeleted = true) : (this.searchDeleted = false);
+      this.filteredDeletedCustomers = this.deletedCustomers.filter((c) =>
+        c.name.toLowerCase().includes(term),
       );
-      this.deletedCurrentPage = 1;
+      this.deletedPager.page = 1;
       this.updatePagedDeletedCustomers();
     });
   }
@@ -182,7 +182,7 @@ export class CustomerList implements OnInit {
         this.filteredCustomers = [];
         this.loading = false;
         this.cdr.markForCheck();
-      }
+      },
     });
 
     this.loadingDeleted = true;
@@ -202,7 +202,7 @@ export class CustomerList implements OnInit {
         this.filteredDeletedCustomers = [];
         this.loadingDeleted = false;
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
@@ -211,9 +211,10 @@ export class CustomerList implements OnInit {
 
     const data = this.customerForm.value;
 
-    const request = this.editting && this.customerEditId
-      ? this.api.updateCustomer(this.customerEditId, data)
-      : this.api.createCustomer(data);
+    const request =
+      this.editting && this.customerEditId
+        ? this.api.updateCustomer(this.customerEditId, data)
+        : this.api.createCustomer(data);
 
     request.subscribe(() => {
       this.load();
@@ -240,12 +241,11 @@ export class CustomerList implements OnInit {
     if (!customer._id) return;
 
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `disable the customer ${customer.name}`
+      data: `disable the customer ${customer.name}`,
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-
         const wasDisabled = this.isCustomerDisabled(customer);
 
         const request = wasDisabled
@@ -256,7 +256,7 @@ export class CustomerList implements OnInit {
           next: () => {
             (customer as ICustomer & { active?: boolean }).active = wasDisabled;
             this.filteredCustomers = [...this.filteredCustomers];
-            this.pagedCustomers = [... this.pagedCustomers];
+            this.pagedCustomers = [...this.pagedCustomers];
             this.cdr.markForCheck();
 
             this.load();
@@ -264,20 +264,20 @@ export class CustomerList implements OnInit {
           error: (err) => {
             console.error(err);
             this.errorMsg = 'Error updating customer status';
-          }
+          },
         });
       }
     });
   }
 
-  hardDdelete(id: string): void {
+  hardDelete(id: string): void {
     this.api.hardDeleteCustomer(id).subscribe(() => this.load());
   }
 
   confirmDelete(id: string, name?: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: name });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) this.hardDdelete(id);
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) this.hardDelete(id);
     });
   }
 
@@ -288,7 +288,7 @@ export class CustomerList implements OnInit {
     this.customerForm.patchValue({
       name: customer.name,
       email: customer.email,
-      password: ''
+      password: '',
     });
   }
 
@@ -320,21 +320,7 @@ export class CustomerList implements OnInit {
   }
 
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredCustomers.length / this.limit));
-  }
-
-  nextCustomersPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.updatePagedCustomers();
-    }
-  }
-
-  prevCustomersPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.updatePagedCustomers();
-    }
+    return this.paginationUtils.getTotalPages(this.filteredCustomers.length, this.customerPager.limit);
   }
 
   loadRestaurants(): void {
@@ -347,14 +333,13 @@ export class CustomerList implements OnInit {
         console.error(err);
         this.restaurants = [];
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
   get imagesControls(): FormArray {
     return this.reviewForm.get('images') as FormArray;
   }
-
 
   addImage(initialUrl: string = ''): void {
     this.imagesControls.push(this.fb.control(initialUrl));
@@ -373,13 +358,11 @@ export class CustomerList implements OnInit {
   toggleExpand(id: string): void {
     this.expanded[id] = !this.expanded[id];
 
-    // LOAD VISITS WHEN EXPANDING
     if (this.expanded[id]) {
-      this.reviewPage[id] = 0;
+      this.reviewPage[id] = 1; // Initialize page to 1
       this.loadReviews(id);
 
-      // NEW: Load visits on expand
-      this.visitPage[id] = 0;
+      this.visitPage[id] = 1; // Initialize page to 1
       this.loadVisits(id);
 
       this.loadCustomerBadges(id);
@@ -388,13 +371,8 @@ export class CustomerList implements OnInit {
 
   goToPage(): void {
     const requestedPage = Number(this.goToPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = this.totalPages;
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.currentPage = safePage;
-    this.goToPageControl.setValue(safePage, { emitEvent: false });
+    this.customerPager.page = this.paginationUtils.getSafePage(requestedPage, this.filteredCustomers.length, this.customerPager.limit);
+    this.goToPageControl.setValue(this.customerPager.page, { emitEvent: false });
     this.updatePagedCustomers();
   }
 
@@ -403,42 +381,23 @@ export class CustomerList implements OnInit {
   // ========================
 
   get totalDeletedPages(): number {
-    return Math.max(1, Math.ceil(this.filteredDeletedCustomers.length / this.limit));
-  }
-
-  nextDeletedPage(): void {
-    if (this.deletedCurrentPage < this.totalDeletedPages) {
-      this.deletedCurrentPage++;
-      this.updatePagedDeletedCustomers();
-    }
-  }
-
-  prevDeletedPage(): void {
-    if (this.deletedCurrentPage > 1) {
-      this.deletedCurrentPage--;
-      this.updatePagedDeletedCustomers();
-    }
+    return this.paginationUtils.getTotalPages(this.filteredDeletedCustomers.length, this.deletedPager.limit);
   }
 
   goToDeletedPage(): void {
     const requestedPage = Number(this.goToDeletedPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = this.totalDeletedPages;
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.deletedCurrentPage = safePage;
-    this.goToDeletedPageControl.setValue(safePage, { emitEvent: false });
+    this.deletedPager.page = this.paginationUtils.getSafePage(requestedPage, this.filteredDeletedCustomers.length, this.deletedPager.limit);
+    this.goToDeletedPageControl.setValue(this.deletedPager.page, { emitEvent: false });
     this.updatePagedDeletedCustomers();
   }
 
   private updatePagedDeletedCustomers(): void {
-    const totalPages = this.totalDeletedPages;
-    this.deletedCurrentPage = Math.min(Math.max(1, this.deletedCurrentPage), totalPages);
-
-    const start = (this.deletedCurrentPage - 1) * this.limit;
-    const end = start + this.limit;
-    this.pagedDeletedCustomers = this.filteredDeletedCustomers.slice(start, end);
+    this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page, this.filteredDeletedCustomers.length, this.deletedPager.limit);
+    this.pagedDeletedCustomers = this.paginationUtils.getPaginatedData(
+      this.filteredDeletedCustomers,
+      this.deletedPager.page,
+      this.deletedPager.limit
+    );
     this.cdr.markForCheck();
   }
 
@@ -446,10 +405,10 @@ export class CustomerList implements OnInit {
     this.expandedDeleted[id] = !this.expandedDeleted[id];
 
     if (this.expandedDeleted[id]) {
-      this.reviewPage[id] = 0;
+      this.reviewPage[id] = 1; // Initialize page to 1
       this.loadReviews(id);
 
-      this.visitPage[id] = 0;
+      this.visitPage[id] = 1; // Initialize page to 1
       this.loadVisits(id);
 
       this.loadCustomerBadges(id);
@@ -458,9 +417,9 @@ export class CustomerList implements OnInit {
 
   restoreDeletedCustomer(customerId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: 'restore this customer'
+      data: 'restore this customer',
     });
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         this.api.restoreCustomer(customerId).subscribe({
           next: () => {
@@ -469,20 +428,21 @@ export class CustomerList implements OnInit {
           error: (err) => {
             console.error(err);
             this.errorMsg = 'Error restoring customer';
-          }
+          },
         });
       }
     });
   }
 
-  private updatePagedCustomers(): void {
-    const totalPages = this.totalPages;
-    this.currentPage = Math.min(Math.max(1, this.currentPage), totalPages);
+  // Removed redundant handlePagination method
 
-    const start = (this.currentPage - 1) * this.limit;
-    const end = start + this.limit;
-    this.pagedCustomers = this.filteredCustomers.slice(start, end);
-    // this.goToPageControl.setValue(this.currentPage, { emitEvent: false });
+  private updatePagedCustomers(): void {
+    this.customerPager.page = this.paginationUtils.getSafePage(this.customerPager.page, this.filteredCustomers.length, this.customerPager.limit);
+    this.pagedCustomers = this.paginationUtils.getPaginatedData(
+      this.filteredCustomers,
+      this.customerPager.page,
+      this.customerPager.limit
+    );
     this.cdr.markForCheck();
   }
 
@@ -512,7 +472,7 @@ export class CustomerList implements OnInit {
   getReviewRestaurantName(review: IReview): string {
     const raw = review.restaurant_id as unknown;
     if (typeof raw === 'string') {
-      const restaurant = this.restaurants.find(r => r._id === raw);
+      const restaurant = this.restaurants.find((r) => r._id === raw);
       return restaurant?.profile?.name ?? 'Restaurant';
     }
 
@@ -533,23 +493,23 @@ export class CustomerList implements OnInit {
 
   loadReviews(customerId: string): void {
     this.reviewService.getByCustomer(customerId).subscribe({
-      next: (data: { data: IReview[], total: number }) => {
+      next: (data: { data: IReview[]; total: number }) => {
         const allReviews = data.data ?? [];
 
-        // STEP 1: FILTER
         let filtered = this.filterReviews(allReviews);
-
-        // STEP 2: SORT
         let sorted = this.sortReviews(filtered);
 
-        // STEP 3: PAGINATE
-        let paginated = this.paginateReviews(sorted, customerId);
-
-        // Store filtered & paginated reviews for display
-        this.reviewsByCustomer = {
-          ...this.reviewsByCustomer,
-          [customerId]: paginated
-        };
+        this.reviewTotal[customerId] = sorted.length;
+        this.reviewPage[customerId] = this.paginationUtils.getSafePage(
+          this.reviewPage[customerId] || 1,
+          sorted.length,
+          this.reviewLimit
+        );
+        this.reviewsByCustomer[customerId] = this.paginationUtils.getPaginatedData(
+          sorted,
+          this.reviewPage[customerId],
+          this.reviewLimit
+        );
 
         this.cdr.markForCheck();
       },
@@ -557,59 +517,22 @@ export class CustomerList implements OnInit {
         console.error('Error loading reviews:', err);
         this.reviewsByCustomer[customerId] = [];
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
-  /**
-   * STEP 1: Filter by minimum rating
-   */
   private filterReviews(reviews: IReview[]): IReview[] {
     if (!this.minGlobalRatingFilter) {
       return reviews;
     }
-    return reviews.filter(r => r.globalRating >= this.minGlobalRatingFilter!);
+    return reviews.filter((r) => r.globalRating >= this.minGlobalRatingFilter!);
   }
 
-  /**
-   * STEP 2: Sort by likes (descending)
-   */
   private sortReviews(reviews: IReview[]): IReview[] {
     if (!this.sortByLikes) {
       return reviews;
     }
-    // Sort by likes descending
     return [...reviews].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-  }
-
-  /**
-   * STEP 3: Paginate using slice()
-   */
-  private paginateReviews(reviews: IReview[], customerId: string): IReview[] {
-    const page = this.reviewPage[customerId] || 0;
-    const start = page * this.reviewLimit;
-    const end = start + this.reviewLimit;
-
-    // Store total for pagination controls
-    this.reviewTotal[customerId] = reviews.length;
-
-    return reviews.slice(start, end);
-  }
-
-  nextPage(customerId: string): void {
-    const page = this.reviewPage[customerId] || 0;
-    const total = this.reviewTotal[customerId] || 0;
-
-    if ((page + 1) * this.reviewLimit >= total) return;
-
-    this.reviewPage[customerId] = page + 1;
-    this.loadReviews(customerId);
-  }
-
-  prevPage(customerId: string): void {
-    if ((this.reviewPage[customerId] || 0) === 0) return;
-    this.reviewPage[customerId]--;
-    this.loadReviews(customerId);
   }
 
   openReviewForm(customerId: string): void {
@@ -628,7 +551,7 @@ export class CustomerList implements OnInit {
         staffService: null,
         cleanliness: null,
         environment: null,
-      }
+      },
     });
     this.clearFormArray(this.imagesControls);
   }
@@ -651,11 +574,11 @@ export class CustomerList implements OnInit {
         staffService: review.ratings?.staffService ?? null,
         cleanliness: review.ratings?.cleanliness ?? null,
         environment: review.ratings?.environment ?? null,
-      }
+      },
     });
 
     this.clearFormArray(this.imagesControls);
-    images.forEach(url => this.addImage(url));
+    images.forEach((url) => this.addImage(url));
   }
 
   private buildReviewPayload(): {
@@ -685,7 +608,7 @@ export class CustomerList implements OnInit {
       },
       images: (formValue.images ?? [])
         .map((url: string) => String(url ?? '').trim())
-        .filter((url: string) => url.length > 0)
+        .filter((url: string) => url.length > 0),
     };
   }
 
@@ -695,7 +618,6 @@ export class CustomerList implements OnInit {
     const reviewPayload = this.buildReviewPayload();
 
     if (this.editingReviewId) {
-      // UPDATE mode
       this.reviewService.update(this.editingReviewId, reviewPayload).subscribe({
         next: () => {
           this.finishReviewAction();
@@ -705,15 +627,14 @@ export class CustomerList implements OnInit {
           console.error('Error updating review:', err);
           alert('Error updating review');
           this.cdr.markForCheck();
-        }
+        },
       });
       return;
     }
 
-    // CREATE mode
     const restaurantId = reviewPayload.restaurant_id;
     const exists = this.reviewsByCustomer[this.selectedCustomerId]?.find(
-      r => this.getReviewRestaurantId(r) === restaurantId
+      (r) => this.getReviewRestaurantId(r) === restaurantId,
     );
 
     if (exists) {
@@ -724,7 +645,7 @@ export class CustomerList implements OnInit {
     const data = {
       ...reviewPayload,
       customer_id: this.selectedCustomerId,
-      date: new Date()
+      date: new Date(),
     };
 
     this.reviewService.create(data).subscribe({
@@ -736,7 +657,7 @@ export class CustomerList implements OnInit {
         console.error('Error creating review:', err);
         alert('Error creating review: ' + (err.error?.message || 'Please try again'));
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
@@ -750,12 +671,11 @@ export class CustomerList implements OnInit {
 
   deleteReview(reviewId: string, customerId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: 'Delete this review?'
+      data: 'Delete this review?',
     });
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.reviewService.softDelete(reviewId)
-          .subscribe(() => this.loadReviews(customerId));
+        this.reviewService.softDelete(reviewId).subscribe(() => this.loadReviews(customerId));
       }
     });
   }
@@ -766,13 +686,8 @@ export class CustomerList implements OnInit {
 
   goToReviewPage(customerId: string): void {
     const requestedPage = Number(this.goToReviewPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = Math.max(1, Math.ceil((this.reviewTotal[customerId] || 0) / this.reviewLimit));
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.reviewPage[customerId] = safePage - 1;
-    this.goToReviewPageControl.setValue(safePage, { emitEvent: false });
+    this.reviewPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.reviewTotal[customerId] || 0, this.reviewLimit);
+    this.goToReviewPageControl.setValue(this.reviewPage[customerId], { emitEvent: false });
     this.loadReviews(customerId);
   }
 
@@ -783,33 +698,33 @@ export class CustomerList implements OnInit {
   loadVisits(customerId: string): void {
     this.visitService.getVisitsByCustomerId(customerId).subscribe({
       next: (allVisits: IVisit[]) => {
-        // STEP 1: FILTER
         let filtered = this.filterVisits(allVisits);
-
-        // STEP 2: SORT
         let sorted = this.sortVisits(filtered);
 
-        // STEP 3: PAGINATE
-        let paginated = this.paginateVisits(sorted, customerId);
-
-        // Store filtered & paginated reviews for display
-        this.customerVisits = {
-          ...this.customerVisits,
-          [customerId]: paginated
-        };
+        this.visitTotal[customerId] = sorted.length;
+        this.visitPage[customerId] = this.paginationUtils.getSafePage(
+          this.visitPage[customerId] || 1,
+          sorted.length,
+          this.visitLimit
+        );
+        this.customerVisits[customerId] = this.paginationUtils.getPaginatedData(
+          sorted,
+          this.visitPage[customerId],
+          this.visitLimit
+        );
 
         this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error loading reviews:', err);
-        this.reviewsByCustomer[customerId] = [];
+        console.error('Error loading visits:', err);
+        this.customerVisits[customerId] = [];
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
   private filterVisits(visits: IVisit[]): IVisit[] {
-    return visits; // No filters yes
+    return visits;
   }
 
   private sortVisits(visits: IVisit[]): IVisit[] {
@@ -817,7 +732,6 @@ export class CustomerList implements OnInit {
       let aVal = a[this.visitSortField];
       let bVal = b[this.visitSortField];
 
-      // Handle undefined values
       if (aVal === undefined || aVal === null) aVal = '';
       if (bVal === undefined || bVal === null) bVal = '';
 
@@ -834,34 +748,6 @@ export class CustomerList implements OnInit {
     });
   }
 
-  private paginateVisits(visits: IVisit[], customerId: string): IVisit[] {
-    const page = this.visitPage[customerId] || 0;
-    const start = page * this.visitLimit;
-    const end = start + this.visitLimit;
-
-    // Store total for pagination controls
-    this.visitTotal[customerId] = visits.length;
-
-    return visits.slice(start, end);
-  }
-
-  nextVisitPage(customerId: string): void {
-    const page = this.visitPage[customerId] || 0;
-    const total = this.visitTotal[customerId] || 0;
-
-    if ((page + 1) * this.visitLimit >= total) return;
-
-    this.visitPage[customerId] = page + 1;
-    this.loadVisits(customerId);
-  }
-
-  prevVisitPage(customerId: string): void {
-    if ((this.visitPage[customerId] || 0) === 0) return;
-
-    this.visitPage[customerId]--;
-    this.loadVisits(customerId);
-  }
-
   prepareNewVisit(customerId: string): void {
     this.currentCustomerId = customerId;
     this.isEditingVisit = false;
@@ -869,7 +755,7 @@ export class CustomerList implements OnInit {
     this.visitForm.reset({
       date: new Date().toISOString().substring(0, 10),
       billAmount: 0,
-      pointsEarned: 0
+      pointsEarned: 0,
     });
   }
 
@@ -886,7 +772,7 @@ export class CustomerList implements OnInit {
       restaurant_id: restaurantId,
       billAmount: visit.billAmount,
       pointsEarned: visit.pointsEarned,
-      date: formattedDate
+      date: formattedDate,
     });
   }
 
@@ -898,14 +784,14 @@ export class CustomerList implements OnInit {
       const updatePayload = {
         date: formValue.date,
         pointsEarned: Number(formValue.pointsEarned),
-        billAmount: Number(formValue.billAmount)
+        billAmount: Number(formValue.billAmount),
       };
       this.visitService.updateVisit(this.selectedVisitId, updatePayload).subscribe({
         next: () => {
           this.loadVisits(this.currentCustomerId!);
           this.cancelVisitForm();
         },
-        error: (err) => alert('Error al actualizar: ' + (err.error?.message || 'Revisa Joi'))
+        error: (err) => alert('Error al actualizar: ' + (err.error?.message || 'Revisa Joi')),
       });
     } else {
       const createPayload = {
@@ -913,7 +799,7 @@ export class CustomerList implements OnInit {
         restaurant_id: formValue.restaurant_id,
         date: formValue.date,
         pointsEarned: Number(formValue.pointsEarned),
-        billAmount: Number(formValue.billAmount)
+        billAmount: Number(formValue.billAmount),
       };
       this.visitService.createVisit(createPayload).subscribe(() => {
         this.loadVisits(this.currentCustomerId!);
@@ -926,7 +812,7 @@ export class CustomerList implements OnInit {
     if (confirm('¿Deseas enviar esta visita a la papelera?')) {
       this.visitService.updateVisit(visitId, { deletedAt: new Date() }).subscribe({
         next: () => this.loadVisits(customerId),
-        error: (err) => console.error('Error en Soft Delete:', err)
+        error: (err) => console.error('Error en Soft Delete:', err),
       });
     }
   }
@@ -949,7 +835,7 @@ export class CustomerList implements OnInit {
     this.visitsExpanded[customerId] = !this.visitsExpanded[customerId];
 
     if (this.visitsExpanded[customerId]) {
-      this.visitPage[customerId] = 0;
+      this.visitPage[customerId] = 1; // Initialize page to 1
       this.loadVisits(customerId);
     }
   }
@@ -970,13 +856,8 @@ export class CustomerList implements OnInit {
 
   goToVisitPage(customerId: string): void {
     const requestedPage = Number(this.goToVisitPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = Math.max(1, Math.ceil((this.visitTotal[customerId] || 0) / this.visitLimit));
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.visitPage[customerId] = safePage - 1;
-    this.goToVisitPageControl.setValue(safePage, { emitEvent: false });
+    this.visitPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.visitTotal[customerId] || 0, this.visitLimit);
+    this.goToVisitPageControl.setValue(this.visitPage[customerId], { emitEvent: false });
     this.loadVisits(customerId);
   }
 
@@ -996,7 +877,51 @@ export class CustomerList implements OnInit {
         this.customerBadges[customerId] = [];
         this.loadingBadges[customerId] = false;
         this.cdr.markForCheck();
-      }
+      },
     });
+  }
+
+  // ========================
+  // PAGINATION METHODS FOR TEMPLATE
+  // ========================
+
+  prevVisitPage(customerId: string): void {
+    this.visitPage[customerId] = this.paginationUtils.getSafePage((this.visitPage[customerId] || 1) - 1, this.visitTotal[customerId] || 0, this.visitLimit);
+    this.loadVisits(customerId);
+  }
+
+  nextVisitPage(customerId: string): void {
+    this.visitPage[customerId] = this.paginationUtils.getSafePage((this.visitPage[customerId] || 1) + 1, this.visitTotal[customerId] || 0, this.visitLimit);
+    this.loadVisits(customerId);
+  }
+
+  prevPage(customerId: string): void { // For reviews
+    this.reviewPage[customerId] = this.paginationUtils.getSafePage((this.reviewPage[customerId] || 1) - 1, this.reviewTotal[customerId] || 0, this.reviewLimit);
+    this.loadReviews(customerId);
+  }
+
+  nextPage(customerId: string): void { // For reviews
+    this.reviewPage[customerId] = this.paginationUtils.getSafePage((this.reviewPage[customerId] || 1) + 1, this.reviewTotal[customerId] || 0, this.reviewLimit);
+    this.loadReviews(customerId);
+  }
+
+  prevCustomersPage(): void {
+    this.customerPager.page = this.paginationUtils.getSafePage(this.customerPager.page - 1, this.filteredCustomers.length, this.customerPager.limit);
+    this.updatePagedCustomers();
+  }
+
+  nextCustomersPage(): void {
+    this.customerPager.page = this.paginationUtils.getSafePage(this.customerPager.page + 1, this.filteredCustomers.length, this.customerPager.limit);
+    this.updatePagedCustomers();
+  }
+
+  prevDeletedPage(): void {
+    this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page - 1, this.filteredDeletedCustomers.length, this.deletedPager.limit);
+    this.updatePagedDeletedCustomers();
+  }
+
+  nextDeletedPage(): void {
+    this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page + 1, this.filteredDeletedCustomers.length, this.deletedPager.limit);
+    this.updatePagedDeletedCustomers();
   }
 }

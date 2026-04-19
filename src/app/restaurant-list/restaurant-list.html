@@ -8,7 +8,7 @@
       + Add Restaurant
     </button>
     @if (!loading && !errorMsg && pagedRestaurants.length > 0) {
-    <button type="button" class="btn-custom btn-secondary" (click)="load()">↻ Refresh</button>
+    <button type="button" class="btn-custom btn-secondary" (click="load()">↻ Refresh</button>
     }
   </div>
 </div>
@@ -599,14 +599,15 @@
         } @else {
         <span class="muted">No rewards</span>
         }
-        <div class="footer" style="margin-top:var(--spacing-sm)">
-          <button class="btn-custom btn-secondary btn-sm" (click)="prevRewardPage(restaurant._id!)"
-            [disabled]="rewardPage[restaurant._id!] < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (rewardPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('rewards', -1, restaurant._id!)"
+            [disabled]="(rewardPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ rewardPage[restaurant._id!] || 1 }} / {{ Math.max(1,
             Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit)) }}</span>
-          <button class="btn-custom btn-secondary btn-sm" (click)="nextRewardPage(restaurant._id!)"
-            [disabled]="((rewardPage[restaurant._id!] || 0) + 1) * rewardLimit >= (rewardTotal[restaurant._id!] || 0)">Next
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('rewards', 1, restaurant._id!)"
+            [disabled]="(rewardPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit))">Next
             ➡</button>
+          <label for="goToRewardPageInput" style="margin-left: 8px;">Go to page:</label>
           <input class="input-custom" id="goToRewardPageInput" type="number" [formControl]="goToRewardPageControl"
             min="1" [max]="Math.max(1, Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit))"
             style="width:70px;" />
@@ -656,9 +657,9 @@
                 <span class="chip chip-neutral">{{ visit.billAmount | number:'1.2-2' }}€</span>
                 <span class="chip chip-success">+{{ visit.pointsEarned }}pts</span>
                 <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="startEditVisit(visit)">Edit</button>
+                  (click="startEditVisit(visit)">Edit</button>
                 <button type="button" class="btn-custom btn-danger btn-sm"
-                  (click)="removeVisit(restaurant._id!, visit)">✕</button>
+                  (click="removeVisit(restaurant._id!, visit)">✕</button>
               </span>
             </ng-container>
             <ng-container *ngIf="editingVisitId === (visit._id || visit.id)">
@@ -672,7 +673,7 @@
                 <button type="submit" class="btn-custom btn-success btn-sm"
                   [disabled]="editVisitForm.invalid">Save</button>
                 <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="cancelEditVisit()">Cancel</button>
+                  (click="cancelEditVisit()">Cancel</button>
               </form>
             </ng-container>
           </li>
@@ -682,14 +683,15 @@
         <span class="muted">No registered visits.</span>
         }
 
-        <div class="footer" style="margin-top:var(--spacing-sm)">
-          <button class="btn-custom btn-secondary btn-sm" (click)="prevVisitPage(restaurant._id!)"
-            [disabled]="visitPage[restaurant._id!] < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (visitPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('visits',-1,restaurant._id!)"
+            [disabled]="(visitPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (visitPage[restaurant._id!] || 1) }} / {{ Math.max(1,
             Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit)) }}</span>
-          <button class="btn-custom btn-secondary btn-sm" (click)="nextVisitPage(restaurant._id!)"
-            [disabled]="((visitPage[restaurant._id!] || 0) + 1) * visitLimit >= (visitTotal[restaurant._id!] || 0)">Next
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('visits', 1, restaurant._id!)"
+            [disabled]="(visitPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit))">Next
             ➡</button>
+          <label for="goToVisitPageInput" style="margin-left: 8px;">Go to page:</label>
           <input class="input-custom" id="goToVisitPageInput" type="number" [formControl]="goToVisitPageControl" min="1"
             [max]="Math.max(1, Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit))" style="width:70px;" />
           <button class="btn-custom btn-primary btn-sm" type="button"
@@ -764,7 +766,7 @@
             } @else if (getTopDishState(restaurant._id!) === 'error') {
               <div class="top-dish-error" role="status" aria-live="polite">
                 <p class="muted">{{ topDishErrorText[restaurant._id!] || 'No se pudo cargar el Top 1 del restaurante.' }}</p>
-                <button type="button" class="btn-custom btn-secondary btn-sm" (click)="retryTopDishLoad(restaurant._id!)">Retry</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm" (click="retryTopDishLoad(restaurant._id!)">Retry</button>
               </div>
             }
           </section>
@@ -794,9 +796,9 @@
               <span style="display:flex;align-items:center;gap:6px;">
                 <span class="chip chip-success">{{ dish.price | number:'1.2-2' }}€</span>
                 <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="startEditDish(dish)">Edit</button>
+                  (click="startEditDish(dish)">Edit</button>
                 <button type="button" class="btn-custom btn-danger btn-sm"
-                  (click)="removeDish(restaurant._id!, dish)">✕</button>
+                  (click="removeDish(restaurant._id!, dish)">✕</button>
               </span>
             </ng-container>
 
@@ -850,14 +852,15 @@
         }
 
         <!-- Pagination -->
-        <div class="footer" style="margin-top:var(--spacing-sm)">
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
           <button class="btn-custom btn-secondary btn-sm" (click)="prevDishPage(restaurant._id!)"
-            [disabled]="dishPage[restaurant._id!] < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (dishPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            [disabled]="(dishPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (dishPage[restaurant._id!] || 1) }} / {{ Math.max(1,
             Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit)) }}</span>
           <button class="btn-custom btn-secondary btn-sm" (click)="nextDishPage(restaurant._id!)"
-            [disabled]="((dishPage[restaurant._id!] || 0) + 1) * dishLimit >= (dishTotal[restaurant._id!] || 0)">Next
+            [disabled]="(dishPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit))">Next
             ➡</button>
+          <label for="goToDishPageInput" style="margin-left: 8px;">Go to page:</label>
           <input class="input-custom" id="goToDishPageInput" type="number" [formControl]="goToDishPageControl" min="1"
             [max]="Math.max(1, Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit))" style="width:70px;" />
           <button class="btn-custom btn-primary btn-sm" type="button"
@@ -953,9 +956,9 @@
               </span>
               <span style="display:flex;align-items:center;gap:6px;">
                 <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="startEditEmployee(employee)">Edit</button>
+                  (click="startEditEmployee(employee)">Edit</button>
                 <button type="button" class="btn-custom btn-danger btn-sm"
-                  (click)="removeEmployee(restaurant._id!, employee)">✕</button>
+                  (click="removeEmployee(restaurant._id!, employee)">✕</button>
               </span>
             </ng-container>
 
@@ -979,7 +982,7 @@
                 <button type="submit" class="btn-custom btn-success btn-sm"
                   [disabled]="editEmployeeForm.invalid">Save</button>
                 <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="cancelEditEmployee()">Cancel</button>
+                  (click="cancelEditEmployee()">Cancel</button>
               </form>
             </ng-container>
           </li>
@@ -990,19 +993,20 @@
         </div>
 
         <!-- Pagination -->
-        <div class="footer" style="margin-top:var(--spacing-sm)">
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
           <button class="btn-custom btn-secondary btn-sm" (click)="prevEmployeePage(restaurant._id!)"
-            [disabled]="(employeePage[restaurant._id!] || 0) < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (employeePage[restaurant._id!] || 0) + 1 }} / {{
+            [disabled]="(employeePage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (employeePage[restaurant._id!] || 1) }} / {{
             Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit)) }}</span>
           <button class="btn-custom btn-secondary btn-sm" (click)="nextEmployeePage(restaurant._id!)"
-            [disabled]="((employeePage[restaurant._id!] || 0) + 1) * employeeLimit >= (employeeTotal[restaurant._id!] || 0)">Next
+            [disabled]="(employeePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit))">Next
             ➡</button>
+          <label for="goToEmployeePageInput" style="margin-left: 8px;">Go to page:</label>
           <input class="input-custom" id="goToEmployeePageInput" type="number" [formControl]="goToEmployeePageControl"
             min="1" [max]="Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit))"
             style="width:70px;" />
           <button class="btn-custom btn-primary btn-sm" type="button"
-            (click)="goToEmployeePage(restaurant._id!)">Go</button>
+            (click="goToEmployeePage(restaurant._id!)">Go</button>
         </div>
       </div>
 
@@ -1068,9 +1072,9 @@
               </span>
               <span style="display:flex;align-items:center;gap:6px;">
                 <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="startEditBadge(badge)">Edit</button>
+                  (click="startEditBadge(badge)">Edit</button>
                 <button type="button" class="btn-custom btn-danger btn-sm"
-                  (click)="removeBadge(restaurant._id!, badge)">✕</button>
+                  (click="removeBadge(restaurant._id!, badge)">✕</button>
               </span>
             </ng-container>
 
@@ -1090,7 +1094,7 @@
                 <button type="submit" class="btn-custom btn-success btn-sm"
                   [disabled]="editBadgeForm.invalid">Save</button>
                 <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="cancelEditBadge()">Cancel</button>
+                  (click="cancelEditBadge()">Cancel</button>
               </form>
             </ng-container>
           </li>
@@ -1101,14 +1105,15 @@
         </div>
 
         <!-- Pagination -->
-        <div class="footer" style="margin-top:var(--spacing-sm)">
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
           <button class="btn-custom btn-secondary btn-sm" (click)="prevBadgePage(restaurant._id!)"
-            [disabled]="badgePage[restaurant._id!] < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (badgePage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            [disabled]="(badgePage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (badgePage[restaurant._id!] || 1) }} / {{ Math.max(1,
             Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit)) }}</span>
           <button class="btn-custom btn-secondary btn-sm" (click)="nextBadgePage(restaurant._id!)"
-            [disabled]="((badgePage[restaurant._id!] || 0) + 1) * badgeLimit >= (badgeTotal[restaurant._id!] || 0)">Next
+            [disabled]="(badgePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit))">Next
             ➡</button>
+          <label for="goToBadgePageInput" style="margin-left: 8px;">Go to page:</label>
           <input class="input-custom" id="goToBadgePageInput" type="number" [formControl]="goToBadgePageControl" min="1"
             [max]="Math.max(1, Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit))" style="width:70px;" />
           <button class="btn-custom btn-primary btn-sm" type="button"
@@ -1148,14 +1153,14 @@
   </li>
 </ul>
 
-<div class="footer">
-  <button class="btn-custom btn-primary" (click)="leftPage()" [disabled]="currentPage <= 1">
+<div class="footer" style="display:flex; align-items:center; gap:10px;">
+  <button class="btn-custom btn-primary" (click)="leftPage()" [disabled]="restaurantPager.page === 1">
     ⬅ Previous
   </button>
 
-  <p class="btn-custom btn-primary">Page {{ currentPage }} / {{ getTotalPages() }}</p>
+  <p class="btn-custom btn-primary">Page {{ restaurantPager.page }} / {{ getTotalPages() }}</p>
 
-  <button class="btn-custom btn-primary" (click)="rightPage()" [disabled]="currentPage >= getTotalPages()">
+  <button class="btn-custom btn-primary" (click)="rightPage()" [disabled]="restaurantPager.page >= getTotalPages()">
     Next ➡
   </button>
 
@@ -1486,13 +1491,13 @@
         } @else {
         <span class="muted">No rewards</span>
         }
-        <div class="footer" style="margin-top:var(--spacing-sm)">
-          <button class="btn-custom btn-secondary btn-sm" (click)="prevRewardPage(restaurant._id!)"
-            [disabled]="rewardPage[restaurant._id!] < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (rewardPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('rewards', -1, restaurant._id!)"
+            [disabled]="(rewardPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (rewardPage[restaurant._id!] || 1) }} / {{ Math.max(1,
             Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit)) }}</span>
-          <button class="btn-custom btn-secondary btn-sm" (click)="nextRewardPage(restaurant._id!)"
-            [disabled]="((rewardPage[restaurant._id!] || 0) + 1) * rewardLimit >= (rewardTotal[restaurant._id!] || 0)">Next
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('rewards', 1, restaurant._id!)"
+            [disabled]="(rewardPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit))">Next
             ➡</button>
         </div>
       </div>
@@ -1518,13 +1523,13 @@
         <span class="muted">No registered visits.</span>
         }
 
-        <div class="footer" style="margin-top:var(--spacing-sm)">
-          <button class="btn-custom btn-secondary btn-sm" (click)="prevVisitPage(restaurant._id!)"
-            [disabled]="visitPage[restaurant._id!] < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (visitPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('visits', -1, restaurant._id!)"
+            [disabled]="(visitPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (visitPage[restaurant._id!] || 1) }} / {{ Math.max(1,
             Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit)) }}</span>
-          <button class="btn-custom btn-secondary btn-sm" (click)="nextVisitPage(restaurant._id!)"
-            [disabled]="((visitPage[restaurant._id!] || 0) + 1) * visitLimit >= (visitTotal[restaurant._id!] || 0)">Next
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('visits', 1, restaurant._id!)"
+            [disabled]="(visitPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit))">Next
             ➡</button>
         </div>
       </div><!-- end visits section -->
@@ -1560,13 +1565,13 @@
         <span class="muted">No dishes registered.</span>
         }
 
-        <div class="footer" style="margin-top:var(--spacing-sm)">
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
           <button class="btn-custom btn-secondary btn-sm" (click)="prevDishPage(restaurant._id!)"
-            [disabled]="dishPage[restaurant._id!] < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (dishPage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            [disabled]="(dishPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (dishPage[restaurant._id!] || 1) }} / {{ Math.max(1,
             Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit)) }}</span>
           <button class="btn-custom btn-secondary btn-sm" (click)="nextDishPage(restaurant._id!)"
-            [disabled]="((dishPage[restaurant._id!] || 0) + 1) * dishLimit >= (dishTotal[restaurant._id!] || 0)">Next
+            [disabled]="(dishPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit))">Next
             ➡</button>
         </div>
       </div>
@@ -1597,13 +1602,13 @@
           <span class="muted">No employees registered.</span>
         </div>
 
-        <div class="footer" style="margin-top:var(--spacing-sm)">
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
           <button class="btn-custom btn-secondary btn-sm" (click)="prevEmployeePage(restaurant._id!)"
-            [disabled]="(employeePage[restaurant._id!] || 0) < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (employeePage[restaurant._id!] || 0) + 1 }} / {{
+            [disabled]="(employeePage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (employeePage[restaurant._id!] || 1) }} / {{
             Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit)) }}</span>
           <button class="btn-custom btn-secondary btn-sm" (click)="nextEmployeePage(restaurant._id!)"
-            [disabled]="((employeePage[restaurant._id!] || 0) + 1) * employeeLimit >= (employeeTotal[restaurant._id!] || 0)">Next
+            [disabled]="(employeePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit))">Next
             ➡</button>
         </div>
       </div>
@@ -1628,13 +1633,13 @@
           <span class="muted">No badges defined for this restaurant.</span>
         </div>
 
-        <div class="footer" style="margin-top:var(--spacing-sm)">
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
           <button class="btn-custom btn-secondary btn-sm" (click)="prevBadgePage(restaurant._id!)"
-            [disabled]="badgePage[restaurant._id!] < 1">⬅ Prev</button>
-          <span class="muted" style="font-size:13px;">Page {{ (badgePage[restaurant._id!] || 0) + 1 }} / {{ Math.max(1,
+            [disabled]="(badgePage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (badgePage[restaurant._id!] || 1) }} / {{ Math.max(1,
             Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit)) }}</span>
           <button class="btn-custom btn-secondary btn-sm" (click)="nextBadgePage(restaurant._id!)"
-            [disabled]="((badgePage[restaurant._id!] || 0) + 1) * badgeLimit >= (badgeTotal[restaurant._id!] || 0)">Next
+            [disabled]="(badgePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit))">Next
             ➡</button>
         </div>
       </div>
@@ -1645,15 +1650,15 @@
 </ul>
 
 <!-- DELETED RESTAURANTS PAGINATION -->
-<div class="footer" *ngIf="pagedDeletedRestaurants.length > 0">
-  <button class="btn-custom btn-primary" (click)="leftDeletedPage()" [disabled]="deletedCurrentPage <= 1">
+<div class="footer" *ngIf="pagedDeletedRestaurants.length > 0" style="display:flex; align-items:center; gap:10px; margin-top: 12px;">
+  <button class="btn-custom btn-primary" (click)="leftDeletedPage()" [disabled]="deletedPager.page === 1">
     ⬅ Previous
   </button>
 
-  <p class="btn-custom btn-primary">Page {{ deletedCurrentPage }} / {{ getTotalDeletedPages() }}</p>
+  <p class="btn-custom btn-primary">Page {{ deletedPager.page }} / {{ getTotalDeletedPages() }}</p>
 
   <button class="btn-custom btn-primary" (click)="rightDeletedPage()"
-    [disabled]="deletedCurrentPage >= getTotalDeletedPages()">
+    [disabled]="deletedPager.page >= getTotalDeletedPages()">
     Next ➡
   </button>
 

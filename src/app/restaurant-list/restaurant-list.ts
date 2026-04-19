@@ -20,6 +20,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { ICustomer } from '../models/customer.model';
 import { CustomerService } from '../services/customer.service';
+import { PaginationUtils } from '../services/pagination.util';
 import { environment } from '../../environments/environment';
 import {
   buildGoogleMapsDirectionsUrl,
@@ -60,9 +61,8 @@ export class RestaurantList implements OnInit, OnDestroy {
   expanded: { [key: string]: boolean } = {};
   restaurantFull: { [key: string]: IRestaurant } = {};
   deletedRestaurantFull: { [key: string]: IRestaurant } = {};
-  limit = 3;
-  currentPage = 1;
-  deletedCurrentPage = 1;
+  restaurantPager = { page: 1, limit: 3 };
+  deletedPager = { page: 1, limit: 3 };
   showAllRestaurants = false;
   showAllDeletedRestaurants = false;
   showAllData = false;
@@ -144,6 +144,7 @@ export class RestaurantList implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
     private sanitizer: DomSanitizer,
+    private paginationUtils: PaginationUtils,
   ) {
     this.restaurantForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
@@ -357,7 +358,7 @@ export class RestaurantList implements OnInit, OnDestroy {
       this.filteredRestaurants = this.restaurants.filter((restaurant) =>
         restaurant.profile.name.toLowerCase().includes(term),
       );
-      this.currentPage = 1;
+      this.restaurantPager.page = 1;
       this.updatePagedRestaurants();
     });
 
@@ -367,7 +368,7 @@ export class RestaurantList implements OnInit, OnDestroy {
       this.filteredDeletedRestaurants = this.deletedRestaurants.filter((restaurant) =>
         restaurant.profile.name.toLowerCase().includes(term),
       );
-      this.deletedCurrentPage = 1;
+      this.deletedPager.page = 1;
       this.updatePagedDeletedRestaurants();
     });
   }
@@ -443,7 +444,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   }
 
   get visibleDeletedRestaurants(): IRestaurant[] {
-    if (this.search) {
+    if (this.searchDeleted) {
       return this.filteredDeletedRestaurants;
     }
     return this.pagedDeletedRestaurants;
@@ -454,7 +455,6 @@ export class RestaurantList implements OnInit, OnDestroy {
       next: (full) => {
         this.restaurantFull[restaurantId] = full;
         this.initializeLocationMapState(restaurantId, full);
-        this.visitPage[restaurantId] = 0;
         this.cdr.markForCheck();
       },
       error: () => {
@@ -470,20 +470,20 @@ export class RestaurantList implements OnInit, OnDestroy {
     if (this.expanded[restaurantId]) {
       this.refreshRestaurantFull(restaurantId);
 
-      this.rewardPage[restaurantId] = 0;
+      this.rewardPage[restaurantId] = 1;
       this.loadRestaurantRewards(restaurantId);
 
-      this.visitPage[restaurantId] = 0;
+      this.visitPage[restaurantId] = 1;
       this.loadRestaurantVisits(restaurantId);
 
-      this.dishPage[restaurantId] = 0;
+      this.dishPage[restaurantId] = 1;
       this.loadRestaurantTopDish(restaurantId);
       this.loadRestaurantDishes(restaurantId);
 
-      this.employeePage[restaurantId] = 0;
+      this.employeePage[restaurantId] = 1;
       this.loadRestaurantEmployees(restaurantId);
 
-      this.badgePage[restaurantId] = 0;
+      this.badgePage[restaurantId] = 1;
       this.loadRestaurantBadges(restaurantId);
     } else {
       this.mapLoading[restaurantId] = false;
@@ -649,19 +649,19 @@ export class RestaurantList implements OnInit, OnDestroy {
     if (this.expanded[restaurantId]) {
       this.refreshDeletedRestaurantFull(restaurantId);
 
-      this.rewardPage[restaurantId] = 0;
+      this.rewardPage[restaurantId] = 1;
       this.loadRestaurantRewards(restaurantId);
 
-      this.visitPage[restaurantId] = 0;
+      this.visitPage[restaurantId] = 1;
       this.loadRestaurantVisits(restaurantId);
 
-      this.dishPage[restaurantId] = 0;
+      this.dishPage[restaurantId] = 1;
       this.loadRestaurantDishes(restaurantId);
 
-      this.employeePage[restaurantId] = 0;
+      this.employeePage[restaurantId] = 1;
       this.loadRestaurantEmployees(restaurantId);
 
-      this.badgePage[restaurantId] = 0;
+      this.badgePage[restaurantId] = 1;
       this.loadRestaurantBadges(restaurantId);
     }
   }
@@ -745,7 +745,7 @@ export class RestaurantList implements OnInit, OnDestroy {
       categoryBuffet: restaurant.profile.category?.includes('Buffet'),
       categoryFoodTruck: restaurant.profile.category?.includes('Food Truck'),
       categoryLounge: restaurant.profile.category?.includes('Lounge'),
-      categoryPub: restaurant.profile.category?.includes('Pub'),
+      categoryPub: 'Pub',
       categoryWineBar: restaurant.profile.category?.includes('Wine Bar'),
       categoryRooftop: restaurant.profile.category?.includes('Rooftop'),
       categoryBar: restaurant.profile.category?.includes('Bar'),
@@ -995,10 +995,17 @@ export class RestaurantList implements OnInit, OnDestroy {
         const res: IReward[] = allRewards.filter(
           (reward: IReward) => reward.restaurant_id === restaurantId,
         );
-        this.restaurantRewards = {
-          ...this.restaurantRewards,
-          [restaurantId]: this.paginateRewards(res, restaurantId) ?? [],
-        };
+        this.rewardTotal[restaurantId] = res.length;
+        this.rewardPage[restaurantId] = this.paginationUtils.getSafePage(
+          this.rewardPage[restaurantId] || 1,
+          res.length,
+          this.rewardLimit
+        );
+        this.restaurantRewards[restaurantId] = this.paginationUtils.getPaginatedData(
+          res,
+          this.rewardPage[restaurantId],
+          this.rewardLimit
+        );
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1010,45 +1017,20 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  private paginateRewards(rewards: IReward[], restaurantId: string): IReward[] {
-    const page = this.rewardPage[restaurantId] || 0;
-    const start = page * this.rewardLimit;
-    const end = start + this.rewardLimit;
-
-    this.rewardTotal[restaurantId] = rewards.length;
-
-    return rewards.slice(start, end);
-  }
-
   nextRewardPage(restaurantId: string): void {
-    const page = this.rewardPage[restaurantId] || 0;
-    const total = this.rewardTotal[restaurantId] || 0;
-
-    if ((page + 1) * this.rewardLimit >= total) return;
-
-    this.rewardPage[restaurantId] = page + 1;
+    this.rewardPage[restaurantId] = this.paginationUtils.getSafePage((this.rewardPage[restaurantId] || 1) + 1, this.rewardTotal[restaurantId] || 0, this.rewardLimit);
     this.loadRestaurantRewards(restaurantId);
   }
 
   prevRewardPage(restaurantId: string): void {
-    if ((this.rewardPage[restaurantId] || 0) === 0) return;
-
-    this.rewardPage[restaurantId]--;
+    this.rewardPage[restaurantId] = this.paginationUtils.getSafePage((this.rewardPage[restaurantId] || 1) - 1, this.rewardTotal[restaurantId] || 0, this.rewardLimit);
     this.loadRestaurantRewards(restaurantId);
   }
 
   goToRewardPage(restaurantId: string): void {
     const requestedPage = Number(this.goToRewardPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = Math.max(
-      1,
-      Math.ceil((this.rewardTotal[restaurantId] || 0) / this.rewardLimit),
-    );
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.rewardPage[restaurantId] = safePage - 1;
-    this.goToRewardPageControl.setValue(safePage, { emitEvent: false });
+    this.rewardPage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.rewardTotal[restaurantId] || 0, this.rewardLimit);
+    this.goToRewardPageControl.setValue(this.rewardPage[restaurantId], { emitEvent: false });
     this.loadRestaurantRewards(restaurantId);
   }
 
@@ -1169,6 +1151,26 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
+  changePage(type: 'restaurants' | 'deleted' | 'rewards' | 'visits', delta: number, id?: string): void {
+    if (type === 'restaurants') {
+      this.restaurantPager.page = this.paginationUtils.getSafePage(this.restaurantPager.page + delta, this.filteredRestaurants.length, this.restaurantPager.limit);
+      this.updatePagedRestaurants();
+    }
+    else if (type === 'deleted') {
+      this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page + delta, this.filteredDeletedRestaurants.length, this.deletedPager.limit);
+      this.updatePagedDeletedRestaurants();
+    }
+    else if (id) {
+      if (type === 'rewards') {
+        this.rewardPage[id] = this.paginationUtils.getSafePage((this.rewardPage[id] || 1) + delta, this.rewardTotal[id] || 0, this.rewardLimit);
+        this.loadRestaurantRewards(id);
+      } else if (type === 'visits') {
+        this.visitPage[id] = this.paginationUtils.getSafePage((this.visitPage[id] || 1) + delta, this.visitTotal[id] || 0, this.visitLimit);
+        this.loadRestaurantVisits(id);
+      }
+    }
+  }
+
   // ========================
   // VISITS
   // ========================
@@ -1176,10 +1178,17 @@ export class RestaurantList implements OnInit, OnDestroy {
   private loadRestaurantVisits(restaurantId: string): void {
     this.visitApi.getVisitsByRestaurantId(restaurantId).subscribe({
       next: (visits: IVisit[]) => {
-        this.restaurantVisits = {
-          ...this.restaurantVisits,
-          [restaurantId]: this.paginateVisits(visits, restaurantId) ?? [],
-        };
+        this.visitTotal[restaurantId] = visits.length;
+        this.visitPage[restaurantId] = this.paginationUtils.getSafePage(
+          this.visitPage[restaurantId] || 1,
+          visits.length,
+          this.visitLimit
+        );
+        this.restaurantVisits[restaurantId] = this.paginationUtils.getPaginatedData(
+          visits,
+          this.visitPage[restaurantId],
+          this.visitLimit
+        );
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1191,46 +1200,10 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  private paginateVisits(visits: IVisit[], restaurantId: string): IVisit[] {
-    const page = this.visitPage[restaurantId] || 0;
-    const start = page * this.visitLimit;
-    const end = start + this.visitLimit;
-
-    // Store total for pagination controls
-    this.visitTotal[restaurantId] = visits.length;
-
-    return visits.slice(start, end);
-  }
-
-  nextVisitPage(restaurantId: string): void {
-    const page = this.visitPage[restaurantId] || 0;
-    const total = this.visitTotal[restaurantId] || 0;
-
-    if ((page + 1) * this.visitLimit >= total) return;
-
-    this.visitPage[restaurantId] = page + 1;
-    this.loadRestaurantVisits(restaurantId);
-  }
-
-  prevVisitPage(restaurantId: string): void {
-    if ((this.visitPage[restaurantId] || 0) === 0) return;
-
-    this.visitPage[restaurantId]--;
-    this.loadRestaurantVisits(restaurantId);
-  }
-
   goToVisitPage(restaurantId: string): void {
     const requestedPage = Number(this.goToVisitPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = Math.max(
-      1,
-      Math.ceil((this.visitTotal[restaurantId] || 0) / this.visitLimit),
-    );
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.visitPage[restaurantId] = safePage - 1;
-    this.goToVisitPageControl.setValue(safePage, { emitEvent: false });
+    this.visitPage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.visitTotal[restaurantId] || 0, this.visitLimit);
+    this.goToVisitPageControl.setValue(this.visitPage[restaurantId], { emitEvent: false });
     this.loadRestaurantVisits(restaurantId);
   }
 
@@ -1304,9 +1277,7 @@ export class RestaurantList implements OnInit, OnDestroy {
 
         this.visitApi.softDeleteVisit(visitId).subscribe({
           next: () => {
-            this.restaurantVisits[restaurantId] = this.restaurantVisits[restaurantId].filter(
-              (v: IVisit) => (v._id || v.id) !== visitId,
-            );
+            this.loadRestaurantVisits(restaurantId);
             this.loading = false;
             this.cdr.markForCheck();
           },
@@ -1408,7 +1379,16 @@ export class RestaurantList implements OnInit, OnDestroy {
       next: (allDishes: IDish[]) => {
         const filtered = allDishes.filter((d) => d.restaurant_id === restaurantId);
         this.dishTotal[restaurantId] = filtered.length;
-        this.restaurantDishes[restaurantId] = this.paginateDishes(filtered, restaurantId);
+        this.dishPage[restaurantId] = this.paginationUtils.getSafePage(
+          this.dishPage[restaurantId] || 1,
+          filtered.length,
+          this.dishLimit
+        );
+        this.restaurantDishes[restaurantId] = this.paginationUtils.getPaginatedData(
+          filtered,
+          this.dishPage[restaurantId],
+          this.dishLimit
+        );
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1420,35 +1400,20 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  private paginateDishes(dishes: IDish[], restaurantId: string): IDish[] {
-    const page = this.dishPage[restaurantId] || 0;
-    const start = page * this.dishLimit;
-    const end = start + this.dishLimit;
-    this.dishTotal[restaurantId] = dishes.length;
-    return dishes.slice(start, end);
-  }
-
   nextDishPage(restaurantId: string): void {
-    const page = this.dishPage[restaurantId] || 0;
-    const total = this.dishTotal[restaurantId] || 0;
-    if ((page + 1) * this.dishLimit >= total) return;
-    this.dishPage[restaurantId] = page + 1;
+    this.dishPage[restaurantId] = this.paginationUtils.getSafePage((this.dishPage[restaurantId] || 1) + 1, this.dishTotal[restaurantId] || 0, this.dishLimit);
     this.loadRestaurantDishes(restaurantId);
   }
 
   prevDishPage(restaurantId: string): void {
-    if ((this.dishPage[restaurantId] || 0) === 0) return;
-    this.dishPage[restaurantId]--;
+    this.dishPage[restaurantId] = this.paginationUtils.getSafePage((this.dishPage[restaurantId] || 1) - 1, this.dishTotal[restaurantId] || 0, this.dishLimit);
     this.loadRestaurantDishes(restaurantId);
   }
 
   goToDishPage(restaurantId: string): void {
     const requestedPage = Number(this.goToDishPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-    const totalPages = Math.max(1, Math.ceil((this.dishTotal[restaurantId] || 0) / this.dishLimit));
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-    this.dishPage[restaurantId] = safePage - 1;
-    this.goToDishPageControl.setValue(safePage, { emitEvent: false });
+    this.dishPage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.dishTotal[restaurantId] || 0, this.dishLimit);
+    this.goToDishPageControl.setValue(this.dishPage[restaurantId], { emitEvent: false });
     this.loadRestaurantDishes(restaurantId);
   }
 
@@ -1579,7 +1544,16 @@ export class RestaurantList implements OnInit, OnDestroy {
       next: (allEmployees: IEmployee[]) => {
         const filtered = allEmployees.filter((e) => e.restaurant_id === restaurantId);
         this.employeeTotal[restaurantId] = filtered.length;
-        this.restaurantEmployees[restaurantId] = this.paginateEmployees(filtered, restaurantId);
+        this.employeePage[restaurantId] = this.paginationUtils.getSafePage(
+          this.employeePage[restaurantId] || 1,
+          filtered.length,
+          this.employeeLimit
+        );
+        this.restaurantEmployees[restaurantId] = this.paginationUtils.getPaginatedData(
+          filtered,
+          this.employeePage[restaurantId],
+          this.employeeLimit
+        );
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1591,38 +1565,20 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  private paginateEmployees(employees: IEmployee[], restaurantId: string): IEmployee[] {
-    const page = this.employeePage[restaurantId] || 0;
-    const start = page * this.employeeLimit;
-    const end = start + this.employeeLimit;
-    this.employeeTotal[restaurantId] = employees.length;
-    return employees.slice(start, end);
-  }
-
   nextEmployeePage(restaurantId: string): void {
-    const page = this.employeePage[restaurantId] || 0;
-    const total = this.employeeTotal[restaurantId] || 0;
-    if ((page + 1) * this.employeeLimit >= total) return;
-    this.employeePage[restaurantId] = page + 1;
+    this.employeePage[restaurantId] = this.paginationUtils.getSafePage((this.employeePage[restaurantId] || 1) + 1, this.employeeTotal[restaurantId] || 0, this.employeeLimit);
     this.loadRestaurantEmployees(restaurantId);
   }
 
   prevEmployeePage(restaurantId: string): void {
-    if ((this.employeePage[restaurantId] || 0) === 0) return;
-    this.employeePage[restaurantId]--;
+    this.employeePage[restaurantId] = this.paginationUtils.getSafePage((this.employeePage[restaurantId] || 1) - 1, this.employeeTotal[restaurantId] || 0, this.employeeLimit);
     this.loadRestaurantEmployees(restaurantId);
   }
 
   goToEmployeePage(restaurantId: string): void {
     const requestedPage = Number(this.goToEmployeePageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-    const totalPages = Math.max(
-      1,
-      Math.ceil((this.employeeTotal[restaurantId] || 0) / this.employeeLimit),
-    );
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-    this.employeePage[restaurantId] = safePage - 1;
-    this.goToEmployeePageControl.setValue(safePage, { emitEvent: false });
+    this.employeePage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.employeeTotal[restaurantId] || 0, this.employeeLimit);
+    this.goToEmployeePageControl.setValue(this.employeePage[restaurantId], { emitEvent: false });
     this.loadRestaurantEmployees(restaurantId);
   }
 
@@ -1705,7 +1661,33 @@ export class RestaurantList implements OnInit, OnDestroy {
   }
 
   saveEditedEmployee(restaurantId: string): void {
-    // ... (unchanged)
+    if (this.editEmployeeForm.invalid || !this.editingEmployeeId) return;
+
+    this.loading = true;
+    this.cdr.markForCheck();
+
+    const v = this.editEmployeeForm.value;
+    const data: Partial<IEmployee> = {
+      profile: {
+        name: v.name,
+        email: v.email || undefined,
+        phone: v.phone || undefined,
+        role: v.role || 'staff',
+      },
+      isActive: v.isActive,
+    };
+
+    this.employeeApi.updateEmployee(this.editingEmployeeId, data).subscribe({
+      next: () => {
+        this.editingEmployeeId = null;
+        this.loadRestaurantEmployees(restaurantId);
+      },
+      error: () => {
+        this.errorMsg = 'Could not update employee.';
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   // ========================
@@ -1716,7 +1698,16 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.badgeApi.getBadgesByRestaurant(restaurantId).subscribe({
       next: (badges: IBadge[]) => {
         this.badgeTotal[restaurantId] = badges.length;
-        this.restaurantBadges[restaurantId] = this.paginateBadges(badges, restaurantId);
+        this.badgePage[restaurantId] = this.paginationUtils.getSafePage(
+          this.badgePage[restaurantId] || 1,
+          badges.length,
+          this.badgeLimit
+        );
+        this.restaurantBadges[restaurantId] = this.paginationUtils.getPaginatedData(
+          badges,
+          this.badgePage[restaurantId],
+          this.badgeLimit
+        );
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1728,38 +1719,20 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  private paginateBadges(badges: IBadge[], restaurantId: string): IBadge[] {
-    const page = this.badgePage[restaurantId] || 0;
-    const start = page * this.badgeLimit;
-    const end = start + this.badgeLimit;
-    this.badgeTotal[restaurantId] = badges.length;
-    return badges.slice(start, end);
-  }
-
   nextBadgePage(restaurantId: string): void {
-    const page = this.badgePage[restaurantId] || 0;
-    const total = this.badgeTotal[restaurantId] || 0;
-    if ((page + 1) * this.badgeLimit >= total) return;
-    this.badgePage[restaurantId] = page + 1;
+    this.badgePage[restaurantId] = this.paginationUtils.getSafePage((this.badgePage[restaurantId] || 1) + 1, this.badgeTotal[restaurantId] || 0, this.badgeLimit);
     this.loadRestaurantBadges(restaurantId);
   }
 
   prevBadgePage(restaurantId: string): void {
-    if ((this.badgePage[restaurantId] || 0) === 0) return;
-    this.badgePage[restaurantId]--;
+    this.badgePage[restaurantId] = this.paginationUtils.getSafePage((this.badgePage[restaurantId] || 1) - 1, this.badgeTotal[restaurantId] || 0, this.badgeLimit);
     this.loadRestaurantBadges(restaurantId);
   }
 
   goToBadgePage(restaurantId: string): void {
     const requestedPage = Number(this.goToBadgePageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-    const totalPages = Math.max(
-      1,
-      Math.ceil((this.badgeTotal[restaurantId] || 0) / this.badgeLimit),
-    );
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-    this.badgePage[restaurantId] = safePage - 1;
-    this.goToBadgePageControl.setValue(safePage, { emitEvent: false });
+    this.badgePage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.badgeTotal[restaurantId] || 0, this.badgeLimit);
+    this.goToBadgePageControl.setValue(this.badgePage[restaurantId], { emitEvent: false });
     this.loadRestaurantBadges(restaurantId);
   }
 
@@ -1899,84 +1872,66 @@ export class RestaurantList implements OnInit, OnDestroy {
   // ========================
 
   leftPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.updatePagedRestaurants();
-    }
+    this.restaurantPager.page = this.paginationUtils.getSafePage(this.restaurantPager.page - 1, this.filteredRestaurants.length, this.restaurantPager.limit);
+    this.updatePagedRestaurants();
   }
 
   rightPage(): void {
-    if (this.currentPage < this.getTotalPages()) {
-      this.currentPage++;
-      this.updatePagedRestaurants();
-    }
+    this.restaurantPager.page = this.paginationUtils.getSafePage(this.restaurantPager.page + 1, this.filteredRestaurants.length, this.restaurantPager.limit);
+    this.updatePagedRestaurants();
   }
 
   goToPage(): void {
     const requestedPage = Number(this.goToPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = this.getTotalPages();
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.currentPage = safePage;
-    this.goToPageControl.setValue(safePage, { emitEvent: false });
+    this.restaurantPager.page = this.paginationUtils.getSafePage(requestedPage, this.filteredRestaurants.length, this.restaurantPager.limit);
+    this.goToPageControl.setValue(this.restaurantPager.page, { emitEvent: false });
     this.updatePagedRestaurants();
   }
 
   getTotalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredRestaurants.length / this.limit));
+    return this.paginationUtils.getTotalPages(this.filteredRestaurants.length, this.restaurantPager.limit);
   }
 
   private updatePagedRestaurants(): void {
-    const totalPages = this.getTotalPages();
-    this.currentPage = Math.min(Math.max(1, this.currentPage), totalPages);
-
-    const start = (this.currentPage - 1) * this.limit;
-    const end = start + this.limit;
-    this.pagedRestaurants = this.filteredRestaurants.slice(start, end);
-    this.goToPageControl.setValue(this.currentPage, { emitEvent: false });
+    this.restaurantPager.page = this.paginationUtils.getSafePage(this.restaurantPager.page, this.filteredRestaurants.length, this.restaurantPager.limit);
+    this.pagedRestaurants = this.paginationUtils.getPaginatedData(
+      this.filteredRestaurants,
+      this.restaurantPager.page,
+      this.restaurantPager.limit
+    );
+    this.goToPageControl.setValue(this.restaurantPager.page, { emitEvent: false });
     this.cdr.markForCheck();
   }
 
   getTotalDeletedPages(): number {
-    return Math.max(1, Math.ceil(this.filteredDeletedRestaurants.length / this.limit));
+    return this.paginationUtils.getTotalPages(this.filteredDeletedRestaurants.length, this.deletedPager.limit);
   }
 
   private updatePagedDeletedRestaurants(): void {
-    const totalPages = this.getTotalDeletedPages();
-    this.deletedCurrentPage = Math.min(Math.max(1, this.deletedCurrentPage), totalPages);
-
-    const start = (this.deletedCurrentPage - 1) * this.limit;
-    const end = start + this.limit;
-    this.pagedDeletedRestaurants = this.filteredDeletedRestaurants.slice(start, end);
-    this.goToDeletedPageControl.setValue(this.deletedCurrentPage, { emitEvent: false });
+    this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page, this.filteredDeletedRestaurants.length, this.deletedPager.limit);
+    this.pagedDeletedRestaurants = this.paginationUtils.getPaginatedData(
+      this.filteredDeletedRestaurants,
+      this.deletedPager.page,
+      this.deletedPager.limit
+    );
+    this.goToDeletedPageControl.setValue(this.deletedPager.page, { emitEvent: false });
     this.cdr.markForCheck();
   }
 
   leftDeletedPage(): void {
-    if (this.deletedCurrentPage > 1) {
-      this.deletedCurrentPage--;
-      this.updatePagedDeletedRestaurants();
-    }
+    this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page - 1, this.filteredDeletedRestaurants.length, this.deletedPager.limit);
+    this.updatePagedDeletedRestaurants();
   }
 
   rightDeletedPage(): void {
-    if (this.deletedCurrentPage < this.getTotalDeletedPages()) {
-      this.deletedCurrentPage++;
-      this.updatePagedDeletedRestaurants();
-    }
+    this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page + 1, this.filteredDeletedRestaurants.length, this.deletedPager.limit);
+    this.updatePagedDeletedRestaurants();
   }
 
   goToDeletedPage(): void {
     const requestedPage = Number(this.goToDeletedPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = this.getTotalDeletedPages();
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.deletedCurrentPage = safePage;
-    this.goToDeletedPageControl.setValue(safePage, { emitEvent: false });
+    this.deletedPager.page = this.paginationUtils.getSafePage(requestedPage, this.filteredDeletedRestaurants.length, this.deletedPager.limit);
+    this.goToDeletedPageControl.setValue(this.deletedPager.page, { emitEvent: false });
     this.updatePagedDeletedRestaurants();
   }
 }

@@ -167,20 +167,20 @@
         <table class="visits-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
           <thead>
             <tr style="text-align: left; border-bottom: 1px solid #ddd;">
+              <th (click)="setVisitSort('date', customer._id!)" style="cursor:pointer">Date ↕</th>
+              <th (click)="setVisitSort('billAmount', customer._id!)" style="cursor:pointer">Spent ↕</th>
+              <th (click)="setVisitSort('pointsEarned', customer._id!)" style="cursor:pointer">Points ↕</th>
               <th>Restaurant</th>
-              <th>Date</th>
-              <th>Spent</th>
-              <th>Points</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             @for (visit of customerVisits[customer._id!]; track visit._id) {
             <tr style="border-bottom: 1px solid #eee;">
-              <td>{{ visit.restaurant_id?.profile?.name || '---' }}</td>
               <td>{{ visit.date | date:'dd/MM/yyyy' }}</td>
               <td>{{ visit.billAmount }}€</td>
               <td style="color: green;">+{{ visit.pointsEarned }}</td>
+              <td>{{ visit.restaurant_id?.profile?.name || '---' }}</td>
               <td style="display: flex; gap: 5px; padding: 5px 0;">
                 <button class="btn-custom btn-primary btn-sm" (click)="editVisit(visit, customer._id!)"
                   title="Edit">Edit</button>
@@ -196,19 +196,19 @@
         } @else {
         <p class="muted italic">No active visits.</p>
         }
-        <div style="margin-top:10px; display:flex; gap:10px;">
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
           <button class="btn-custom btn-primary" type="button" (click)="prevVisitPage(customer._id!)"
-            [disabled]="(visitPage[customer._id!] || 0) === 0">⬅ Prev</button>
-          <span>Page {{ (visitPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((visitTotal[customer._id!] ||
+            [disabled]="(visitPage[customer._id!] || 1) === 1">⬅ Prev</button>
+          <span>Page {{ visitPage[customer._id!] || 1 }} / {{ Math.max(1, Math.ceil((visitTotal[customer._id!] ||
             0) / visitLimit)) }}</span>
           <button class="btn-custom btn-primary" type="button" (click)="nextVisitPage(customer._id!)"
-            [disabled]="((visitPage[customer._id!] || 0) + 1) * visitLimit >= (visitTotal[customer._id!] || 0)">Next
+            [disabled]="(visitPage[customer._id!] || 1) >= Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit))">Next
             ➡</button>
+          <label for="goToVisitPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToVisitPageInput" type="number" [formControl]="goToVisitPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit))" style="width: 80px;" />
+          <button class="btn-custom btn-primary" type="button" (click)="goToVisitPage(customer._id!)">Go</button>
         </div>
-        <label for="goToVisitPageInput" style="margin-left: 8px;">Go to page:</label>
-        <input class="input-custom" id="goToVisitPageInput" type="number" [formControl]="goToVisitPageControl" min="1"
-          [max]="Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit))" style="width: 80px;" />
-        <button class="btn-custom btn-primary" type="button" (click)="goToVisitPage(customer._id!)">Go</button>
       </div>
 
       <!-- Sección de Badges -->
@@ -254,19 +254,19 @@
                 <p>No reviews yet</p>
               }
 
-        <div style="margin-top:10px; display:flex; gap:10px;">
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
           <button class="btn-custom btn-primary" type="button" (click)="prevPage(customer._id!)"
-            [disabled]="(reviewPage[customer._id!] || 0) === 0">⬅ Prev</button>
-          <span>Page {{ (reviewPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((reviewTotal[customer._id!]
+            [disabled]="(reviewPage[customer._id!] || 1) === 1">⬅ Prev</button>
+          <span>Page {{ reviewPage[customer._id!] || 1 }} / {{ Math.max(1, Math.ceil((reviewTotal[customer._id!]
             || 0) / reviewLimit)) }}</span>
           <button class="btn-custom btn-primary" type="button" (click)="nextPage(customer._id!)"
-            [disabled]="((reviewPage[customer._id!] || 0) + 1) * reviewLimit >= (reviewTotal[customer._id!] || 0)">Next
+            [disabled]="(reviewPage[customer._id!] || 1) >= Math.max(1, Math.ceil((reviewTotal[customer._id!] || 0) / reviewLimit))">Next
             ➡</button>
+          <label for="goToReviewPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToReviewPageInput" type="number" [formControl]="goToReviewPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((reviewTotal[customer._id!] || 0) / reviewLimit))" style="width: 80px;" />
+          <button class="btn-custom btn-primary" type="button" (click)="goToReviewPage(customer._id!)">Go</button>
         </div>
-        <label for="goToReviewPageInput" style="margin-left: 8px;">Go to page:</label>
-        <input class="input-custom" id="goToReviewPageInput" type="number" [formControl]="goToReviewPageControl" min="1"
-          [max]="Math.max(1, Math.ceil((reviewTotal[customer._id!] || 0) / reviewLimit))" style="width: 80px;" />
-        <button class="btn-custom btn-primary" type="button" (click)="goToReviewPage(customer._id!)">Go</button>
       </div>
     </div>
     }
@@ -341,21 +341,21 @@
 
 @if (!loading && !errorMsg && filteredCustomers.length > 0) {
 <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
-  <button class="btn-custom btn-primary" type="button" (click)="prevCustomersPage()" [disabled]="currentPage === 1">
+  <button class="btn-custom btn-primary" type="button" (click)="prevCustomersPage()" [disabled]="customerPager.page === 1">
     ⬅ Prev
   </button>
 
-  <span>Page {{ currentPage }} / {{ totalPages }}</span>
+  <span>Page {{ customerPager.page }} / {{ totalPages }}</span>
 
   <button class="btn-custom btn-primary" type="button" (click)="nextCustomersPage()"
-    [disabled]="currentPage >= totalPages">
+    [disabled]="customerPager.page >= totalPages">
     Next ➡
   </button>
+  <label for="goToPageInput" style="margin-left: 8px;">Go to page:</label>
+  <input class="input-custom" id="goToPageInput" type="number" [formControl]="goToPageControl" min="1" [max]="totalPages"
+    style="width: 80px;" />
+  <button class="btn-custom btn-primary" type="button" (click)="goToPage()">Go</button>
 </div>
-<label for="goToPageInput" style="margin-left: 8px;">Go to page:</label>
-<input class="input-custom" id="goToPageInput" type="number" [formControl]="goToPageControl" min="1" [max]="totalPages"
-  style="width: 80px;" />
-<button class="btn-custom btn-primary" type="button" (click)="goToPage()">Go</button>
 }
 
 @if (!loading && !errorMsg && customers.length === 0) {
@@ -376,7 +376,7 @@
 
 <div class="search-wrap">
   <span class="search-icon">🔍</span>
-  <input type="text" [formControl]="searchDeletedControl" placeholder="Search deleted by name..."
+  <input type="text" [formControl]="searchControl" placeholder="Search deleted by name..."
     class="input-custom" />
 </div>
 
@@ -425,19 +425,19 @@
         <table class="visits-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
           <thead>
             <tr style="text-align: left; border-bottom: 1px solid #ddd;">
+              <th (click)="setVisitSort('date', customer._id!)" style="cursor:pointer">Date ↕</th>
+              <th (click)="setVisitSort('billAmount', customer._id!)" style="cursor:pointer">Spent ↕</th>
+              <th (click)="setVisitSort('pointsEarned', customer._id!)" style="cursor:pointer">Points ↕</th>
               <th>Restaurant</th>
-              <th>Date</th>
-              <th>Spent</th>
-              <th>Points</th>
             </tr>
           </thead>
           <tbody>
             @for (visit of customerVisits[customer._id!]; track visit._id) {
             <tr style="border-bottom: 1px solid #eee;">
-              <td>{{ visit.restaurant_id?.profile?.name || '---' }}</td>
               <td>{{ visit.date | date:'dd/MM/yyyy' }}</td>
               <td>{{ visit.billAmount }}€</td>
               <td style="color: green;">+{{ visit.pointsEarned }}</td>
+              <td>{{ visit.restaurant_id?.profile?.name || '---' }}</td>
             </tr>
             }
           </tbody>
@@ -445,13 +445,13 @@
         } @else {
         <p class="muted italic">No visits.</p>
         }
-        <div style="margin-top:10px; display:flex; gap:10px;">
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
           <button class="btn-custom btn-primary" type="button" (click)="prevVisitPage(customer._id!)"
-            [disabled]="(visitPage[customer._id!] || 0) === 0">⬅ Prev</button>
-          <span>Page {{ (visitPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((visitTotal[customer._id!] ||
+            [disabled]="(visitPage[customer._id!] || 1) === 1">⬅ Prev</button>
+          <span>Page {{ visitPage[customer._id!] || 1 }} / {{ Math.max(1, Math.ceil((visitTotal[customer._id!] ||
             0) / visitLimit)) }}</span>
           <button class="btn-custom btn-primary" type="button" (click)="nextVisitPage(customer._id!)"
-            [disabled]="((visitPage[customer._id!] || 0) + 1) * visitLimit >= (visitTotal[customer._id!] || 0)">Next
+            [disabled]="(visitPage[customer._id!] || 1) >= Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit))">Next
             ➡</button>
         </div>
       </div>
@@ -495,13 +495,13 @@
         <p>No reviews yet</p>
         }
 
-        <div style="margin-top:10px; display:flex; gap:10px;">
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
           <button class="btn-custom btn-primary" type="button" (click)="prevPage(customer._id!)"
-            [disabled]="(reviewPage[customer._id!] || 0) === 0">⬅ Prev</button>
-          <span>Page {{ (reviewPage[customer._id!] || 0) + 1 }} / {{ Math.max(1, Math.ceil((reviewTotal[customer._id!]
+            [disabled]="(reviewPage[customer._id!] || 1) === 1">⬅ Prev</button>
+          <span>Page {{ reviewPage[customer._id!] || 1 }} / {{ Math.max(1, Math.ceil((reviewTotal[customer._id!]
             || 0) / reviewLimit)) }}</span>
           <button class="btn-custom btn-primary" type="button" (click)="nextPage(customer._id!)"
-            [disabled]="((reviewPage[customer._id!] || 0) + 1) * reviewLimit >= (reviewTotal[customer._id!] || 0)">Next
+            [disabled]="(reviewPage[customer._id!] || 1) >= Math.max(1, Math.ceil((reviewTotal[customer._id!] || 0) / reviewLimit))">Next
             ➡</button>
         </div>
       </div>
@@ -514,21 +514,21 @@
 <!-- Deleted customers pagination -->
 <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
   <button class="btn-custom btn-primary" type="button" (click)="prevDeletedPage()"
-    [disabled]="deletedCurrentPage === 1">
+    [disabled]="deletedPager.page === 1">
     ⬅ Prev
   </button>
 
-  <span>Page {{ deletedCurrentPage }} / {{ totalDeletedPages }}</span>
+  <span>Page {{ deletedPager.page }} / {{ totalDeletedPages }}</span>
 
   <button class="btn-custom btn-primary" type="button" (click)="nextDeletedPage()"
-    [disabled]="deletedCurrentPage >= totalDeletedPages">
+    [disabled]="deletedPager.page >= totalDeletedPages">
     Next ➡
   </button>
+  <label for="goToDeletedPageInput" style="margin-left: 8px;">Go to page:</label>
+  <input class="input-custom" id="goToDeletedPageInput" type="number" [formControl]="goToDeletedPageControl" min="1"
+    [max]="totalDeletedPages" style="width: 80px;" />
+  <button class="btn-custom btn-primary" type="button" (click)="goToDeletedPage()">Go</button>
 </div>
-<label for="goToDeletedPageInput" style="margin-left: 8px;">Go to page:</label>
-<input class="input-custom" id="goToDeletedPageInput" type="number" [formControl]="goToDeletedPageControl" min="1"
-  [max]="totalDeletedPages" style="width: 80px;" />
-<button class="btn-custom btn-primary" type="button" (click)="goToDeletedPage()">Go</button>
 }
 
 @if (!loadingDeleted && filteredDeletedCustomers.length === 0) {
