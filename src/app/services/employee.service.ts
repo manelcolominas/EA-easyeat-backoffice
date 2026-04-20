@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import { IEmployee } from '../models/employee.model';
 import { ApiClientService } from './api-client.service';
 import { map } from 'rxjs/operators';
-import { normalizeArrayResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
@@ -12,11 +11,11 @@ export class EmployeeService {
   constructor(private api: ApiClientService) {}
 
   getEmployees(): Observable<IEmployee[]> {
-    return this.api.get<unknown>('/employees').pipe(map((res) => normalizeArrayResponse<IEmployee>(res)));
+    return this.api.getAllPaginatedData<IEmployee>('/employees').pipe(map((res) => res.data));
   }
 
   getDeletedEmployees(): Observable<IEmployee[]> {
-    return this.api.get<unknown>('/employees/deleted').pipe(map((res) => normalizeArrayResponse<IEmployee>(res)));
+    return this.api.getAllPaginatedData<IEmployee>('/employees/deleted').pipe(map((res) => res.data));
   }
 
   getEmployee(employeeId: string): Observable<IEmployee> {

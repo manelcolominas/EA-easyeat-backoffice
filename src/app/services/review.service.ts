@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { IReview } from '../models/review.model';
 import { ApiClientService } from './api-client.service';
-import { normalizeArrayResponse } from './api-response.util';
+import { IPaginatedData, normalizePaginatedResponse } from './api-response.util';
 import { IDish } from '../models/dish.model';
 
 
@@ -10,10 +10,7 @@ import { IDish } from '../models/dish.model';
 // TYPES EXTRA
 // ========================
 
-export interface IPaginatedReviews {
-  data: IReview[];
-  total: number;
-}
+export interface IPaginatedReviews extends IPaginatedData<IReview> {}
 
 // ========================
 // SERVICE
@@ -29,15 +26,11 @@ export class ReviewService {
   // GET ALL
   // ========================
   getAll(): Observable<IReview[]> {
-    return this.api
-      .get<unknown>('/reviews')
-      .pipe(map((res) => normalizeArrayResponse<IReview>(res)));
+    return this.api.getAllPaginatedData<IReview>('/reviews').pipe(map((res) => res.data));
   }
 
   getAllDeleted(): Observable<IReview[]> {
-    return this.api
-      .get<unknown>('/reviews/deleted')
-      .pipe(map((res) => normalizeArrayResponse<IReview>(res)));
+    return this.api.getAllPaginatedData<IReview>('/reviews/deleted').pipe(map((res) => res.data));
   }
 
   // ========================
@@ -45,14 +38,14 @@ export class ReviewService {
   // ========================
   getByRestaurant(restaurantId: string): Observable<IReview[]> {
     return this.api
-      .get<unknown>(`/reviews/restaurant/${restaurantId}`)
-      .pipe(map((res) => normalizeArrayResponse<IReview>(res)));
+      .getAllPaginatedData<IReview>(`/reviews/restaurant/${restaurantId}`)
+      .pipe(map((res) => res.data));
   }
 
   getByDeletedRestaurant(restaurantId: string): Observable<IReview[]> {
     return this.api
-      .get<unknown>(`/reviews/restaurant/${restaurantId}/deleted`)
-      .pipe(map((res) => normalizeArrayResponse<IReview>(res)));
+      .getAllPaginatedData<IReview>(`/reviews/restaurant/${restaurantId}/deleted`)
+      .pipe(map((res) => res.data));
   }
 
   // ========================
@@ -65,12 +58,14 @@ export class ReviewService {
     minGlobalRating?: number,
     sortByLikes?: boolean,
   ): Observable<IPaginatedReviews> {
-    return this.api.get<IPaginatedReviews>(`/reviews/customer/${customerId}`, {
-      limit,
-      skip,
+    const safeLimit = Math.max(1, limit);
+    const page = Math.floor(Math.max(0, skip) / safeLimit) + 1;
+    return this.api.get<unknown>(`/reviews/customer/${customerId}`, {
+      page,
+      limit: safeLimit,
       minGlobalRating,
       sortByLikes: sortByLikes ? true : undefined,
-    });
+    }).pipe(map((res) => normalizePaginatedResponse<IReview>(res)));
   }
 
   getByDeletedCustomer(
@@ -80,12 +75,14 @@ export class ReviewService {
     minGlobalRating?: number,
     sortByLikes?: boolean,
   ): Observable<IPaginatedReviews> {
-    return this.api.get<IPaginatedReviews>(`/reviews/customer/${customerId}/deleted`, {
-      limit,
-      skip,
+    const safeLimit = Math.max(1, limit);
+    const page = Math.floor(Math.max(0, skip) / safeLimit) + 1;
+    return this.api.get<unknown>(`/reviews/customer/${customerId}/deleted`, {
+      page,
+      limit: safeLimit,
       minGlobalRating,
       sortByLikes: sortByLikes ? true : undefined,
-    });
+    }).pipe(map((res) => normalizePaginatedResponse<IReview>(res)));
   }
 
   // ========================

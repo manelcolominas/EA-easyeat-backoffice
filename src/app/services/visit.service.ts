@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import { IVisit } from '../models/visit.model';
 import { ApiClientService } from './api-client.service';
 import { map } from 'rxjs/operators';
-import { normalizeArrayResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
@@ -12,27 +11,27 @@ export class VisitService {
   constructor(private api: ApiClientService) { }
 
   getVisitsByRestaurantId(restaurantId: string): Observable<IVisit[]> {
-    return this.api.get<unknown>('/visits', { restaurant_id: restaurantId }).pipe(
-      map((res) => normalizeArrayResponse<IVisit>(res))
-    );
+    return this.api
+      .getAllPaginatedData<IVisit>('/visits', { restaurant_id: restaurantId })
+      .pipe(map((res) => res.data));
   }
 
   getDeletedVisitsByRestaurantId(restaurantId: string): Observable<IVisit[]> {
-    return this.api.get<unknown>('/visits/deleted', { restaurant_id: restaurantId }).pipe(
-      map((res) => normalizeArrayResponse<IVisit>(res))
-    );
+    return this.api
+      .getAllPaginatedData<IVisit>('/visits/deleted', { restaurant_id: restaurantId })
+      .pipe(map((res) => res.data));
   }
 
   getVisitsByCustomerId(customerId: string): Observable<IVisit[]> {
-    return this.api.get<unknown>('/visits', { customer_id: customerId }).pipe(
-      map((res) => normalizeArrayResponse<IVisit>(res))
-    );
+    return this.api
+      .getAllPaginatedData<IVisit>('/visits', { customer_id: customerId })
+      .pipe(map((res) => res.data));
   }
 
   getDeletedVisitsByCustomerId(customerId: string): Observable<IVisit[]> {
-    return this.api.get<unknown>('/visits/deleted', { customer_id: customerId }).pipe(
-      map((res) => normalizeArrayResponse<IVisit>(res))
-    );
+    return this.api
+      .getAllPaginatedData<IVisit>('/visits/deleted', { customer_id: customerId })
+      .pipe(map((res) => res.data));
   }
 
   getVisitFull(visitId: string): Observable<IVisit> {

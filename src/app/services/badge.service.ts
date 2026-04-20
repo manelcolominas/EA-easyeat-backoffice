@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { IBadge } from '../models/badge.model';
 import { ApiClientService } from './api-client.service';
-import { normalizeArrayResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
@@ -11,25 +10,21 @@ export class BadgeService {
   constructor(private api: ApiClientService) { }
 
   getBadges(): Observable<IBadge[]> {
-    return this.api.get<unknown>('/badges').pipe(map((res) => normalizeArrayResponse<IBadge>(res)));
+    return this.api.getAllPaginatedData<IBadge>('/badges').pipe(map((res) => res.data));
   }
 
-  /** Gets all badges belonging to a restaurant via the restaurant endpoint */
+  /** Gets all badges belonging to a restaurant */
   getBadgesByRestaurant(restaurantId: string): Observable<IBadge[]> {
-    return this.api.get<any>(`/restaurants/${restaurantId}/badges`).pipe(
-      map(res => {
-        // Endpoint returns the restaurant object with a populated 'badges' array
-        const badges = res?.badges ?? res ?? [];
-        return Array.isArray(badges) ? badges : [];
-      })
-    );
+    return this.api
+      .getAllPaginatedData<IBadge>(`/badges/restaurant/${restaurantId}`)
+      .pipe(map((res) => res.data));
   }
 
   /** Gets badges earned by a customer */
   getBadgesByCustomer(customerId: string): Observable<IBadge[]> {
-    return this.api.get<unknown>(`/customers/${customerId}/badges`).pipe(
-      map(res => normalizeArrayResponse<IBadge>(res))
-    );
+    return this.api
+      .getAllPaginatedData<IBadge>(`/customers/${customerId}/badges`)
+      .pipe(map((res) => res.data));
   }
 
   getBadge(badgeId: string): Observable<IBadge> {
