@@ -28,16 +28,14 @@ export const normalizePaginatedResponse = <T>(response: unknown): IPaginatedData
     response && typeof response === 'object' ? (response as { total?: unknown }).total : undefined;
   const fallbackTotal = typeof fallbackTotalValue === 'number' ? fallbackTotalValue : data.length;
 
-  const total = typeof rawMeta?.['total'] === 'number' ? (rawMeta['total'] as number) : fallbackTotal;
-  const page = typeof rawMeta?.['page'] === 'number' ? (rawMeta['page'] as number) : 1;
+  const total = typeof rawMeta?.['total'] === 'number' ? rawMeta['total'] : fallbackTotal;
+  const page = typeof rawMeta?.['page'] === 'number' ? rawMeta['page'] : 1;
   const limit =
-    typeof rawMeta?.['limit'] === 'number' && (rawMeta['limit'] as number) > 0
-      ? (rawMeta['limit'] as number)
+    typeof rawMeta?.['limit'] === 'number' && rawMeta['limit'] > 0
+      ? rawMeta['limit']
       : Math.max(1, data.length || 1);
   const totalPages =
-    typeof rawMeta?.['totalPages'] === 'number'
-      ? (rawMeta['totalPages'] as number)
-      : Math.max(1, Math.ceil(total / limit));
+    typeof rawMeta?.['totalPages'] === 'number' ? rawMeta['totalPages'] : Math.max(1, Math.ceil(total / limit));
 
   return {
     data,

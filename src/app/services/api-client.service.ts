@@ -41,9 +41,9 @@ export class ApiClientService {
           limit: currentPageResponse.meta.limit,
         }).pipe(map((response) => normalizePaginatedResponse<T>(response)));
       }),
-      reduce<PaginatedResponse<T>, PaginatedResponse<T>>(
+      reduce<PaginatedResponse<T>, PaginatedResponse<T> | null>(
         (acc, pageResponse) => {
-          if (acc.meta.page === 0) {
+          if (!acc) {
             return {
               data: [...pageResponse.data],
               meta: pageResponse.meta,
@@ -55,17 +55,21 @@ export class ApiClientService {
             meta: pageResponse.meta,
           };
         },
-        {
-          data: [],
-          meta: {
-            total: 0,
-            page: 0,
-            limit: defaultLimit,
-            totalPages: 0,
-          },
-        },
+        null,
       ),
       map((result) => {
+        if (!result) {
+          return {
+            data: [],
+            meta: {
+              total: 0,
+              page: 1,
+              limit: defaultLimit,
+              totalPages: 1,
+            },
+          };
+        }
+
         const total = result.meta.total || result.data.length;
         const totalPages = result.meta.totalPages || Math.max(1, Math.ceil(total / Math.max(1, result.meta.limit)));
 
@@ -73,7 +77,7 @@ export class ApiClientService {
           data: result.data,
           meta: {
             total,
-            page: totalPages,
+            page: 1,
             limit: result.meta.limit || defaultLimit,
             totalPages,
           },
