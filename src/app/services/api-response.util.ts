@@ -33,7 +33,7 @@ export const normalizePaginatedResponse = <T>(response: unknown): IPaginatedData
   const limit =
     typeof rawMeta?.['limit'] === 'number' && rawMeta['limit'] > 0
       ? rawMeta['limit']
-      : Math.max(1, data.length || 1);
+      : Math.max(1, data.length);
   const totalPages =
     typeof rawMeta?.['totalPages'] === 'number' ? rawMeta['totalPages'] : Math.max(1, Math.ceil(total / limit));
 
