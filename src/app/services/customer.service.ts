@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import { ICustomer } from '../models/customer.model';
 import { ApiClientService } from './api-client.service';
 import { map } from 'rxjs/operators';
-import { normalizePaginatedResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
@@ -24,11 +23,11 @@ export class CustomerService {
   }
 
   getCustomers(): Observable<ICustomer[]> {
-    return this.api.get<unknown>('/customers').pipe(map((res) => normalizePaginatedResponse<ICustomer>(res).data));
+    return this.api.getAllPaginatedData<ICustomer>('/customers').pipe(map((res) => res.data));
   }
 
   getDeletedCustomers(): Observable<ICustomer[]> {
-    return this.api.get<unknown>('/customers/deleted').pipe(map((res) => normalizePaginatedResponse<ICustomer>(res).data));
+    return this.api.getAllPaginatedData<ICustomer>('/customers/deleted').pipe(map((res) => res.data));
   }
 
   getFullCustomer(customerId: string): Observable<ICustomer> {

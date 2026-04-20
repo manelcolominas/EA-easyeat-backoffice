@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { IRestaurant } from '../models/restaurant.model';
+import { IBadge } from '../models/badge.model';
 import { ApiClientService } from './api-client.service';
-import { normalizeArrayResponse } from './api-response.util';
 import { map } from 'rxjs/operators';
 
 @Injectable({
@@ -24,11 +24,11 @@ export class RestaurantService {
   }
 
   getRestaurants(): Observable<IRestaurant[]> {
-    return this.api.get<unknown>('/restaurants').pipe(map((res) => normalizeArrayResponse<IRestaurant>(res)));
+    return this.api.getAllPaginatedData<IRestaurant>('/restaurants').pipe(map((res) => res.data));
   }
 
   getDeletedRestaurants(): Observable<IRestaurant[]> {
-    return this.api.get<unknown>('/restaurants/deleted').pipe(map((res) => normalizeArrayResponse<IRestaurant>(res)));
+    return this.api.getAllPaginatedData<IRestaurant>('/restaurants/deleted').pipe(map((res) => res.data));
   }
 
   updateRestaurant(restaurantId: string, data: Partial<IRestaurant>): Observable<IRestaurant> {
@@ -59,12 +59,16 @@ export class RestaurantService {
     return this.api.get<IRestaurant>('/restaurants/filter', { lng, lat, radiusMeters: maxDistance });
   }
 
-  getBadges(restaurantId: string): Observable<IRestaurant> {
-    return this.api.get<IRestaurant>(`/restaurants/${restaurantId}/badges`);
+  getBadges(restaurantId: string): Observable<IBadge[]> {
+    return this.api
+      .getAllPaginatedData<IBadge>(`/badges/restaurant/${restaurantId}`)
+      .pipe(map((res) => res.data));
   }
 
-  getDeletedBadges(restaurantId: string): Observable<IRestaurant> {
-    return this.api.get<IRestaurant>(`/restaurants/${restaurantId}/badges/deleted`);
+  getDeletedBadges(restaurantId: string): Observable<IBadge[]> {
+    return this.api
+      .getAllPaginatedData<IBadge>(`/badges/restaurant/${restaurantId}/deleted`)
+      .pipe(map((res) => res.data));
   }
 
   getStatistics(restaurantId: string): Observable<IRestaurant> {
