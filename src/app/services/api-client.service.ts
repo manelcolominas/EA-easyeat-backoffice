@@ -50,10 +50,9 @@ export class ApiClientService {
             };
           }
 
-          return {
-            data: [...acc.data, ...pageResponse.data],
-            meta: pageResponse.meta,
-          };
+          acc.data.push(...pageResponse.data);
+          acc.meta = pageResponse.meta;
+          return acc;
         },
         null,
       ),
@@ -77,7 +76,7 @@ export class ApiClientService {
           data: result.data,
           meta: {
             total,
-            page: 1,
+            page: totalPages,
             limit: result.meta.limit || defaultLimit,
             totalPages,
           },

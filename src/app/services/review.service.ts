@@ -53,14 +53,16 @@ export class ReviewService {
   // ========================
   getByCustomer(
     customerId: string,
-    page = 1,
     limit = 5,
+    skip = 0,
     minGlobalRating?: number,
     sortByLikes?: boolean,
   ): Observable<IPaginatedReviews> {
+    const safeLimit = Math.max(1, limit);
+    const page = Math.floor(Math.max(0, skip) / safeLimit) + 1;
     return this.api.get<unknown>(`/reviews/customer/${customerId}`, {
       page,
-      limit,
+      limit: safeLimit,
       minGlobalRating,
       sortByLikes: sortByLikes ? true : undefined,
     }).pipe(map((res) => normalizePaginatedResponse<IReview>(res)));
@@ -68,14 +70,16 @@ export class ReviewService {
 
   getByDeletedCustomer(
     customerId: string,
-    page = 1,
     limit = 5,
+    skip = 0,
     minGlobalRating?: number,
     sortByLikes?: boolean,
   ): Observable<IPaginatedReviews> {
+    const safeLimit = Math.max(1, limit);
+    const page = Math.floor(Math.max(0, skip) / safeLimit) + 1;
     return this.api.get<unknown>(`/reviews/customer/${customerId}/deleted`, {
       page,
-      limit,
+      limit: safeLimit,
       minGlobalRating,
       sortByLikes: sortByLikes ? true : undefined,
     }).pipe(map((res) => normalizePaginatedResponse<IReview>(res)));
