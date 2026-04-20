@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { IDish } from '../models/dish.model';
 import { ApiClientService } from './api-client.service';
-import { normalizeArrayResponse } from './api-response.util';
 import { map } from 'rxjs/operators';
 
 @Injectable({
@@ -12,11 +11,11 @@ export class DishService {
   constructor(private api: ApiClientService) {}
 
   getDishes(): Observable<IDish[]> {
-    return this.api.get<unknown>('/dishes').pipe(map((res) => normalizeArrayResponse<IDish>(res)));
+    return this.api.getAllPaginatedData<IDish>('/dishes').pipe(map((res) => res.data));
   }
 
   getDeletedDishes(): Observable<IDish[]> {
-    return this.api.get<unknown>('/dishes/deleted').pipe(map((res) => normalizeArrayResponse<IDish>(res)));
+    return this.api.getAllPaginatedData<IDish>('/dishes/deleted').pipe(map((res) => res.data));
   }
 
   getDish(dishId: string): Observable<IDish> {

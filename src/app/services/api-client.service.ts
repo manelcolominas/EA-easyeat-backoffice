@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
+import { expand, map, reduce } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { PaginatedResponse } from '../models/pagination.models';
+import { normalizePaginatedResponse } from './api-response.util';
 
 type QueryParams = Record<string, string | number | boolean | null | undefined>;
 
@@ -15,6 +18,68 @@ export class ApiClientService {
 
   get<T>(path: string, query?: QueryParams): Observable<T> {
     return this.http.get<T>(this.buildUrl(path), { params: this.toHttpParams(query) });
+  }
+
+  getAllPaginatedData<T>(
+    path: string,
+    query?: QueryParams,
+    defaultLimit = 50,
+  ): Observable<PaginatedResponse<T>> {
+    const firstPage = 1;
+    const firstQuery = { ...query, page: firstPage, limit: defaultLimit };
+
+    return this.get<unknown>(path, firstQuery).pipe(
+      map((response) => normalizePaginatedResponse<T>(response)),
+      expand((currentPageResponse) => {
+        if (currentPageResponse.meta.page >= currentPageResponse.meta.totalPages) {
+          return EMPTY;
+        }
+
+        return this.get<unknown>(path, {
+          ...query,
+          page: currentPageResponse.meta.page + 1,
+          limit: currentPageResponse.meta.limit,
+        }).pipe(map((response) => normalizePaginatedResponse<T>(response)));
+      }),
+      reduce<PaginatedResponse<T>, PaginatedResponse<T>>(
+        (acc, pageResponse) => {
+          if (acc.meta.page === 0) {
+            return {
+              data: [...pageResponse.data],
+              meta: pageResponse.meta,
+            };
+          }
+
+          return {
+            data: [...acc.data, ...pageResponse.data],
+            meta: pageResponse.meta,
+          };
+        },
+        {
+          data: [],
+          meta: {
+            total: 0,
+            page: 0,
+            limit: defaultLimit,
+            totalPages: 0,
+          },
+        },
+      ),
+      map((result) => {
+        const total = result.meta.total || result.data.length;
+        const totalPages = result.meta.totalPages || Math.max(1, Math.ceil(total / Math.max(1, result.meta.limit)));
+
+        return {
+          data: result.data,
+          meta: {
+            total,
+            page: totalPages,
+            limit: result.meta.limit || defaultLimit,
+            totalPages,
+          },
+        };
+      }),
+    );
   }
 
   post<T>(path: string, body: unknown): Observable<T> {

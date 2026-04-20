@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import { IReward } from '../models/reward.model';
 import { ApiClientService } from './api-client.service';
 import { map } from 'rxjs/operators';
-import { normalizeArrayResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
@@ -12,11 +11,11 @@ export class RewardService {
   constructor(private api: ApiClientService) {}
 
   getRewards(): Observable<IReward[]> {
-    return this.api.get<unknown>('/rewards').pipe(map((res) => normalizeArrayResponse<IReward>(res)));
+    return this.api.getAllPaginatedData<IReward>('/rewards').pipe(map((res) => res.data));
   }
 
   getDeletedRewards(): Observable<IReward[]> {
-    return this.api.get<unknown>('/rewards/deleted').pipe(map((res) => normalizeArrayResponse<IReward>(res)));
+    return this.api.getAllPaginatedData<IReward>('/rewards/deleted').pipe(map((res) => res.data));
   }
 
   getReward(rewardId: string): Observable<IReward> {
