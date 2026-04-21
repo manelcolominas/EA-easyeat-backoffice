@@ -492,24 +492,20 @@ export class CustomerList implements OnInit {
   }
 
   loadReviews(customerId: string): void {
-    this.reviewService.getByCustomer(customerId).subscribe({
-      next: (data: { data: IReview[]; total: number }) => {
+    this.reviewService.getByCustomer(customerId, this.reviewLimit, this.reviewPage[customerId]).subscribe({
+      next: (data: any) => {
         const allReviews = data.data ?? [];
 
         let filtered = this.filterReviews(allReviews);
         let sorted = this.sortReviews(filtered);
 
-        this.reviewTotal[customerId] = sorted.length;
+        this.reviewTotal[customerId] = data.meta.total;
         this.reviewPage[customerId] = this.paginationUtils.getSafePage(
           this.reviewPage[customerId] || 1,
-          sorted.length,
+          data.meta.total,
           this.reviewLimit
         );
-        this.reviewsByCustomer[customerId] = this.paginationUtils.getPaginatedData(
-          sorted,
-          this.reviewPage[customerId],
-          this.reviewLimit
-        );
+        this.reviewsByCustomer[customerId] = sorted;
 
         this.cdr.markForCheck();
       },
@@ -696,22 +692,18 @@ export class CustomerList implements OnInit {
   // ========================
 
   loadVisits(customerId: string): void {
-    this.visitService.getVisitsByCustomerId(customerId).subscribe({
-      next: (allVisits: IVisit[]) => {
-        let filtered = this.filterVisits(allVisits);
+    this.visitService.getVisitsByCustomerId(customerId, this.visitLimit, this.visitPage[customerId]).subscribe({
+      next: (allVisits: any) => {
+        let filtered = this.filterVisits(allVisits.data);
         let sorted = this.sortVisits(filtered);
 
-        this.visitTotal[customerId] = sorted.length;
+        this.visitTotal[customerId] = allVisits.meta.total;
         this.visitPage[customerId] = this.paginationUtils.getSafePage(
           this.visitPage[customerId] || 1,
-          sorted.length,
+          allVisits.meta.total,
           this.visitLimit
         );
-        this.customerVisits[customerId] = this.paginationUtils.getPaginatedData(
-          sorted,
-          this.visitPage[customerId],
-          this.visitLimit
-        );
+        this.customerVisits[customerId] = sorted;
 
         this.cdr.markForCheck();
       },

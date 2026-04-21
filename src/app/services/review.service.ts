@@ -54,14 +54,14 @@ export class ReviewService {
   getByCustomer(
     customerId: string,
     limit = 5,
-    skip = 0,
+    page = 1,
     minGlobalRating?: number,
     sortByLikes?: boolean,
   ): Observable<IPaginatedReviews> {
     const safeLimit = Math.max(1, limit);
-    const page = Math.floor(Math.max(0, skip) / safeLimit) + 1;
+    const safePage = Math.max(1, page);
     return this.api.get<unknown>(`/reviews/customer/${customerId}`, {
-      page,
+      page: safePage,
       limit: safeLimit,
       minGlobalRating,
       sortByLikes: sortByLikes ? true : undefined,

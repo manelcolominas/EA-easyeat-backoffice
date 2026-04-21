@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { IVisit } from '../models/visit.model';
 import { ApiClientService } from './api-client.service';
 import { map } from 'rxjs/operators';
+import { normalizePaginatedResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
@@ -22,10 +23,14 @@ export class VisitService {
       .pipe(map((res) => res.data));
   }
 
-  getVisitsByCustomerId(customerId: string): Observable<IVisit[]> {
-    return this.api
-      .getAllPaginatedData<IVisit>('/visits', { customer_id: customerId })
-      .pipe(map((res) => res.data));
+  getVisitsByCustomerId(customerId: string, limit: number, page: number) {
+    return this.api.get<IVisit>('/visits',
+        {
+          customer_id: customerId,
+          limit: limit,
+          page: page,
+        })
+      .pipe(map((res) => normalizePaginatedResponse<IVisit>(res)));
   }
 
   getDeletedVisitsByCustomerId(customerId: string): Observable<IVisit[]> {
