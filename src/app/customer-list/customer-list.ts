@@ -64,7 +64,9 @@ export class CustomerList implements OnInit {
   editingReviewId: string | null = null;
   reviewLimit = 2;
   reviewPage: { [key: string]: number } = {};
+  deletedReviewPage: { [key: string]: number } = {};
   reviewTotal: { [key: string]: number } = {};
+  deletedReviewTotal: { [key: string]: number } = {};
   minGlobalRatingFilter: number | null = null;
   sortByLikes = false;
   goToReviewPageControl = new FormControl<number | null>(1);
@@ -365,8 +367,9 @@ export class CustomerList implements OnInit {
 
     if (this.expanded[id]) {
       this.reviewPage[id] = 1; // Initialize page to 1
+      this.deletedReviewPage[id] = 1; // Initialize page to 1
       this.loadReviews(id);
-      this.loadDeletedVisits(id);
+      this.loadDeletedReviews(id);
 
       this.visitPage[id] = 1; // Initialize page to 1
       this.deletedVisitPage[id] = 1;
@@ -414,7 +417,9 @@ export class CustomerList implements OnInit {
 
     if (this.expandedDeleted[id]) {
       this.reviewPage[id] = 1; // Initialize page to 1
+      this.deletedReviewPage[id] = 1; // Initialize page to 1
       this.loadReviews(id);
+      this.loadDeletedReviews(id);
 
       this.visitPage[id] = 1; // Initialize page to 1
       this.deletedVisitPage[id] = 1;
@@ -522,6 +527,32 @@ export class CustomerList implements OnInit {
       error: (err) => {
         console.error('Error loading reviews:', err);
         this.reviewsByCustomer[customerId] = [];
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  loadDeletedReviews(customerId: string): void {
+    this.reviewService.getDeletedByCustomer(customerId, this.reviewLimit, this.deletedReviewPage[customerId]).subscribe({
+      next: (data: any) => {
+        const allReviews = data.data ?? [];
+
+        let filtered = this.filterReviews(allReviews);
+        let sorted = this.sortReviews(filtered);
+
+        this.deletedReviewTotal[customerId] = data.meta.total;
+        this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage(
+          this.deletedReviewPage[customerId] || 1,
+          data.meta.total,
+          this.reviewLimit
+        );
+        this.deletedReviewsByCustomer[customerId] = sorted;
+
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading reviews:', err);
+        this.deletedReviewsByCustomer[customerId] = [];
         this.cdr.markForCheck();
       },
     });
@@ -675,13 +706,44 @@ export class CustomerList implements OnInit {
     if (id) this.loadReviews(id);
   }
 
-  deleteReview(reviewId: string, customerId: string): void {
+  softDeleteReview(reviewId: string, customerId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: 'Delete this review?',
+      data: 'delete this review',
     });
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.reviewService.softDelete(reviewId).subscribe(() => this.loadReviews(customerId));
+        this.reviewService.softDelete(reviewId).subscribe(() => {
+          this.loadReviews(customerId);
+          this.loadDeletedReviews(customerId);
+        });
+      }
+    });
+  }
+
+  hardDeleteReview(reviewId: string, customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'PERMANENTLY DELETE this review',
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.reviewService.hardDelete(reviewId).subscribe(() => {
+          this.loadReviews(customerId);
+          this.loadDeletedReviews(customerId);
+        });
+      }
+    });
+  }
+
+  restoreReview(reviewId: string, customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'restore this review',
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.reviewService.restoreDelete(reviewId).subscribe(() => {
+          this.loadReviews(customerId);
+          this.loadDeletedReviews(customerId);
+        });
       }
     });
   }
@@ -695,6 +757,13 @@ export class CustomerList implements OnInit {
     this.reviewPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.reviewTotal[customerId] || 0, this.reviewLimit);
     this.goToReviewPageControl.setValue(this.reviewPage[customerId], { emitEvent: false });
     this.loadReviews(customerId);
+  }
+
+  goToDeletedReviewPage(customerId: string): void {
+    const requestedPage = Number(this.goToDeletedReviewPageControl.value);
+    this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
+    this.goToDeletedReviewPageControl.setValue(this.deletedReviewPage[customerId], { emitEvent: false });
+    this.loadDeletedReviews(customerId);
   }
 
   // ========================
@@ -986,20 +1055,20 @@ export class CustomerList implements OnInit {
     this.loadReviews(customerId);
   }
 
-  // prevDeletedReviewPage(customerId: string): void { // For deleted reviews
-  //   this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage((this.deletedReviewPage[customerId] || 1) - 1, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
-  //   this.loadDeletedReviews(customerId);
-  // }
+  prevDeletedReviewPage(customerId: string): void { // For deleted reviews
+    this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage((this.deletedReviewPage[customerId] || 1) - 1, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
+    this.loadDeletedReviews(customerId);
+  }
 
   nextPage(customerId: string): void { // For reviews
     this.reviewPage[customerId] = this.paginationUtils.getSafePage((this.reviewPage[customerId] || 1) + 1, this.reviewTotal[customerId] || 0, this.reviewLimit);
     this.loadReviews(customerId);
   }
 
-  // nextDeletedReviewPage(customerId: string): void { // For deleted reviews
-  //   this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage((this.deletedReviewPage[customerId] || 1) + 1, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
-  //   this.loadDeletedReviews(customerId);
-  // }
+  nextDeletedReviewPage(customerId: string): void { // For deleted reviews
+    this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage((this.deletedReviewPage[customerId] || 1) + 1, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
+    this.loadDeletedReviews(customerId);
+  }
 
   prevCustomersPage(): void {
     this.customerPager.page = this.paginationUtils.getSafePage(this.customerPager.page - 1, this.filteredCustomers.length, this.customerPager.limit);

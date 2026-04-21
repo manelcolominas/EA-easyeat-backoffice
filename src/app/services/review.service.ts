@@ -10,7 +10,7 @@ import { IDish } from '../models/dish.model';
 // TYPES EXTRA
 // ========================
 
-export interface IPaginatedReviews extends IPaginatedData<IReview> {}
+export interface IPaginatedReviews extends IPaginatedData<IReview> { }
 
 // ========================
 // SERVICE
@@ -20,7 +20,7 @@ export interface IPaginatedReviews extends IPaginatedData<IReview> {}
   providedIn: 'root',
 })
 export class ReviewService {
-  constructor(private api: ApiClientService) {}
+  constructor(private api: ApiClientService) { }
 
   // ========================
   // GET ALL
@@ -68,17 +68,17 @@ export class ReviewService {
     }).pipe(map((res) => normalizePaginatedResponse<IReview>(res)));
   }
 
-  getByDeletedCustomer(
+  getDeletedByCustomer(
     customerId: string,
     limit = 5,
-    skip = 0,
+    page = 1,
     minGlobalRating?: number,
     sortByLikes?: boolean,
   ): Observable<IPaginatedReviews> {
     const safeLimit = Math.max(1, limit);
-    const page = Math.floor(Math.max(0, skip) / safeLimit) + 1;
+    const safePage = Math.max(1, page);
     return this.api.get<unknown>(`/reviews/customer/${customerId}/deleted`, {
-      page,
+      page: safePage,
       limit: safeLimit,
       minGlobalRating,
       sortByLikes: sortByLikes ? true : undefined,

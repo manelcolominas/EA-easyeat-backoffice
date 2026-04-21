@@ -195,8 +195,8 @@
         </div>
       </div>
 
-      @if (customerDeletedVisits[customer._id!]?.length) {
       <!-- Deleted visits section -->
+      @if (customerDeletedVisits[customer._id!]?.length) {
       <div class="visits-section" style="margin-top: 20px; background-color: fff3e0;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <h4>Deleted Visits History</h4>
@@ -300,8 +300,10 @@
           <span class="chip chip-primary">👍 {{ review.likes || 0 }}</span>
           <div style="margin-top:5px;">
             <button class="btn-custom btn-primary" type="button" (click)="editReview(review)">Edit</button>
+            <button class="btn-custom btn-danger" type="button" (click)="softDeleteReview(review._id!, customer._id!)"
+              style="background: #ff9800;">Disable</button>
             <button class="btn-custom btn-danger" type="button"
-              (click)="deleteReview(review._id!, customer._id!)">✕</button>
+              (click)="hardDeleteReview(review._id!, customer._id!)">X</button>
           </div>
         </div>
         }
@@ -323,6 +325,51 @@
             style="width: 80px;" />
           <button class="btn-custom btn-primary" type="button" (click)="goToReviewPage(customer._id!)">Go</button>
         </div>
+
+        <!--Deleted reviews section-->
+        @if (deletedReviewsByCustomer[customer._id!].length) {
+        <hr>
+        <hr>
+
+        <h4>Deleted Reviews</h4>
+
+        @for (review of deletedReviewsByCustomer[customer._id!]; track review._id) {
+        <div style="border-bottom:1px solid #ccc; margin-bottom:8px; padding-bottom:8px; background-color: #fff3e0;">
+          <p><strong>{{ getReviewRestaurantName(review) }}</strong></p>
+          <div>
+            @for (_ of getStars(review.globalRating); track $index) {
+            <span>⭐</span>
+            }
+          </div>
+          <p>{{ review.comment }}</p>
+          <span class="chip chip-primary">👍 {{ review.likes || 0 }}</span>
+          <div style="margin-top:5px;">
+            <button class="btn-custom btn-primary" type="button" (click)="restoreReview(review._id!, customer._id!)"
+              style="background: #ff9800;">Restore</button>
+            <button class="btn-custom btn-danger" type="button"
+              (click)="hardDeleteReview(review._id!, customer._id!)">X</button>
+          </div>
+        </div>
+        }
+
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+          <button class="btn-custom btn-primary" type="button" (click)="prevDeletedReviewPage(customer._id!)"
+            [disabled]="(deletedReviewPage[customer._id!] || 1) === 1">⬅ Prev</button>
+          <span>Page {{ deletedReviewPage[customer._id!] || 1 }} / {{ Math.max(1,
+            Math.ceil((deletedReviewTotal[customer._id!]
+            || 0) / reviewLimit)) }}</span>
+          <button class="btn-custom btn-primary" type="button" (click)="nextDeletedReviewPage(customer._id!)"
+            [disabled]="(deletedReviewPage[customer._id!] || 1) >= Math.max(1, Math.ceil((deletedReviewTotal[customer._id!] || 0) / reviewLimit))">Next
+            ➡</button>
+          <label for="goToDeletedReviewPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedReviewPageInput" type="number"
+            [formControl]="goToDeletedReviewPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedReviewTotal[customer._id!] || 0) / reviewLimit))"
+            style="width: 80px;" />
+          <button class="btn-custom btn-primary" type="button"
+            (click)="goToDeletedReviewPage(customer._id!)">Go</button>
+        </div>
+        }
       </div>
     </div>
     }
@@ -502,15 +549,70 @@
         <p class="muted italic">No visits.</p>
         }
         <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-          <button class="btn-custom btn-primary" type="button" (click)="prevVisitPage(customer._id!)"
-            [disabled]="(visitPage[customer._id!] || 1) === 1">⬅ Prev</button>
-          <span>Page {{ visitPage[customer._id!] || 1 }} / {{ Math.max(1, Math.ceil((visitTotal[customer._id!] ||
-            0) / visitLimit)) }}</span>
-          <button class="btn-custom btn-primary" type="button" (click)="nextVisitPage(customer._id!)"
-            [disabled]="(visitPage[customer._id!] || 1) >= Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit))">Next
+          <button class="btn-custom btn-primary" type="button" (click)="prevDeletedVisitPage(customer._id!)"
+            [disabled]="(deletedVisitPage[customer._id!] || 1) === 1">⬅ Prev</button>
+          <span>Page {{ deletedVisitPage[customer._id!] || 1 }} / {{
+            Math.max(1, Math.ceil((deletedVisitTotal[customer._id!] || 0) / visitLimit)) }}</span>
+          <button class="btn-custom btn-primary" type="button" (click)="nextDeletedVisitPage(customer._id!)"
+            [disabled]="(deletedVisitPage[customer._id!] || 1) >= Math.max(1, Math.ceil((deletedVisitTotal[customer._id!] || 0) / visitLimit))">Next
             ➡</button>
+          <label for="goToDeletedVisitPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedVisitPageInput" type="number"
+            [formControl]="goToDeletedVisitPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedVisitTotal[customer._id!] || 0) / visitLimit))" style="width: 80px;" />
+          <button class="btn-custom btn-primary" type="button" (click)="goToDeletedVisitPage(customer._id!)">Go</button>
         </div>
       </div>
+
+      <!-- Deleted visits (read-only) -->
+      @if (customerDeletedVisits[customer._id!]?.length) {
+      <div class="visits-section" style="margin-top: 20px; background-color: fff3e0;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h4>Deleted Visits History</h4>
+        </div>
+
+        @if (loadingVisits[customer._id!]) {
+        <p class="muted italic">Cargando...</p>
+        } @else {
+        <table class="visits-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <thead>
+            <tr style="text-align: left; border-bottom: 1px solid #ddd;">
+              <th (click)="setVisitSort('date', customer._id!)" style="cursor:pointer">Date ↕</th>
+              <th (click)="setVisitSort('billAmount', customer._id!)" style="cursor:pointer">Spent ↕</th>
+              <th (click)="setVisitSort('pointsEarned', customer._id!)" style="cursor:pointer">Points ↕</th>
+              <th>Restaurant</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (visit of customerDeletedVisits[customer._id!]; track visit._id) {
+            <tr style="border-bottom: 1px solid #eee; background-color: #fff3e0;">
+              <td>{{ visit.date | date:'dd/MM/yyyy' }}</td>
+              <td>{{ visit.billAmount }}€</td>
+              <td style="color: green;">+{{ visit.pointsEarned }}</td>
+              <td>{{ visit.restaurant_id?.profile?.name || '---' }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        }
+
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+          <button class="btn-custom btn-primary" type="button" (click)="prevDeletedVisitPage(customer._id!)"
+            [disabled]="(deletedVisitPage[customer._id!] || 1) === 1">⬅ Prev</button>
+          <span>Page {{ deletedVisitPage[customer._id!] || 1 }} / {{
+            Math.max(1, Math.ceil((deletedVisitTotal[customer._id!] || 0) / visitLimit)) }}</span>
+          <button class="btn-custom btn-primary" type="button" (click)="nextDeletedVisitPage(customer._id!)"
+            [disabled]="(deletedVisitPage[customer._id!] || 1) >= Math.max(1, Math.ceil((deletedVisitTotal[customer._id!] || 0) / visitLimit))">Next
+            ➡</button>
+          <label for="goToDeletedVisitPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedVisitPageInput" type="number"
+            [formControl]="goToDeletedVisitPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedVisitTotal[customer._id!] || 0) / visitLimit))" style="width: 80px;" />
+          <button class="btn-custom btn-primary" type="button" (click)="goToDeletedVisitPage(customer._id!)">Go</button>
+        </div>
+      </div>
+      }
 
       <!-- Badges (read-only) -->
       <div class="badges-section" style="margin-top: 20px;">
