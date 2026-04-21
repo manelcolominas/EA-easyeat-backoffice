@@ -56,8 +56,8 @@ export class CustomerList implements OnInit {
   // ========================
   // REVIEWS
   // ========================
-  reviews: IReview[] = [];
   reviewsByCustomer: { [key: string]: IReview[] } = {};
+  deletedReviewsByCustomer: { [key: string]: IReview[] } = {}
   restaurants: IRestaurant[] = [];
   reviewForm!: FormGroup;
   selectedCustomerId: string | null = null;
@@ -68,11 +68,13 @@ export class CustomerList implements OnInit {
   minGlobalRatingFilter: number | null = null;
   sortByLikes = false;
   goToReviewPageControl = new FormControl<number | null>(1);
+  goToDeletedReviewPageControl = new FormControl<number | null>(1);
 
   // ========================
   // VISITS
   // ========================
   customerVisits: { [key: string]: IVisit[] } = {};
+  customerDeletedVisits: { [key: string]: IVisit[] } = {};
   loadingVisits: { [key: string]: boolean } = {};
   visitForm!: FormGroup;
   activeVisitForm = false;
@@ -81,11 +83,14 @@ export class CustomerList implements OnInit {
   selectedVisitId: string | null = null;
   visitPage: { [customerId: string]: number } = {};
   visitTotal: { [key: string]: number } = {};
+  deletedVisitPage: { [customerId: string]: number } = {};
+  deletedVisitTotal: { [key: string]: number } = {};
   visitLimit = 2;
   visitsExpanded: { [customerId: string]: boolean } = {};
   visitSortField: 'date' | 'billAmount' | 'pointsEarned' = 'date';
   visitSortOrder: 'asc' | 'desc' = 'desc';
   goToVisitPageControl = new FormControl<number | null>(1);
+  goToDeletedVisitPageControl = new FormControl<number | null>(1);
 
   customerBadges: { [key: string]: IBadge[] } = {};
   loadingBadges: { [key: string]: boolean } = {};
@@ -361,9 +366,12 @@ export class CustomerList implements OnInit {
     if (this.expanded[id]) {
       this.reviewPage[id] = 1; // Initialize page to 1
       this.loadReviews(id);
+      this.loadDeletedVisits(id);
 
       this.visitPage[id] = 1; // Initialize page to 1
+      this.deletedVisitPage[id] = 1;
       this.loadVisits(id);
+      this.loadDeletedVisits(id);
 
       this.loadCustomerBadges(id);
     }
@@ -409,7 +417,9 @@ export class CustomerList implements OnInit {
       this.loadReviews(id);
 
       this.visitPage[id] = 1; // Initialize page to 1
+      this.deletedVisitPage[id] = 1;
       this.loadVisits(id);
+      this.loadDeletedVisits(id);
 
       this.loadCustomerBadges(id);
     }
@@ -715,6 +725,30 @@ export class CustomerList implements OnInit {
     });
   }
 
+  loadDeletedVisits(customerId: string): void {
+    this.visitService.getDeletedVisitsByCustomerId(customerId, this.visitLimit, this.deletedVisitPage[customerId]).subscribe({
+      next: (deletedData: any) => {
+        let filtered = this.filterVisits(deletedData.data);
+        let sorted = this.sortVisits(filtered);
+
+        this.deletedVisitTotal[customerId] = deletedData.meta.total;
+        this.deletedVisitPage[customerId] = this.paginationUtils.getSafePage(
+          this.deletedVisitPage[customerId] || 1,
+          deletedData.meta.total,
+          this.visitLimit
+        );
+        this.customerDeletedVisits[customerId] = sorted;
+
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading deleted visits:', err);
+        this.customerDeletedVisits[customerId] = [];
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
   private filterVisits(visits: IVisit[]): IVisit[] {
     return visits;
   }
@@ -801,35 +835,81 @@ export class CustomerList implements OnInit {
   }
 
   softDeleteVisit(visitId: string, customerId: string): void {
-    if (confirm('¿Deseas enviar esta visita a la papelera?')) {
-      this.visitService.updateVisit(visitId, { deletedAt: new Date() }).subscribe({
-        next: () => this.loadVisits(customerId),
-        error: (err) => console.error('Error en Soft Delete:', err),
-      });
-    }
+    if (!customerId) return;
+    if (!visitId) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `soft-delete the visit`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.visitService.softDeleteVisit(visitId).subscribe({
+          next: () => {
+            this.loadVisits(customerId);
+            this.loadDeletedVisits(customerId);
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error deleting visit';
+          },
+        });
+      }
+    });
   }
 
-  deleteVisit(visitId: string, customerId: string): void {
-    if (confirm('¿Seguro que quieres borrar permanentemente (Hard Delete)?')) {
-      this.visitService.softDeleteVisit(visitId).subscribe(() => {
-        this.loadVisits(customerId);
-      });
-    }
+  hardDeleteVisit(visitId: string, customerId: string): void {
+    if (!customerId) return;
+    if (!visitId) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `PERMANENTLY DELETE the visit`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.visitService.hardDeleteVisit(visitId).subscribe({
+          next: () => {
+            this.loadVisits(customerId);
+            this.loadDeletedVisits(customerId);
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error deleting visit';
+          },
+        });
+      }
+    });
+  }
+
+  restoreVisit(visitId: string, customerId: string): void {
+    if (!customerId) return;
+    if (!visitId) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `restore the visit`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.visitService.restoreVisit(visitId).subscribe({
+          next: () => {
+            this.loadVisits(customerId);
+            this.loadDeletedVisits(customerId);
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error restoring visit';
+          },
+        });
+      }
+    });
   }
 
   cancelVisitForm(): void {
     this.activeVisitForm = false;
     this.selectedVisitId = null;
     this.visitForm.reset();
-  }
-
-  toggleVisitsExpand(customerId: string): void {
-    this.visitsExpanded[customerId] = !this.visitsExpanded[customerId];
-
-    if (this.visitsExpanded[customerId]) {
-      this.visitPage[customerId] = 1; // Initialize page to 1
-      this.loadVisits(customerId);
-    }
   }
 
   setVisitSort(field: 'date' | 'billAmount' | 'pointsEarned', customerId: string): void {
@@ -840,10 +920,7 @@ export class CustomerList implements OnInit {
       this.visitSortOrder = 'desc';
     }
     this.loadVisits(customerId);
-  }
-
-  getVisitsByCustomer(customerId: string): IVisit[] {
-    return this.customerVisits[customerId] || [];
+    this.loadDeletedVisits(customerId);
   }
 
   goToVisitPage(customerId: string): void {
@@ -851,6 +928,13 @@ export class CustomerList implements OnInit {
     this.visitPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.visitTotal[customerId] || 0, this.visitLimit);
     this.goToVisitPageControl.setValue(this.visitPage[customerId], { emitEvent: false });
     this.loadVisits(customerId);
+  }
+
+  goToDeletedVisitPage(customerId: string): void {
+    const requestedPage = Number(this.goToDeletedVisitPageControl.value);
+    this.deletedVisitPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.deletedVisitTotal[customerId] || 0, this.visitLimit);
+    this.goToDeletedVisitPageControl.setValue(this.deletedVisitPage[customerId], { emitEvent: false });
+    this.loadDeletedVisits(customerId);
   }
 
   // ========================
@@ -882,9 +966,19 @@ export class CustomerList implements OnInit {
     this.loadVisits(customerId);
   }
 
+  prevDeletedVisitPage(customerId: string): void {
+    this.deletedVisitPage[customerId] = this.paginationUtils.getSafePage((this.deletedVisitPage[customerId] || 1) - 1, this.deletedVisitTotal[customerId] || 0, this.visitLimit);
+    this.loadDeletedVisits(customerId);
+  }
+
   nextVisitPage(customerId: string): void {
     this.visitPage[customerId] = this.paginationUtils.getSafePage((this.visitPage[customerId] || 1) + 1, this.visitTotal[customerId] || 0, this.visitLimit);
     this.loadVisits(customerId);
+  }
+
+  nextDeletedVisitPage(customerId: string): void {
+    this.deletedVisitPage[customerId] = this.paginationUtils.getSafePage((this.deletedVisitPage[customerId] || 1) + 1, this.deletedVisitTotal[customerId] || 0, this.visitLimit);
+    this.loadDeletedVisits(customerId);
   }
 
   prevPage(customerId: string): void { // For reviews
@@ -892,10 +986,20 @@ export class CustomerList implements OnInit {
     this.loadReviews(customerId);
   }
 
+  // prevDeletedReviewPage(customerId: string): void { // For deleted reviews
+  //   this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage((this.deletedReviewPage[customerId] || 1) - 1, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
+  //   this.loadDeletedReviews(customerId);
+  // }
+
   nextPage(customerId: string): void { // For reviews
     this.reviewPage[customerId] = this.paginationUtils.getSafePage((this.reviewPage[customerId] || 1) + 1, this.reviewTotal[customerId] || 0, this.reviewLimit);
     this.loadReviews(customerId);
   }
+
+  // nextDeletedReviewPage(customerId: string): void { // For deleted reviews
+  //   this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage((this.deletedReviewPage[customerId] || 1) + 1, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
+  //   this.loadDeletedReviews(customerId);
+  // }
 
   prevCustomersPage(): void {
     this.customerPager.page = this.paginationUtils.getSafePage(this.customerPager.page - 1, this.filteredCustomers.length, this.customerPager.limit);
