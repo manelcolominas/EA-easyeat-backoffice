@@ -95,7 +95,11 @@ export class CustomerList implements OnInit {
   goToDeletedVisitPageControl = new FormControl<number | null>(1);
 
   customerBadges: { [key: string]: IBadge[] } = {};
+  customerDeletedBadges: { [key: string]: IBadge[] } = {};
   loadingBadges: { [key: string]: boolean } = {};
+  badgeTotal: { [customerId: string]: number } = {};
+  deletedBadgeTotal: { [customerId: string]: number } = {};
+  badgeLimit = 50;
 
   constructor(
     private api: CustomerService,
@@ -1012,7 +1016,7 @@ export class CustomerList implements OnInit {
 
   loadCustomerBadges(customerId: string): void {
     this.loadingBadges[customerId] = true;
-    this.badgeService.getBadgesByCustomer(customerId).subscribe({
+    this.badgeService.getBadgesByCustomerId(customerId, 1, this.badgeLimit).subscribe({
       next: (badges: IBadge[]) => {
         this.customerBadges[customerId] = badges;
         this.loadingBadges[customerId] = false;

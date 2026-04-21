@@ -11,20 +11,26 @@ import { normalizePaginatedResponse } from './api-response.util';
 export class VisitService {
   constructor(private api: ApiClientService) { }
 
-  getVisitsByRestaurantId(restaurantId: string): Observable<IVisit[]> {
+  getVisitsByRestaurantId(restaurantId: string, page: number, limit: number): Observable<any> {
     return this.api
-      .getAllPaginatedData<IVisit>('/visits', { restaurant_id: restaurantId })
-      .pipe(map((res) => res.data));
+      .get(`/visits/restaurant/${restaurantId}`, {
+        page: page,
+        limit: limit,
+      })
+      .pipe(map((res) => normalizePaginatedResponse<IVisit>(res)));
   }
 
-  getDeletedVisitsByRestaurantId(restaurantId: string): Observable<IVisit[]> {
+  getDeletedVisitsByRestaurantId(restaurantId: string, page: number, limit: number): Observable<any> {
     return this.api
-      .getAllPaginatedData<IVisit>('/visits/deleted', { restaurant_id: restaurantId })
-      .pipe(map((res) => res.data));
+      .get(`/visits/restaurant/${restaurantId}/deleted`, {
+        page: page,
+        limit: limit,
+      })
+      .pipe(map((res) => normalizePaginatedResponse<IVisit>(res)));
   }
 
   getVisitsByCustomerId(customerId: string, limit: number, page: number) {
-    return this.api.get<IVisit>(`/visits/customer/${customerId}`,
+    return this.api.get(`/visits/customer/${customerId}`,
       {
         limit: limit,
         page: page,
@@ -33,7 +39,7 @@ export class VisitService {
   }
 
   getDeletedVisitsByCustomerId(customerId: string, limit: number, page: number) {
-    return this.api.get<IVisit>(`/visits/customer/${customerId}/deleted`,
+    return this.api.get(`/visits/customer/${customerId}/deleted`,
       {
         limit: limit,
         page: page,

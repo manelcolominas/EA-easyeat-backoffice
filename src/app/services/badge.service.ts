@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { IBadge } from '../models/badge.model';
 import { ApiClientService } from './api-client.service';
+import { normalizePaginatedResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
@@ -13,17 +14,39 @@ export class BadgeService {
     return this.api.getAllPaginatedData<IBadge>('/badges').pipe(map((res) => res.data));
   }
 
-  /** Gets all badges belonging to a restaurant */
-  getBadgesByRestaurant(restaurantId: string): Observable<IBadge[]> {
+  getBadgesByRestaurantId(restaurantId: string, page: number, limit: number): Observable<any> {
     return this.api
-      .getAllPaginatedData<IBadge>(`/badges/restaurant/${restaurantId}`)
+      .get(`/badges/restaurant/${restaurantId}`, {
+        page: page,
+        limit: limit,
+      })
+      .pipe(map((res) => normalizePaginatedResponse<IBadge>(res)));
+  }
+
+  getDeletedBadgesByRestaurantId(restaurantId: string, page: number, limit: number): Observable<any> {
+    return this.api
+      .get(`/badges/restaurant/${restaurantId}/deleted`, {
+        page: page,
+        limit: limit,
+      })
+      .pipe(map((res) => normalizePaginatedResponse<IBadge>(res)));
+  }
+
+  getBadgesByCustomerId(customerId: string, page: number, limit: number): Observable<IBadge[]> {
+    return this.api
+      .getAllPaginatedData<IBadge>(`/badges/customer/${customerId}`, {
+        page: page,
+        limit: limit,
+      })
       .pipe(map((res) => res.data));
   }
 
-  /** Gets badges earned by a customer */
-  getBadgesByCustomer(customerId: string): Observable<IBadge[]> {
+  getDeletedBadgesByCustomerId(customerId: string, page: number, limit: number): Observable<IBadge[]> {
     return this.api
-      .getAllPaginatedData<IBadge>(`/customers/${customerId}/badges`)
+      .getAllPaginatedData<IBadge>(`/badges/customer/${customerId}/deleted`, {
+        page: page,
+        limit: limit,
+      })
       .pipe(map((res) => res.data));
   }
 

@@ -71,60 +71,80 @@ export class RestaurantList implements OnInit, OnDestroy {
   goToDeletedPageControl = new FormControl<number | null>(1);
 
   restaurantRewards: { [key: string]: IReward[] } = {};
+  deletedRestaurantRewards: { [key: string]: IReward[] } = {};
   showRewardForm: { [key: string]: boolean } = {};
   newRewardForm!: FormGroup;
   editingRewardId: string | null = null;
   editRewardForm!: FormGroup;
   rewardPage: { [restaurantId: string]: number } = {};
+  deletedRewardPage: { [restaurantId: string]: number } = {};
   rewardTotal: { [key: string]: number } = {};
+  deletedRewardTotal: { [key: string]: number } = {};
   rewardLimit = 2;
   rewardExpanded: { [restaurantId: string]: boolean } = {};
   goToRewardPageControl = new FormControl<number | null>(1);
+  goToDeletedRewardPageControl = new FormControl<number | null>(1);
 
   restaurantVisits: { [key: string]: IVisit[] } = {};
+  deletedRestaurantVisits: { [key: string]: IVisit[] } = {};
   showVisitForm: { [key: string]: boolean } = {};
   newVisitForm!: FormGroup;
   editingVisitId: string | null = null;
   editVisitForm!: FormGroup;
   loadingCustomers: boolean = false;
   visitPage: { [restaurantId: string]: number } = {};
+  deletedVisitPage: { [restaurantId: string]: number } = {};
   visitTotal: { [key: string]: number } = {};
+  deletedVisitTotal: { [key: string]: number } = {};
   visitLimit = 2;
   visitsExpanded: { [restaurantId: string]: boolean } = {};
   goToVisitPageControl = new FormControl<number | null>(1);
+  goToDeletedVisitPageControl = new FormControl<number | null>(1);
 
   restaurantDishes: { [key: string]: IDish[] } = {};
+  deletedRestaurantDishes: { [key: string]: IDish[] } = {};
   showDishForm: { [key: string]: boolean } = {};
   newDishForm!: FormGroup;
   editingDishId: string | null = null;
   editDishForm!: FormGroup;
   dishPage: { [restaurantId: string]: number } = {};
+  deletedDishPage: { [restaurantId: string]: number } = {};
   dishTotal: { [key: string]: number } = {};
+  deletedDishTotal: { [key: string]: number } = {};
   dishLimit = 5;
   goToDishPageControl = new FormControl<number | null>(1);
+  goToDeletedDishPageControl = new FormControl<number | null>(1);
   topDishByRestaurant: { [key: string]: IDish | null } = {};
   topDishState: { [key: string]: 'idle' | 'loading' | 'success' | 'empty' | 'error' } = {};
   topDishErrorText: { [key: string]: string } = {};
 
   restaurantEmployees: { [key: string]: IEmployee[] } = {};
+  deletedRestaurantEmployees: { [key: string]: IEmployee[] } = {};
   showEmployeeForm: { [key: string]: boolean } = {};
   newEmployeeForm!: FormGroup;
   editingEmployeeId: string | null = null;
   editEmployeeForm!: FormGroup;
   employeePage: { [restaurantId: string]: number } = {};
+  deletedEmployeePage: { [restaurantId: string]: number } = {};
   employeeTotal: { [key: string]: number } = {};
+  deletedEmployeeTotal: { [key: string]: number } = {};
   employeeLimit = 6;
   goToEmployeePageControl = new FormControl<number | null>(1);
+  goToDeletedEmployeePageControl = new FormControl<number | null>(1);
 
   restaurantBadges: { [key: string]: IBadge[] } = {};
+  deletedRestaurantBadges: { [key: string]: IBadge[] } = {};
   showBadgeForm: { [key: string]: boolean } = {};
   newBadgeForm!: FormGroup;
   editingBadgeId: string | null = null;
   editBadgeForm!: FormGroup;
   badgePage: { [restaurantId: string]: number } = {};
+  deletedBadgePage: { [restaurantId: string]: number } = {};
   badgeTotal: { [key: string]: number } = {};
+  deletedBadgeTotal: { [key: string]: number } = {};
   badgeLimit = 5;
   goToBadgePageControl = new FormControl<number | null>(1);
+  goToDeletedBadgePageControl = new FormControl<number | null>(1);
   mapEmbedUrl: { [key: string]: SafeResourceUrl | null } = {};
   mapOpenUrl: { [key: string]: string } = {};
   mapDirectionsUrl: { [key: string]: string } = {};
@@ -471,20 +491,30 @@ export class RestaurantList implements OnInit, OnDestroy {
       this.refreshRestaurantFull(restaurantId);
 
       this.rewardPage[restaurantId] = 1;
+      this.deletedRewardPage[restaurantId] = 1;
       this.loadRestaurantRewards(restaurantId);
+      this.loadDeletedRestaurantRewards(restaurantId);
 
       this.visitPage[restaurantId] = 1;
+      this.deletedVisitPage[restaurantId] = 1;
       this.loadRestaurantVisits(restaurantId);
+      this.loadDeletedRestaurantVisits(restaurantId);
 
       this.dishPage[restaurantId] = 1;
+      this.deletedDishPage[restaurantId] = 1;
       this.loadRestaurantTopDish(restaurantId);
       this.loadRestaurantDishes(restaurantId);
+      this.loadDeletedRestaurantDishes(restaurantId);
 
       this.employeePage[restaurantId] = 1;
+      this.deletedEmployeePage[restaurantId] = 1;
       this.loadRestaurantEmployees(restaurantId);
+      this.loadDeletedRestaurantEmployees(restaurantId);
 
       this.badgePage[restaurantId] = 1;
+      this.deletedBadgePage[restaurantId] = 1;
       this.loadRestaurantBadges(restaurantId);
+      this.loadDeletedRestaurantBadges(restaurantId);
     } else {
       this.mapLoading[restaurantId] = false;
     }
@@ -650,19 +680,29 @@ export class RestaurantList implements OnInit, OnDestroy {
       this.refreshDeletedRestaurantFull(restaurantId);
 
       this.rewardPage[restaurantId] = 1;
+      this.deletedRewardPage[restaurantId] = 1;
       this.loadRestaurantRewards(restaurantId);
+      this.loadDeletedRestaurantRewards(restaurantId);
 
       this.visitPage[restaurantId] = 1;
+      this.deletedVisitPage[restaurantId] = 1;
       this.loadRestaurantVisits(restaurantId);
+      this.loadDeletedRestaurantVisits(restaurantId);
 
       this.dishPage[restaurantId] = 1;
+      this.deletedDishPage[restaurantId] = 1;
       this.loadRestaurantDishes(restaurantId);
+      this.loadDeletedRestaurantDishes(restaurantId);
 
       this.employeePage[restaurantId] = 1;
+      this.deletedEmployeePage[restaurantId] = 1;
       this.loadRestaurantEmployees(restaurantId);
+      this.loadDeletedRestaurantEmployees(restaurantId);
 
       this.badgePage[restaurantId] = 1;
+      this.deletedBadgePage[restaurantId] = 1;
       this.loadRestaurantBadges(restaurantId);
+      this.loadDeletedRestaurantBadges(restaurantId);
     }
   }
 
@@ -990,27 +1030,42 @@ export class RestaurantList implements OnInit, OnDestroy {
   // ========================
 
   private loadRestaurantRewards(restaurantId: string): void {
-    this.rewardApi.getRewards().subscribe({
-      next: (allRewards: IReward[]) => {
-        const res: IReward[] = allRewards.filter(
-          (reward: IReward) => reward.restaurant_id === restaurantId,
-        );
-        this.rewardTotal[restaurantId] = res.length;
+    this.rewardApi.getRewardsByRestaurant(restaurantId, this.rewardPage[restaurantId], this.rewardLimit).subscribe({
+      next: (res: { data: IReward[], meta: { total: number, page: number, limit: number, totalPages: number } }) => {
+        this.rewardTotal[restaurantId] = res.meta.total;
         this.rewardPage[restaurantId] = this.paginationUtils.getSafePage(
           this.rewardPage[restaurantId] || 1,
-          res.length,
+          res.meta.total,
           this.rewardLimit
         );
-        this.restaurantRewards[restaurantId] = this.paginationUtils.getPaginatedData(
-          res,
-          this.rewardPage[restaurantId],
-          this.rewardLimit
-        );
+
+        this.restaurantRewards[restaurantId] = res.data;
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: () => {
         this.restaurantRewards = { ...this.restaurantRewards, [restaurantId]: [] };
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private loadDeletedRestaurantRewards(restaurantId: string): void {
+    this.rewardApi.getDeletedRewardsByRestaurant(restaurantId, this.deletedRewardPage[restaurantId], this.rewardLimit).subscribe({
+      next: (res: { data: IReward[], meta: any }) => {
+        this.deletedRewardTotal[restaurantId] = res.meta.total;
+        this.deletedRewardPage[restaurantId] = this.paginationUtils.getSafePage(
+          this.deletedRewardPage[restaurantId] || 1,
+          res.meta.total,
+          this.rewardLimit
+        );
+        this.deletedRestaurantRewards[restaurantId] = res.data;
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.deletedRestaurantRewards = { ...this.deletedRestaurantRewards, [restaurantId]: [] };
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1176,24 +1231,41 @@ export class RestaurantList implements OnInit, OnDestroy {
   // ========================
 
   private loadRestaurantVisits(restaurantId: string): void {
-    this.visitApi.getVisitsByRestaurantId(restaurantId).subscribe({
-      next: (visits: IVisit[]) => {
-        this.visitTotal[restaurantId] = visits.length;
+    this.visitApi.getVisitsByRestaurantId(restaurantId, this.visitPage[restaurantId], this.visitLimit).subscribe({
+      next: (visits: { data: IVisit[], meta: any }) => {
+        this.visitTotal[restaurantId] = visits.meta.total;
         this.visitPage[restaurantId] = this.paginationUtils.getSafePage(
           this.visitPage[restaurantId] || 1,
-          visits.length,
+          visits.meta.total,
           this.visitLimit
         );
-        this.restaurantVisits[restaurantId] = this.paginationUtils.getPaginatedData(
-          visits,
-          this.visitPage[restaurantId],
-          this.visitLimit
-        );
+        this.restaurantVisits[restaurantId] = visits.data;
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: () => {
         this.restaurantVisits = { ...this.restaurantVisits, [restaurantId]: [] };
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private loadDeletedRestaurantVisits(restaurantId: string): void {
+    this.visitApi.getDeletedVisitsByRestaurantId(restaurantId, this.deletedVisitPage[restaurantId], this.visitLimit).subscribe({
+      next: (visits: { data: IVisit[], meta: any }) => {
+        this.deletedVisitTotal[restaurantId] = visits.meta.total;
+        this.deletedVisitPage[restaurantId] = this.paginationUtils.getSafePage(
+          this.deletedVisitPage[restaurantId] || 1,
+          visits.meta.total,
+          this.visitLimit
+        );
+        this.deletedRestaurantVisits[restaurantId] = visits.data;
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.deletedRestaurantVisits = { ...this.deletedRestaurantVisits, [restaurantId]: [] };
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1375,25 +1447,41 @@ export class RestaurantList implements OnInit, OnDestroy {
   }
 
   private loadRestaurantDishes(restaurantId: string): void {
-    this.dishApi.getDishes().subscribe({
-      next: (allDishes: IDish[]) => {
-        const filtered = allDishes.filter((d) => d.restaurant_id === restaurantId);
-        this.dishTotal[restaurantId] = filtered.length;
+    this.dishApi.getDishesByRestaurantId(restaurantId, this.dishPage[restaurantId] || 1, this.dishLimit).subscribe({
+      next: (dishes: { data: IDish[], meta: any }) => {
+        this.dishTotal[restaurantId] = dishes.meta.total;
         this.dishPage[restaurantId] = this.paginationUtils.getSafePage(
           this.dishPage[restaurantId] || 1,
-          filtered.length,
+          dishes.meta.total,
           this.dishLimit
         );
-        this.restaurantDishes[restaurantId] = this.paginationUtils.getPaginatedData(
-          filtered,
-          this.dishPage[restaurantId],
-          this.dishLimit
-        );
+        this.restaurantDishes[restaurantId] = dishes.data;
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: () => {
         this.restaurantDishes[restaurantId] = [];
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private loadDeletedRestaurantDishes(restaurantId: string): void {
+    this.dishApi.getDeletedDishesByRestaurantId(restaurantId, this.deletedDishPage[restaurantId] || 1, this.dishLimit).subscribe({
+      next: (dishes: { data: IDish[], meta: any }) => {
+        this.deletedDishTotal[restaurantId] = dishes.meta.total;
+        this.deletedDishPage[restaurantId] = this.paginationUtils.getSafePage(
+          this.deletedDishPage[restaurantId] || 1,
+          dishes.meta.total,
+          this.dishLimit
+        );
+        this.deletedRestaurantDishes[restaurantId] = dishes.data;
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.deletedRestaurantDishes[restaurantId] = [];
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1540,25 +1628,41 @@ export class RestaurantList implements OnInit, OnDestroy {
   // ========================
 
   private loadRestaurantEmployees(restaurantId: string): void {
-    this.employeeApi.getEmployees().subscribe({
-      next: (allEmployees: IEmployee[]) => {
-        const filtered = allEmployees.filter((e) => e.restaurant_id === restaurantId);
-        this.employeeTotal[restaurantId] = filtered.length;
+    this.employeeApi.getEmployeesByRestaurantId(restaurantId, this.employeePage[restaurantId], this.employeeLimit).subscribe({
+      next: (employees: { data: IEmployee[], meta: any }) => {
+        this.employeeTotal[restaurantId] = employees.meta.total;
         this.employeePage[restaurantId] = this.paginationUtils.getSafePage(
           this.employeePage[restaurantId] || 1,
-          filtered.length,
+          employees.meta.total,
           this.employeeLimit
         );
-        this.restaurantEmployees[restaurantId] = this.paginationUtils.getPaginatedData(
-          filtered,
-          this.employeePage[restaurantId],
-          this.employeeLimit
-        );
+        this.restaurantEmployees[restaurantId] = employees.data;
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: () => {
         this.restaurantEmployees[restaurantId] = [];
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private loadDeletedRestaurantEmployees(restaurantId: string): void {
+    this.employeeApi.getDeletedEmployeesByRestaurantId(restaurantId, this.deletedEmployeePage[restaurantId], this.employeeLimit).subscribe({
+      next: (employees: { data: IEmployee[], meta: any }) => {
+        this.deletedEmployeeTotal[restaurantId] = employees.meta.total;
+        this.deletedEmployeePage[restaurantId] = this.paginationUtils.getSafePage(
+          this.deletedEmployeePage[restaurantId] || 1,
+          employees.meta.total,
+          this.employeeLimit
+        );
+        this.deletedRestaurantEmployees[restaurantId] = employees.data;
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.deletedRestaurantEmployees[restaurantId] = [];
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1695,24 +1799,41 @@ export class RestaurantList implements OnInit, OnDestroy {
   // ========================
 
   private loadRestaurantBadges(restaurantId: string): void {
-    this.badgeApi.getBadgesByRestaurant(restaurantId).subscribe({
-      next: (badges: IBadge[]) => {
-        this.badgeTotal[restaurantId] = badges.length;
+    this.badgeApi.getBadgesByRestaurantId(restaurantId, this.badgePage[restaurantId], this.badgeLimit).subscribe({
+      next: (response: { data: IBadge[], meta: any }) => {
+        this.badgeTotal[restaurantId] = response.meta.total;
         this.badgePage[restaurantId] = this.paginationUtils.getSafePage(
           this.badgePage[restaurantId] || 1,
-          badges.length,
+          response.meta.total,
           this.badgeLimit
         );
-        this.restaurantBadges[restaurantId] = this.paginationUtils.getPaginatedData(
-          badges,
-          this.badgePage[restaurantId],
-          this.badgeLimit
-        );
+        this.restaurantBadges[restaurantId] = response.data;
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: () => {
         this.restaurantBadges[restaurantId] = [];
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private loadDeletedRestaurantBadges(restaurantId: string): void {
+    this.badgeApi.getDeletedBadgesByRestaurantId(restaurantId, this.deletedBadgePage[restaurantId], this.badgeLimit).subscribe({
+      next: (response: { data: IBadge[], meta: any }) => {
+        this.deletedBadgeTotal[restaurantId] = response.meta.total;
+        this.deletedBadgePage[restaurantId] = this.paginationUtils.getSafePage(
+          this.deletedBadgePage[restaurantId] || 1,
+          response.meta.total,
+          this.badgeLimit
+        );
+        this.deletedRestaurantBadges[restaurantId] = response.data;
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.deletedRestaurantBadges[restaurantId] = [];
         this.loading = false;
         this.cdr.markForCheck();
       },

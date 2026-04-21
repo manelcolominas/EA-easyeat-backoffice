@@ -3,12 +3,14 @@ import { Observable } from 'rxjs';
 import { IEmployee } from '../models/employee.model';
 import { ApiClientService } from './api-client.service';
 import { map } from 'rxjs/operators';
+import { IDish } from '../models/dish.model';
+import { normalizePaginatedResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
 })
 export class EmployeeService {
-  constructor(private api: ApiClientService) {}
+  constructor(private api: ApiClientService) { }
 
   getEmployees(): Observable<IEmployee[]> {
     return this.api.getAllPaginatedData<IEmployee>('/employees').pipe(map((res) => res.data));
@@ -16,6 +18,24 @@ export class EmployeeService {
 
   getDeletedEmployees(): Observable<IEmployee[]> {
     return this.api.getAllPaginatedData<IEmployee>('/employees/deleted').pipe(map((res) => res.data));
+  }
+
+  getEmployeesByRestaurantId(restaurantId: string, page: number, limit: number): Observable<any> {
+    return this.api
+      .get(`/employees/restaurant/${restaurantId}`, {
+        page: page,
+        limit: limit,
+      })
+      .pipe(map((res) => normalizePaginatedResponse<IEmployee>(res)));
+  }
+
+  getDeletedEmployeesByRestaurantId(restaurantId: string, page: number, limit: number): Observable<any> {
+    return this.api
+      .get(`/employees/restaurant/${restaurantId}/deleted`, {
+        page: page,
+        limit: limit,
+      })
+      .pipe(map((res) => normalizePaginatedResponse<IEmployee>(res)));
   }
 
   getEmployee(employeeId: string): Observable<IEmployee> {

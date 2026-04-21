@@ -3,12 +3,13 @@ import { Observable } from 'rxjs';
 import { IDish } from '../models/dish.model';
 import { ApiClientService } from './api-client.service';
 import { map } from 'rxjs/operators';
+import { normalizePaginatedResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DishService {
-  constructor(private api: ApiClientService) {}
+  constructor(private api: ApiClientService) { }
 
   getDishes(): Observable<IDish[]> {
     return this.api.getAllPaginatedData<IDish>('/dishes').pipe(map((res) => res.data));
@@ -16,6 +17,24 @@ export class DishService {
 
   getDeletedDishes(): Observable<IDish[]> {
     return this.api.getAllPaginatedData<IDish>('/dishes/deleted').pipe(map((res) => res.data));
+  }
+
+  getDishesByRestaurantId(restaurantId: string, page: number, limit: number): Observable<any> {
+    return this.api
+      .get(`/dishes/restaurant/${restaurantId}`, {
+        page: page,
+        limit: limit,
+      })
+      .pipe(map((res) => normalizePaginatedResponse<IDish>(res)));
+  }
+
+  getDeletedDishesByRestaurantId(restaurantId: string, page: number, limit: number): Observable<any> {
+    return this.api
+      .get(`/dishes/restaurant/${restaurantId}/deleted`, {
+        page: page,
+        limit: limit,
+      })
+      .pipe(map((res) => normalizePaginatedResponse<IDish>(res)));
   }
 
   getDish(dishId: string): Observable<IDish> {
