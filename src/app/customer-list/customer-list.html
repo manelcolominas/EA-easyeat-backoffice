@@ -549,18 +549,17 @@
         <p class="muted italic">No visits.</p>
         }
         <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-          <button class="btn-custom btn-primary" type="button" (click)="prevDeletedVisitPage(customer._id!)"
-            [disabled]="(deletedVisitPage[customer._id!] || 1) === 1">⬅ Prev</button>
-          <span>Page {{ deletedVisitPage[customer._id!] || 1 }} / {{
-            Math.max(1, Math.ceil((deletedVisitTotal[customer._id!] || 0) / visitLimit)) }}</span>
-          <button class="btn-custom btn-primary" type="button" (click)="nextDeletedVisitPage(customer._id!)"
-            [disabled]="(deletedVisitPage[customer._id!] || 1) >= Math.max(1, Math.ceil((deletedVisitTotal[customer._id!] || 0) / visitLimit))">Next
+          <button class="btn-custom btn-primary" type="button" (click)="prevVisitPage(customer._id!)"
+            [disabled]="(visitPage[customer._id!] || 1) === 1">⬅ Prev</button>
+          <span>Page {{ visitPage[customer._id!] || 1 }} / {{
+            Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit)) }}</span>
+          <button class="btn-custom btn-primary" type="button" (click)="nextVisitPage(customer._id!)"
+            [disabled]="(visitPage[customer._id!] || 1) >= Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit))">Next
             ➡</button>
-          <label for="goToDeletedVisitPageInput" style="margin-left: 8px;">Go to page:</label>
-          <input class="input-custom" id="goToDeletedVisitPageInput" type="number"
-            [formControl]="goToDeletedVisitPageControl" min="1"
-            [max]="Math.max(1, Math.ceil((deletedVisitTotal[customer._id!] || 0) / visitLimit))" style="width: 80px;" />
-          <button class="btn-custom btn-primary" type="button" (click)="goToDeletedVisitPage(customer._id!)">Go</button>
+          <label for="goToVisitPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToVisitPageInput" type="number" [formControl]="goToVisitPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((visitTotal[customer._id!] || 0) / visitLimit))" style="width: 80px;" />
+          <button class="btn-custom btn-primary" type="button" (click)="goToVisitPage(customer._id!)">Go</button>
         </div>
       </div>
 
@@ -634,6 +633,20 @@
 
       <!-- Reviews (read-only) -->
       <div class="card-custom" style="margin-top:10px;">
+        <div class="card-custom" style="margin-top:10px;">
+          <label>Min globalRating:</label>
+          <select class="select-custom" [(ngModel)]="minGlobalRatingFilter" (change)="loadReviews(customer._id!)">
+            <option [ngValue]="null">All</option>
+            <option [ngValue]="5">5+</option>
+            <option [ngValue]="7">7+</option>
+            <option [ngValue]="9">9+</option>
+          </select>
+          <label style="margin-left:10px;">
+            <input class="checkbox-custom" type="checkbox" [(ngModel)]="sortByLikes"
+              (change)="loadReviews(customer._id!)" />
+            Sort by likes
+          </label>
+        </div>
         <h4>Reviews</h4>
 
         @if ((reviewsByCustomer[customer._id!] || []).length > 0) {
@@ -661,7 +674,51 @@
           <button class="btn-custom btn-primary" type="button" (click)="nextPage(customer._id!)"
             [disabled]="(reviewPage[customer._id!] || 1) >= Math.max(1, Math.ceil((reviewTotal[customer._id!] || 0) / reviewLimit))">Next
             ➡</button>
+          <label for="goToReviewPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToReviewPageInput" type="number" [formControl]="goToReviewPageControl"
+            min="1" [max]="Math.max(1, Math.ceil((reviewTotal[customer._id!] || 0) / reviewLimit))"
+            style="width: 80px;" />
+          <button class="btn-custom btn-primary" type="button" (click)="goToReviewPage(customer._id!)">Go</button>
         </div>
+
+        <!--Deleted reviews section-->
+        @if (deletedReviewsByCustomer[customer._id!]?.length) {
+        <hr>
+        <hr>
+
+        <h4>Deleted Reviews</h4>
+
+        @for (review of deletedReviewsByCustomer[customer._id!]; track review._id) {
+        <div style="border-bottom:1px solid #ccc; margin-bottom:8px; padding-bottom:8px; background-color: #fff3e0;">
+          <p><strong>{{ getReviewRestaurantName(review) }}</strong></p>
+          <div>
+            @for (_ of getStars(review.globalRating); track $index) {
+            <span>⭐</span>
+            }
+          </div>
+          <p>{{ review.comment }}</p>
+          <span class="chip chip-primary">👍 {{ review.likes || 0 }}</span>
+        </div>
+        }
+
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+          <button class="btn-custom btn-primary" type="button" (click)="prevDeletedReviewPage(customer._id!)"
+            [disabled]="(deletedReviewPage[customer._id!] || 1) === 1">⬅ Prev</button>
+          <span>Page {{ deletedReviewPage[customer._id!] || 1 }} / {{ Math.max(1,
+            Math.ceil((deletedReviewTotal[customer._id!]
+            || 0) / reviewLimit)) }}</span>
+          <button class="btn-custom btn-primary" type="button" (click)="nextDeletedReviewPage(customer._id!)"
+            [disabled]="(deletedReviewPage[customer._id!] || 1) >= Math.max(1, Math.ceil((deletedReviewTotal[customer._id!] || 0) / reviewLimit))">Next
+            ➡</button>
+          <label for="goToDeletedReviewPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedReviewPageInput" type="number"
+            [formControl]="goToDeletedReviewPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedReviewTotal[customer._id!] || 0) / reviewLimit))"
+            style="width: 80px;" />
+          <button class="btn-custom btn-primary" type="button"
+            (click)="goToDeletedReviewPage(customer._id!)">Go</button>
+        </div>
+        }
       </div>
     </div>
     }

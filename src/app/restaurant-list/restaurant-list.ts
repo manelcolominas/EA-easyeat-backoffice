@@ -542,7 +542,7 @@ export class RestaurantList implements OnInit, OnDestroy {
     return this.topDishState[restaurantId] ?? 'idle';
   }
 
-  getTopDish(restaurantId: string ): IDish | null {
+  getTopDish(restaurantId: string): IDish | null {
     return this.topDishByRestaurant[restaurantId] ?? null;
   }
 
@@ -836,9 +836,9 @@ export class RestaurantList implements OnInit, OnDestroy {
     const parseDay = (val: string): { open: string; close: string }[] | undefined =>
       val
         ? val.split(',').map((slot: string) => {
-            const [open, close] = slot.split('-');
-            return { open, close };
-          })
+          const [open, close] = slot.split('-');
+          return { open, close };
+        })
         : undefined;
 
     const category: string[] = [];
