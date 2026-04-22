@@ -312,12 +312,16 @@
           <button type="button" class="btn-custom btn-primary btn-sm" (click)="edit(restaurant)">
             Edit
           </button>
-
-          <button type="button" class="btn-custom btn-danger btn-sm"
-            (click)="confirmDelete(restaurant._id, restaurant.profile.name)">
-            ✕
-          </button>
           }
+
+          <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+            (click)="softDeleteRestaurant(restaurant._id!)">
+            Disable
+          </button>
+
+          <button type="button" class="btn-custom btn-danger btn-sm" (click)="hardDeleteRestaurant(restaurant._id!)">
+            X
+          </button>
         </div>
       </div>
     </div>
@@ -622,6 +626,7 @@
             (click)="goToRewardPage(restaurant._id!)">Go</button>
         </div>
 
+        <!-- DELETED REWARDS SECTION -->
         @if (deletedRestaurantRewards[restaurant._id!] && deletedRestaurantRewards[restaurant._id!].length > 0) {
         <span class="info-card-title">🎁 Deleted Rewards</span>
         <ul class="data-list">
@@ -1420,7 +1425,9 @@
 </div>
 
 
+<!-- =========================== -->
 <!-- DELETED RESTAURANTS SECTION -->
+<!-- =========================== -->
 <h2 *ngIf="pagedDeletedRestaurants.length > 0" style="margin-top:var(--spacing-lg);color:#e65100;">🗑️ Deleted
   Restaurants</h2>
 
@@ -1452,11 +1459,14 @@
             {{ expanded[restaurant._id!] ? '▲ Less' : '▼ More' }}
           </button>
 
-          @if (restaurant._id != undefined) {
-          <button type="button" class="btn-custom btn-success btn-sm" (click)="restoreRestaurant(restaurant._id!)">
+          <button type="button" class="btn-custom btn-success btn-sm" style="background: #ff9800;"
+            (click)="restoreRestaurant(restaurant._id!)">
             ↩ Restore
           </button>
-          }
+
+          <button type="button" class="btn-custom btn-danger btn-sm" (click)="hardDeleteRestaurant(restaurant._id!)">
+            X
+          </button>
         </div>
       </div>
     </div>
@@ -1726,6 +1736,42 @@
             [disabled]="(rewardPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((rewardTotal[restaurant._id!] || 0) / rewardLimit))">Next
             ➡</button>
         </div>
+
+        <!-- DELETED REWARDS SECTION -->
+        @if (deletedRestaurantRewards[restaurant._id!] && deletedRestaurantRewards[restaurant._id!].length > 0) {
+        <span class="info-card-title">🎁 Deleted Rewards</span>
+        <ul class="data-list">
+          @for (reward of deletedRestaurantRewards[restaurant._id!]; track $index) {
+          <li style="background-color: #fff3e0;">
+            <span>{{ $any(reward).name }} — {{ $any(reward).description }}</span>
+            <span style="display:flex;align-items:center;gap:8px;">
+              <span class="chip chip-warning">{{ $any(reward).pointsRequired }} pts</span>
+              <button type="button" class="btn-custom btn-success btn-sm" style="background: #ff9800;"
+                (click)="restoreReward(restaurant._id!, reward._id!)">Restore</button>
+              <button type="button" class="btn-custom btn-danger btn-sm"
+                (click)="hardDeleteReward(restaurant._id!, reward._id!)">X</button>
+            </span>
+          </li>
+          }
+        </ul>
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('deletedRewards', -1, restaurant._id!)"
+            [disabled]="(deletedRewardPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ deletedRewardPage[restaurant._id!] || 1 }} / {{
+            Math.max(1,
+            Math.ceil((deletedRewardTotal[restaurant._id!] || 0) / rewardLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('deletedRewards', 1, restaurant._id!)"
+            [disabled]="(deletedRewardPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((deletedRewardTotal[restaurant._id!] || 0) / rewardLimit))">Next
+            ➡</button>
+          <label for="goToDeletedRewardPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedRewardPageInput" type="number"
+            [formControl]="goToDeletedRewardPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedRewardTotal[restaurant._id!] || 0) / rewardLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDeletedRewardPage(restaurant._id!)">Go</button>
+        </div>
+        }
       </div>
 
       <!-- VISITS SECTION (read-only) -->
@@ -1758,6 +1804,57 @@
             [disabled]="(visitPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((visitTotal[restaurant._id!] || 0) / visitLimit))">Next
             ➡</button>
         </div>
+
+        <!-- DELETED VISITS SECTION -->
+        @if (deletedRestaurantVisits[restaurant._id!] && deletedRestaurantVisits[restaurant._id!].length > 0) {
+        <span class="info-card-title">📅 Deleted Received Visits</span>
+        <p *ngIf="loading && expanded[restaurant._id!]" class="muted">
+          Loading visits...
+        </p>
+
+        <ul class="data-list">
+          @for (visit of deletedRestaurantVisits[restaurant._id!]; track visit._id) {
+          <li style="background-color: #fff3e0;">
+            <ng-container>
+              <span>
+                <strong>{{ visit.customer_id?.name || 'Unknown' }}</strong>
+                &nbsp;·&nbsp; {{ visit.date | date:'dd/MM/yyyy' }}
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span class="chip chip-neutral">{{ visit.billAmount | number:'1.2-2' }}€</span>
+                <span class="chip chip-success">+{{ visit.pointsEarned }}pts</span>
+                <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                  (click)="restoreVisit(restaurant._id!, visit._id!)">Restore</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="hardDeleteVisit(restaurant._id!, visit._id!)">X</button>
+              </span>
+            </ng-container>
+          </li>
+          }
+        </ul>
+
+        @if (deletedRestaurantVisits[restaurant._id!] && deletedRestaurantVisits[restaurant._id!].length === 0) {
+        <span class="muted">No registered visits.</span>
+        }
+
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('deletedVisits', -1, restaurant._id!)"
+            [disabled]="(deletedVisitPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (deletedVisitPage[restaurant._id!] || 1) }} / {{
+            Math.max(1,
+            Math.ceil((deletedVisitTotal[restaurant._id!] || 0) / visitLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('deletedVisits', 1, restaurant._id!)"
+            [disabled]="(deletedVisitPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((deletedVisitTotal[restaurant._id!] || 0) / visitLimit))">Next
+            ➡</button>
+          <label for="goToDeletedVisitPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedVisitPageInput" type="number"
+            [formControl]="goToDeletedVisitPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedVisitTotal[restaurant._id!] || 0) / visitLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDeletedVisitPage(restaurant._id!)">Go</button>
+        </div>
+        }
       </div><!-- end visits section -->
 
       <!-- DISHES SECTION (read-only) -->
@@ -1800,6 +1897,67 @@
             [disabled]="(dishPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((dishTotal[restaurant._id!] || 0) / dishLimit))">Next
             ➡</button>
         </div>
+
+        <!-- DELETED DISH section -->
+        @if (deletedRestaurantDishes[restaurant._id!] && deletedRestaurantDishes[restaurant._id!].length > 0) {
+        <span class="info-card-title">🍽️ Deleted Dishes</span>
+
+        @if (loading) {
+        <p class="muted">Loading
+          dishes...</p>
+        } @else {
+        <ul class="data-list">
+          @for (dish of deletedRestaurantDishes[restaurant._id!]; track dish._id) {
+          <li style="background-color: #fff3e0;">
+            <ng-container *ngIf="editingDishId !== $any(dish)._id">
+              <span style="display:flex;flex-direction:column;gap:2px;">
+                <span>
+                  <strong>{{ dish.name }}</strong>
+                  <span class="chip chip-neutral" style="margin-left:6px;">{{ dish.section }}</span>
+                  <span class="chip" [class.chip-success]="dish.active" [class.chip-neutral]="!dish.active"
+                    style="margin-left:4px;">
+                    {{ dish.active ? 'Active' : 'Inactive' }}
+                  </span>
+                  <span *ngIf="dish.portionSize" class="chip chip-primary" style="margin-left:4px;">{{ dish.portionSize
+                    }}</span>
+                </span>
+                <span class="muted" *ngIf="dish.description">{{ dish.description }}</span>
+                <span *ngIf="dish.availableAt && dish.availableAt.length > 0">
+                  <span *ngFor="let slot of dish.availableAt" class="chip chip-warning" style="margin-right:2px;">{{
+                    slot }}</span>
+                </span>
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span class="chip chip-success">{{ dish.price | number:'1.2-2' }}€</span>
+                <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                  (click)="restoreDish(restaurant._id!, dish._id!)">Restore</button>
+                <button type="button" class="btn-custom btn-danger btn-sm"
+                  (click)="hardDeleteDish(restaurant._id!, dish._id!)">X</button>
+              </span>
+            </ng-container>
+          </li>
+          }
+        </ul>
+        }
+
+        <!-- Pagination -->
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevDeletedDishPage(restaurant._id!)"
+            [disabled]="(deletedDishPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (deletedDishPage[restaurant._id!] || 1) }} / {{
+            Math.max(1,
+            Math.ceil((deletedDishTotal[restaurant._id!] || 0) / dishLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextDeletedDishPage(restaurant._id!)"
+            [disabled]="(deletedDishPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((deletedDishTotal[restaurant._id!] || 0) / dishLimit))">Next
+            ➡</button>
+          <label for="goToDeletedDishPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedDishPageInput" type="number"
+            [formControl]="goToDeletedDishPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedDishTotal[restaurant._id!] || 0) / dishLimit))" style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDeletedDishPage(restaurant._id!)">Go</button>
+        </div>
+        }
       </div>
 
       <!-- EMPLOYEES SECTION (read-only) -->
@@ -1837,6 +1995,55 @@
             [disabled]="(employeePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit))">Next
             ➡</button>
         </div>
+
+        <!-- DELETED EMPLOYEES SECTION -->
+        @if (deletedRestaurantEmployees[restaurant._id!] && deletedRestaurantEmployees[restaurant._id!].length > 0) {
+        <span class="info-card-title">👤 Deleted Employees</span>
+        @if (loading) {
+        <p class="muted">Loading deleted employees...</p>
+        } @else {
+        <ul class="data-list">
+          @for (employee of deletedRestaurantEmployees[restaurant._id!]; track $index) {
+          <li style="background-color: #fff3e0;">
+            <ng-container *ngIf="editingEmployeeId !== $any(employee)._id">
+              <span style="display:flex;flex-direction:column;gap:2px;">
+                <span>
+                  <strong>{{ employee.profile.name }}</strong>
+                  <span class="chip chip-neutral" style="margin-left:6px;">{{ employee.profile.role || 'staff' }}</span>
+                </span>
+                <span class="muted" *ngIf="employee.profile.email">{{ employee.profile.email }}</span>
+                <span class="muted" *ngIf="employee.profile.phone">{{ employee.profile.phone }}</span>
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                  (click)="restoreEmployee(restaurant._id!, employee._id!)">Restore</button>
+                <button type="button" class="btn-custom btn-danger btn-sm"
+                  (click)="hardDeleteEmployee(restaurant._id!, employee._id!)">X</button>
+              </span>
+            </ng-container>
+          </li>
+          }
+        </ul>
+
+        <!-- Pagination -->
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevDeletedEmployeePage(restaurant._id!)"
+            [disabled]="(deletedEmployeePage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (deletedEmployeePage[restaurant._id!] || 1) }} / {{
+            Math.max(1, Math.ceil((deletedEmployeeTotal[restaurant._id!] || 0) / employeeLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextDeletedEmployeePage(restaurant._id!)"
+            [disabled]="(deletedEmployeePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((deletedEmployeeTotal[restaurant._id!] || 0) / employeeLimit))">Next
+            ➡</button>
+          <label for="goToDeletedEmployeePageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedEmployeePageInput" type="number"
+            [formControl]="goToDeletedEmployeePageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedEmployeeTotal[restaurant._id!] || 0) / employeeLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDeletedEmployeePage(restaurant._id!)">Go</button>
+        </div>
+        }
+        }
       </div>
 
       <!-- BADGES SECTION (read-only) -->
@@ -1868,6 +2075,53 @@
             [disabled]="(badgePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((badgeTotal[restaurant._id!] || 0) / badgeLimit))">Next
             ➡</button>
         </div>
+
+        <!-- DELETED BADGES SECTION -->
+        @if (deletedRestaurantBadges[restaurant._id!] && deletedRestaurantBadges[restaurant._id!].length > 0) {
+        <span class="info-card-title">🏅 Manage Deleted Badges</span>
+        @if (loading) {
+        <p class="muted">Loading badges...</p>
+        } @else {
+        <ul class="data-list">
+          @for (badge of deletedRestaurantBadges[restaurant._id!]; track badge._id) {
+          <li style="background-color: #fff3e0;">
+            <span style="display:flex;flex-direction:column;gap:2px;">
+              <span>
+                <strong>{{ badge.title }}</strong>
+                <span class="chip chip-success" style="margin-left:6px;">{{ badge.type }}</span>
+              </span>
+              <span class="muted">{{ badge.description }}</span>
+            </span>
+            <span style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                (click)="restoreBadge(restaurant._id!, badge._id!)">Restore</button>
+              <button type="button" class="btn-custom btn-danger btn-sm"
+                (click)="hardDeleteBadge(restaurant._id!, badge._id!)">X</button>
+            </span>
+          </li>
+          }
+        </ul>
+        }
+
+        <!-- Pagination -->
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevDeletedBadgePage(restaurant._id!)"
+            [disabled]="(deletedBadgePage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (deletedBadgePage[restaurant._id!] || 1) }} / {{
+            Math.max(1,
+            Math.ceil((deletedBadgeTotal[restaurant._id!] || 0) / badgeLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextDeletedBadgePage(restaurant._id!)"
+            [disabled]="(deletedBadgePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((deletedBadgeTotal[restaurant._id!] || 0) / badgeLimit))">Next
+            ➡</button>
+          <label for="goToDeletedBadgePageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedBadgePageInput" type="number"
+            [formControl]="goToDeletedBadgePageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedBadgeTotal[restaurant._id!] || 0) / badgeLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDeletedBadgePage(restaurant._id!)">Go</button>
+        </div>
+        }
       </div>
       }
     </div><!-- end .data -->

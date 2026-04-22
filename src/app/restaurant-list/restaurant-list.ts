@@ -702,26 +702,6 @@ export class RestaurantList implements OnInit, OnDestroy {
     }
   }
 
-  restoreRestaurant(restaurantId: string): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: 'restore this restaurant',
-    });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.loading = true;
-        this.cdr.markForCheck();
-        this.api.restoreRestaurant(restaurantId).subscribe({
-          next: () => this.load(),
-          error: () => {
-            this.errorMsg = 'Could not restore restaurant.';
-            this.loading = false;
-            this.cdr.markForCheck();
-          },
-        });
-      }
-    });
-  }
-
   private formatRelationValue(value: unknown): string {
     if (Array.isArray(value)) {
       return value
@@ -997,27 +977,75 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.restaurantForm.reset();
   }
 
-  confirmDelete(id: string, name?: string): void {
+  softDeleteRestaurant(restaurantId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `soft delete the restaurant ${name}`,
+      data: "disable this restaurant",
     });
     dialogRef.afterClosed().subscribe((result) => {
-      if (result) this.delete(id);
+      if (result) {
+        if (!restaurantId) return;
+
+        this.errorMsg = '';
+        this.loading = true;
+        this.cdr.markForCheck();
+
+        this.api.softDeleteRestaurant(restaurantId).subscribe({
+          next: () => this.load(),
+          error: () => {
+            this.errorMsg = 'Error: could not disable restaurant';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
     });
   }
 
-  delete(id: string): void {
-    this.errorMsg = '';
-    this.loading = true;
-    this.cdr.markForCheck();
+  restoreRestaurant(restaurantId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: "restore this restaurant",
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!restaurantId) return;
 
-    this.api.softDeleteRestaurant(id).subscribe({
-      next: () => this.load(),
-      error: () => {
-        this.errorMsg = 'Error delete';
-        this.loading = false;
+        this.errorMsg = '';
+        this.loading = true;
         this.cdr.markForCheck();
-      },
+
+        this.api.restoreRestaurant(restaurantId).subscribe({
+          next: () => this.load(),
+          error: () => {
+            this.errorMsg = 'Error: could not restore restaurant';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  hardDeleteRestaurant(restaurantId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: "PERMANENTLY DELETE this restaurant",
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!restaurantId) return;
+
+        this.errorMsg = '';
+        this.loading = true;
+        this.cdr.markForCheck();
+
+        this.api.hardDeleteRestaurant(restaurantId).subscribe({
+          next: () => this.load(),
+          error: () => {
+            this.errorMsg = 'Error: could not delete restaurant';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
     });
   }
 
