@@ -80,7 +80,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedRewardPage: { [restaurantId: string]: number } = {};
   rewardTotal: { [key: string]: number } = {};
   deletedRewardTotal: { [key: string]: number } = {};
-  rewardLimit = 2;
+  rewardLimit = 1;
   rewardExpanded: { [restaurantId: string]: boolean } = {};
   goToRewardPageControl = new FormControl<number | null>(1);
   goToDeletedRewardPageControl = new FormControl<number | null>(1);
@@ -96,7 +96,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedVisitPage: { [restaurantId: string]: number } = {};
   visitTotal: { [key: string]: number } = {};
   deletedVisitTotal: { [key: string]: number } = {};
-  visitLimit = 2;
+  visitLimit = 1;
   visitsExpanded: { [restaurantId: string]: boolean } = {};
   goToVisitPageControl = new FormControl<number | null>(1);
   goToDeletedVisitPageControl = new FormControl<number | null>(1);
@@ -111,7 +111,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedDishPage: { [restaurantId: string]: number } = {};
   dishTotal: { [key: string]: number } = {};
   deletedDishTotal: { [key: string]: number } = {};
-  dishLimit = 5;
+  dishLimit = 1;
   goToDishPageControl = new FormControl<number | null>(1);
   goToDeletedDishPageControl = new FormControl<number | null>(1);
   topDishByRestaurant: { [key: string]: IDish | null } = {};
@@ -128,7 +128,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedEmployeePage: { [restaurantId: string]: number } = {};
   employeeTotal: { [key: string]: number } = {};
   deletedEmployeeTotal: { [key: string]: number } = {};
-  employeeLimit = 6;
+  employeeLimit = 1;
   goToEmployeePageControl = new FormControl<number | null>(1);
   goToDeletedEmployeePageControl = new FormControl<number | null>(1);
 
@@ -142,7 +142,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedBadgePage: { [restaurantId: string]: number } = {};
   badgeTotal: { [key: string]: number } = {};
   deletedBadgeTotal: { [key: string]: number } = {};
-  badgeLimit = 5;
+  badgeLimit = 1;
   goToBadgePageControl = new FormControl<number | null>(1);
   goToDeletedBadgePageControl = new FormControl<number | null>(1);
   mapEmbedUrl: { [key: string]: SafeResourceUrl | null } = {};
@@ -1077,9 +1077,19 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.loadRestaurantRewards(restaurantId);
   }
 
+  nextDeletedRewardPage(restaurantId: string): void {
+    this.deletedRewardPage[restaurantId] = this.paginationUtils.getSafePage((this.deletedRewardPage[restaurantId] || 1) + 1, this.deletedRewardTotal[restaurantId] || 0, this.rewardLimit);
+    this.loadDeletedRestaurantRewards(restaurantId);
+  }
+
   prevRewardPage(restaurantId: string): void {
     this.rewardPage[restaurantId] = this.paginationUtils.getSafePage((this.rewardPage[restaurantId] || 1) - 1, this.rewardTotal[restaurantId] || 0, this.rewardLimit);
     this.loadRestaurantRewards(restaurantId);
+  }
+
+  prevDeletedRewardPage(restaurantId: string): void {
+    this.deletedRewardPage[restaurantId] = this.paginationUtils.getSafePage((this.deletedRewardPage[restaurantId] || 1) - 1, this.deletedRewardTotal[restaurantId] || 0, this.rewardLimit);
+    this.loadDeletedRestaurantRewards(restaurantId);
   }
 
   goToRewardPage(restaurantId: string): void {
@@ -1087,6 +1097,13 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.rewardPage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.rewardTotal[restaurantId] || 0, this.rewardLimit);
     this.goToRewardPageControl.setValue(this.rewardPage[restaurantId], { emitEvent: false });
     this.loadRestaurantRewards(restaurantId);
+  }
+
+  goToDeletedRewardPage(restaurantId: string): void {
+    const requestedPage = Number(this.goToDeletedRewardPageControl.value);
+    this.deletedRewardPage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.deletedRewardTotal[restaurantId] || 0, this.rewardLimit);
+    this.goToDeletedRewardPageControl.setValue(this.deletedRewardPage[restaurantId], { emitEvent: false });
+    this.loadDeletedRestaurantRewards(restaurantId);
   }
 
   toggleRewardForm(restaurantId: string): void {
@@ -1130,22 +1147,85 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  removeReward(restaurant: IRestaurant, reward: any): void {
+  softDeleteReward(restaurantId: string, rewardId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `soft delete ${reward.name || 'this reward'}`,
+      data: `soft delete this reward`,
     });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        const rewardId = reward._id || reward.id;
         if (!rewardId) return;
+        if (!restaurantId) return;
 
         this.loading = true;
         this.cdr.markForCheck();
 
         this.rewardApi.softDeleteReward(rewardId).subscribe({
           next: () => {
-            this.loadRestaurantRewards(restaurant._id!);
+            this.loadRestaurantRewards(restaurantId);
+            this.loadDeletedRestaurantRewards(restaurantId);
+
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.errorMsg = 'Could not remove reward.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  restoreReward(restaurantId: string, rewardId: string) {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `restore this reward`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!rewardId) return;
+        if (!restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+
+        this.rewardApi.restoreReward(rewardId).subscribe({
+          next: () => {
+            this.loadRestaurantRewards(restaurantId);
+            this.loadDeletedRestaurantRewards(restaurantId);
+
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.errorMsg = 'Could not restore reward.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  hardDeleteReward(restaurantId: string, rewardId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `PERMANENTLY DELETE this reward`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!rewardId) return;
+        if (!restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+
+        this.rewardApi.hardDeleteReward(rewardId).subscribe({
+          next: () => {
+            this.loadRestaurantRewards(restaurantId);
+            this.loadDeletedRestaurantRewards(restaurantId);
 
             this.loading = false;
             this.cdr.markForCheck();
@@ -1206,7 +1286,7 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  changePage(type: 'restaurants' | 'deleted' | 'rewards' | 'visits', delta: number, id?: string): void {
+  changePage(type: 'restaurants' | 'deleted' | 'rewards' | 'deletedRewards' | 'visits' | 'deletedVisits', delta: number, id?: string): void {
     if (type === 'restaurants') {
       this.restaurantPager.page = this.paginationUtils.getSafePage(this.restaurantPager.page + delta, this.filteredRestaurants.length, this.restaurantPager.limit);
       this.updatePagedRestaurants();
@@ -1219,9 +1299,15 @@ export class RestaurantList implements OnInit, OnDestroy {
       if (type === 'rewards') {
         this.rewardPage[id] = this.paginationUtils.getSafePage((this.rewardPage[id] || 1) + delta, this.rewardTotal[id] || 0, this.rewardLimit);
         this.loadRestaurantRewards(id);
+      } else if (type === 'deletedRewards') {
+        this.deletedRewardPage[id] = this.paginationUtils.getSafePage((this.deletedRewardPage[id] || 1) + delta, this.deletedRewardTotal[id] || 0, this.rewardLimit);
+        this.loadDeletedRestaurantRewards(id);
       } else if (type === 'visits') {
         this.visitPage[id] = this.paginationUtils.getSafePage((this.visitPage[id] || 1) + delta, this.visitTotal[id] || 0, this.visitLimit);
         this.loadRestaurantVisits(id);
+      } else if (type === 'deletedVisits') {
+        this.deletedVisitPage[id] = this.paginationUtils.getSafePage((this.deletedVisitPage[id] || 1) + delta, this.deletedVisitTotal[id] || 0, this.visitLimit);
+        this.loadDeletedRestaurantVisits(id);
       }
     }
   }
@@ -1279,6 +1365,13 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.loadRestaurantVisits(restaurantId);
   }
 
+  goToDeletedVisitPage(restaurantId: string): void {
+    const requestedPage = Number(this.goToDeletedVisitPageControl.value);
+    this.deletedVisitPage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.deletedVisitTotal[restaurantId] || 0, this.visitLimit);
+    this.goToDeletedVisitPageControl.setValue(this.deletedVisitPage[restaurantId], { emitEvent: false });
+    this.loadDeletedRestaurantVisits(restaurantId);
+  }
+
   toggleVisitForm(restaurantId: string): void {
     this.showVisitForm[restaurantId] = !this.showVisitForm[restaurantId];
     if (this.showVisitForm[restaurantId]) {
@@ -1334,15 +1427,15 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  removeVisit(restaurantId: string, visit: IVisit): void {
+  softDeleteVisit(restaurantId: string, visitId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `soft delete visit from ${visit.customer_id?.name || 'this customer'}`,
+      data: `soft delete visit from this customer`,
     });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        const visitId = visit._id || visit.id;
         if (!visitId) return;
+        if (!restaurantId) return;
 
         this.loading = true;
         this.cdr.markForCheck();
@@ -1350,11 +1443,72 @@ export class RestaurantList implements OnInit, OnDestroy {
         this.visitApi.softDeleteVisit(visitId).subscribe({
           next: () => {
             this.loadRestaurantVisits(restaurantId);
+            this.loadDeletedRestaurantVisits(restaurantId);
             this.loading = false;
             this.cdr.markForCheck();
           },
           error: () => {
             this.errorMsg = 'Could not remove visit.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  restoreVisit(restaurantId: string, visitId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `restore visit from this customer`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!visitId) return;
+        if (!restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+
+        this.visitApi.restoreVisit(visitId).subscribe({
+          next: () => {
+            this.loadDeletedRestaurantVisits(restaurantId);
+            this.loadRestaurantVisits(restaurantId);
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.errorMsg = 'Could not restore visit.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  hardDeleteVisit(restaurantId: string, visitId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `PERMANENTLY DELETE the visit from this customer`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!visitId) return;
+        if (!restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+
+        this.visitApi.hardDeleteVisit(visitId).subscribe({
+          next: () => {
+            this.loadDeletedRestaurantVisits(restaurantId);
+            this.loadRestaurantVisits(restaurantId);
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.errorMsg = 'Could not delete visit.';
             this.loading = false;
             this.cdr.markForCheck();
           },

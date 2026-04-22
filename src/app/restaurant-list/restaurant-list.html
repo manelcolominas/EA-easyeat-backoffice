@@ -326,15 +326,15 @@
 
       <!-- Loading state while /full is being fetched -->
       @if (!restaurantFull[restaurant._id]) {
-        <div class="detail-skeleton" aria-hidden="true">
-          <div class="skeleton-line skeleton-line-title"></div>
-          <div class="skeleton-grid">
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-          </div>
+      <div class="detail-skeleton" aria-hidden="true">
+        <div class="skeleton-line skeleton-line-title"></div>
+        <div class="skeleton-grid">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
         </div>
+      </div>
       } @else {
 
       <!-- DASHBOARD GRID -->
@@ -360,105 +360,90 @@
           </span>
         </div>
 
-          <!-- Location + map card -->
-          @if (hasLocationData(restaurantFull[restaurant._id])) {
-            <div class="info-card info-card-full location-card">
-              <span class="info-card-title">📍 Location</span>
+        <!-- Location + map card -->
+        @if (hasLocationData(restaurantFull[restaurant._id])) {
+        <div class="info-card info-card-full location-card">
+          <span class="info-card-title">📍 Location</span>
 
-              <div class="location-layout">
-                <div class="location-content">
-                  <span class="info-card-value"><strong>Address:</strong> {{ restaurantFull[restaurant._id].profile.location.address || '—' }}</span>
-                  <span class="info-card-value"><strong>City:</strong> {{ restaurantFull[restaurant._id].profile.location.city || '—' }}</span>
-                  @if (restaurantFull[restaurant._id].profile.location.googlePlaceId) {
-                    <span class="info-card-value"><strong>Place ID:</strong> {{ restaurantFull[restaurant._id].profile.location.googlePlaceId }}</span>
-                  }
-                  @if (hasCoordinates(restaurantFull[restaurant._id])) {
-                    <span class="info-card-value">
-                      <strong>Coords:</strong>
-                      {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }},
-                      {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}
-                    </span>
-                  }
+          <div class="location-layout">
+            <div class="location-content">
+              <span class="info-card-value"><strong>Address:</strong> {{
+                restaurantFull[restaurant._id].profile.location.address || '—' }}</span>
+              <span class="info-card-value"><strong>City:</strong> {{
+                restaurantFull[restaurant._id].profile.location.city || '—' }}</span>
+              @if (restaurantFull[restaurant._id].profile.location.googlePlaceId) {
+              <span class="info-card-value"><strong>Place ID:</strong> {{
+                restaurantFull[restaurant._id].profile.location.googlePlaceId }}</span>
+              }
+              @if (hasCoordinates(restaurantFull[restaurant._id])) {
+              <span class="info-card-value">
+                <strong>Coords:</strong>
+                {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }},
+                {{ restaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}
+              </span>
+              }
 
-                  <div class="location-actions">
-                    @if (getDirectionsUrl(restaurant._id!)) {
-                      <a
-                        class="btn-custom btn-secondary btn-sm"
-                        [href]="getDirectionsUrl(restaurant._id!)"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Open route in Google Maps in a new tab"
-                      >
-                        How to get there
-                      </a>
-                    }
-                    @if (getOpenMapsUrl(restaurant._id!)) {
-                      <a
-                        class="btn-custom btn-primary btn-sm"
-                        [href]="getOpenMapsUrl(restaurant._id!)"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Open location in Google Maps in a new tab"
-                      >
-                        Open in Google Maps
-                      </a>
-                    }
-                  </div>
-                </div>
-
-                <div class="location-map-wrap">
-                  @if (hasCoordinates(restaurantFull[restaurant._id]) && getMapEmbedUrl(restaurant._id!)) {
-                    @defer (on viewport) {
-                      <div class="map-frame-container" [class.map-loading]="mapLoading[restaurant._id!]" [class.map-error]="mapLoadError[restaurant._id!]">
-                        <iframe
-                          class="location-map-frame"
-                          [src]="getMapEmbedUrl(restaurant._id!)"
-                          loading="lazy"
-                          referrerpolicy="no-referrer-when-downgrade"
-                          title="Restaurant location map"
-                          (load)="onMapFrameLoad(restaurant._id!)"
-                          (error)="onMapFrameError(restaurant._id!)"
-                          aria-label="Map with restaurant location"
-                        ></iframe>
-
-                        @if (mapLoading[restaurant._id!]) {
-                          <div class="map-overlay" aria-hidden="true">
-                            <div class="map-overlay-line"></div>
-                            <div class="map-overlay-line short"></div>
-                          </div>
-                        }
-
-                        @if (mapLoadError[restaurant._id!]) {
-                          <div class="map-error-state" role="status" aria-live="polite">
-                            <p>Map could not be loaded.</p>
-                            @if (getOpenMapsUrl(restaurant._id!)) {
-                              <a
-                                class="btn-custom btn-secondary btn-sm"
-                                [href]="getOpenMapsUrl(restaurant._id!)"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                Open in Google Maps
-                              </a>
-                            }
-                          </div>
-                        }
-                      </div>
-                    } @placeholder {
-                      <div class="map-placeholder" aria-hidden="true">
-                        <div class="map-overlay-line"></div>
-                        <div class="map-overlay-line short"></div>
-                      </div>
-                    }
-                  } @else {
-                    <div class="map-fallback" role="note">
-                      <p class="info-card-value">Map preview is not available. Use Google Maps buttons to open the location.</p>
-                    </div>
-                  }
-                </div>
+              <div class="location-actions">
+                @if (getDirectionsUrl(restaurant._id!)) {
+                <a class="btn-custom btn-secondary btn-sm" [href]="getDirectionsUrl(restaurant._id!)" target="_blank"
+                  rel="noopener noreferrer" aria-label="Open route in Google Maps in a new tab">
+                  How to get there
+                </a>
+                }
+                @if (getOpenMapsUrl(restaurant._id!)) {
+                <a class="btn-custom btn-primary btn-sm" [href]="getOpenMapsUrl(restaurant._id!)" target="_blank"
+                  rel="noopener noreferrer" aria-label="Open location in Google Maps in a new tab">
+                  Open in Google Maps
+                </a>
+                }
               </div>
             </div>
-          }
+
+            <div class="location-map-wrap">
+              @if (hasCoordinates(restaurantFull[restaurant._id]) && getMapEmbedUrl(restaurant._id!)) {
+              @defer (on viewport) {
+              <div class="map-frame-container" [class.map-loading]="mapLoading[restaurant._id!]"
+                [class.map-error]="mapLoadError[restaurant._id!]">
+                <iframe class="location-map-frame" [src]="getMapEmbedUrl(restaurant._id!)" loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade" title="Restaurant location map"
+                  (load)="onMapFrameLoad(restaurant._id!)" (error)="onMapFrameError(restaurant._id!)"
+                  aria-label="Map with restaurant location"></iframe>
+
+                @if (mapLoading[restaurant._id!]) {
+                <div class="map-overlay" aria-hidden="true">
+                  <div class="map-overlay-line"></div>
+                  <div class="map-overlay-line short"></div>
+                </div>
+                }
+
+                @if (mapLoadError[restaurant._id!]) {
+                <div class="map-error-state" role="status" aria-live="polite">
+                  <p>Map could not be loaded.</p>
+                  @if (getOpenMapsUrl(restaurant._id!)) {
+                  <a class="btn-custom btn-secondary btn-sm" [href]="getOpenMapsUrl(restaurant._id!)" target="_blank"
+                    rel="noopener noreferrer">
+                    Open in Google Maps
+                  </a>
+                  }
+                </div>
+                }
+              </div>
+              } @placeholder {
+              <div class="map-placeholder" aria-hidden="true">
+                <div class="map-overlay-line"></div>
+                <div class="map-overlay-line short"></div>
+              </div>
+              }
+              } @else {
+              <div class="map-fallback" role="note">
+                <p class="info-card-value">Map preview is not available. Use Google Maps buttons to open the location.
+                </p>
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+        }
 
         <!-- Statistics card -->
         @if (restaurantFull[restaurant._id].statistics) {
@@ -591,7 +576,9 @@
             <span style="display:flex;align-items:center;gap:8px;">
               <span class="chip chip-warning">{{ $any(reward).pointsRequired }} pts</span>
               <button type="button" class="btn-custom btn-danger btn-sm"
-                (click)="removeReward(restaurant, reward)">✕</button>
+                (click)="softDeleteReward(restaurant._id!, reward._id!)" style="background: #ff9800;">Disable</button>
+              <button type="button" class="btn-custom btn-danger btn-sm"
+                (click)="hardDeleteReward(restaurant._id!, reward._id!)">X</button>
             </span>
           </li>
           }
@@ -614,6 +601,41 @@
           <button class="btn-custom btn-primary btn-sm" type="button"
             (click)="goToRewardPage(restaurant._id!)">Go</button>
         </div>
+
+        @if (deletedRestaurantRewards[restaurant._id!] && deletedRestaurantRewards[restaurant._id!].length > 0) {
+        <span class="info-card-title">🎁 Deleted Rewards</span>
+        <ul class="data-list">
+          @for (reward of deletedRestaurantRewards[restaurant._id!]; track $index) {
+          <li style="background-color: #fff3e0;">
+            <span>{{ $any(reward).name }} — {{ $any(reward).description }}</span>
+            <span style="display:flex;align-items:center;gap:8px;">
+              <span class="chip chip-warning">{{ $any(reward).pointsRequired }} pts</span>
+              <button type="button" class="btn-custom btn-success btn-sm" style="background: #ff9800;"
+                (click)="restoreReward(restaurant._id!, reward._id!)">Restore</button>
+              <button type="button" class="btn-custom btn-danger btn-sm"
+                (click)="hardDeleteReward(restaurant._id!, reward._id!)">X</button>
+            </span>
+          </li>
+          }
+        </ul>
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('deletedRewards', -1, restaurant._id!)"
+            [disabled]="(deletedRewardPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ deletedRewardPage[restaurant._id!] || 1 }} / {{
+            Math.max(1,
+            Math.ceil((deletedRewardTotal[restaurant._id!] || 0) / rewardLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('deletedRewards', 1, restaurant._id!)"
+            [disabled]="(deletedRewardPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((deletedRewardTotal[restaurant._id!] || 0) / rewardLimit))">Next
+            ➡</button>
+          <label for="goToDeletedRewardPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedRewardPageInput" type="number"
+            [formControl]="goToDeletedRewardPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedRewardTotal[restaurant._id!] || 0) / rewardLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDeletedRewardPage(restaurant._id!)">Go</button>
+        </div>
+        }
       </div>
 
       <!-- Add Reward form -->
@@ -657,9 +679,11 @@
                 <span class="chip chip-neutral">{{ visit.billAmount | number:'1.2-2' }}€</span>
                 <span class="chip chip-success">+{{ visit.pointsEarned }}pts</span>
                 <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click="startEditVisit(visit)">Edit</button>
+                  (click)="startEditVisit(visit)">Edit</button>
+                <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                  (click)="softDeleteVisit(restaurant._id!, visit._id!)">Disable</button>
                 <button type="button" class="btn-custom btn-danger btn-sm"
-                  (click="removeVisit(restaurant._id!, visit)">✕</button>
+                  (click)="hardDeleteVisit(restaurant._id!, visit._id!)">X</button>
               </span>
             </ng-container>
             <ng-container *ngIf="editingVisitId === (visit._id || visit.id)">
@@ -673,7 +697,7 @@
                 <button type="submit" class="btn-custom btn-success btn-sm"
                   [disabled]="editVisitForm.invalid">Save</button>
                 <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click="cancelEditVisit()">Cancel</button>
+                  (click)="cancelEditVisit()">Cancel</button>
               </form>
             </ng-container>
           </li>
@@ -735,43 +759,99 @@
           @else { <p class="muted">{{ errorMsg }}</p> }
           }
         </div>
+
+        <!-- DELETED VISITS SECTION -->
+        @if (deletedRestaurantVisits[restaurant._id!] && deletedRestaurantVisits[restaurant._id!].length > 0) {
+        <span class="info-card-title">📅 Deleted Received Visits</span>
+        <p *ngIf="loading && expanded[restaurant._id!]" class="muted">
+          Loading visits...
+        </p>
+
+        <ul class="data-list">
+          @for (visit of deletedRestaurantVisits[restaurant._id!]; track visit._id) {
+          <li style="background-color: #fff3e0;">
+            <ng-container>
+              <span>
+                <strong>{{ visit.customer_id?.name || 'Unknown' }}</strong>
+                &nbsp;·&nbsp; {{ visit.date | date:'dd/MM/yyyy' }}
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span class="chip chip-neutral">{{ visit.billAmount | number:'1.2-2' }}€</span>
+                <span class="chip chip-success">+{{ visit.pointsEarned }}pts</span>
+                <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                  (click)="restoreVisit(restaurant._id!, visit._id!)">Restore</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="hardDeleteVisit(restaurant._id!, visit._id!)">X</button>
+              </span>
+            </ng-container>
+          </li>
+          }
+        </ul>
+
+        @if (deletedRestaurantVisits[restaurant._id!] && deletedRestaurantVisits[restaurant._id!].length === 0) {
+        <span class="muted">No registered visits.</span>
+        }
+
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('deletedVisits', -1, restaurant._id!)"
+            [disabled]="(deletedVisitPage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (deletedVisitPage[restaurant._id!] || 1) }} / {{
+            Math.max(1,
+            Math.ceil((deletedVisitTotal[restaurant._id!] || 0) / visitLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="changePage('deletedVisits', 1, restaurant._id!)"
+            [disabled]="(deletedVisitPage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((deletedVisitTotal[restaurant._id!] || 0) / visitLimit))">Next
+            ➡</button>
+          <label for="goToDeletedVisitPageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedVisitPageInput" type="number"
+            [formControl]="goToDeletedVisitPageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedVisitTotal[restaurant._id!] || 0) / visitLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDeletedVisitPage(restaurant._id!)">Go</button>
+        </div>
+        }
       </div><!-- end visits section -->
 
-        <!-- DISHES SECTION -->
-        <div class="info-card info-card-full mt-md">
-          <span class="info-card-title">🍽️ Dishes</span>
+      <!-- DISHES SECTION -->
+      <div class="info-card info-card-full mt-md">
+        <span class="info-card-title">🍽️ Dishes</span>
 
-          <section class="top-dish-card" aria-label="Top rated dish">
-            <div class="top-dish-header">
-              <span class="chip chip-warning top-dish-badge">Top 1</span>
-              <span class="top-dish-title">Top rated dish</span>
-            </div>
+        <section class="top-dish-card" aria-label="Top rated dish">
+          <div class="top-dish-header">
+            <span class="chip chip-warning top-dish-badge">Top 1</span>
+            <span class="top-dish-title">Top rated dish</span>
+          </div>
 
-            @if (getTopDishState(restaurant._id!) === 'loading') {
-              <p class="muted top-dish-empty">Loading top rated dish...</p>
-            } @else if (getTopDishState(restaurant._id!) === 'success') {
-              @if (getTopDish(restaurant._id!); as topDish) {
-                <article class="top-dish-content">
-                  <div class="top-dish-meta">
-                    <h4 class="top-dish-name">{{ topDish.name }}</h4>
-                    <div class="top-dish-stats" aria-label="Top dish stats">
-                      <span class="chip chip-success">⭐ {{ formatTopDishRating(getTopDish(restaurant._id)?.avgRating) }}</span>
-                      <span class="chip chip-neutral">{{ formatTopDishVotes(getTopDish(restaurant._id)?.ratingsCount) }}</span>
-                    </div>
-                  </div>
-                </article>
-              }
-            } @else if (getTopDishState(restaurant._id!) === 'empty') {
-              <p class="muted top-dish-empty">Todavia no hay valoraciones para este restaurante.</p>
-            } @else if (getTopDishState(restaurant._id!) === 'error') {
-              <div class="top-dish-error" role="status" aria-live="polite">
-                <p class="muted">{{ topDishErrorText[restaurant._id!] || 'No se pudo cargar el Top 1 del restaurante.' }}</p>
-                <button type="button" class="btn-custom btn-secondary btn-sm" (click="retryTopDishLoad(restaurant._id!)">Retry</button>
+          @if (getTopDishState(restaurant._id!) === 'loading') {
+          <p class="muted top-dish-empty">Loading top rated dish...</p>
+          } @else if (getTopDishState(restaurant._id!) === 'success') {
+          @if (getTopDish(restaurant._id!); as topDish) {
+          <article class="top-dish-content">
+            <div class="top-dish-meta">
+              <h4 class="top-dish-name">{{ topDish.name }}</h4>
+              <div class="top-dish-stats" aria-label="Top dish stats">
+                <span class="chip chip-success">⭐ {{ formatTopDishRating(getTopDish(restaurant._id)?.avgRating)
+                  }}</span>
+                <span class="chip chip-neutral">{{ formatTopDishVotes(getTopDish(restaurant._id)?.ratingsCount)
+                  }}</span>
               </div>
-            }
-          </section>
+            </div>
+          </article>
+          }
+          } @else if (getTopDishState(restaurant._id!) === 'empty') {
+          <p class="muted top-dish-empty">Todavia no hay valoraciones para este restaurante.</p>
+          } @else if (getTopDishState(restaurant._id!) === 'error') {
+          <div class="top-dish-error" role="status" aria-live="polite">
+            <p class="muted">{{ topDishErrorText[restaurant._id!] || 'No se pudo cargar el Top 1 del restaurante.' }}
+            </p>
+            <button type="button" class="btn-custom btn-secondary btn-sm"
+              (click="retryTopDishLoad(restaurant._id!)">Retry</button>
+          </div>
+          }
+        </section>
 
-          <p *ngIf="loading && expanded[restaurant._id!] && !restaurantDishes[restaurant._id!]" class="muted">Loading dishes...</p>
+        <p *ngIf="loading && expanded[restaurant._id!] && !restaurantDishes[restaurant._id!]" class="muted">Loading
+          dishes...</p>
 
         <ul class="data-list" *ngIf="restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length > 0">
           <li *ngFor="let dish of restaurantDishes[restaurant._id!]">
@@ -795,8 +875,7 @@
               </span>
               <span style="display:flex;align-items:center;gap:6px;">
                 <span class="chip chip-success">{{ dish.price | number:'1.2-2' }}€</span>
-                <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click="startEditDish(dish)">Edit</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm" (click="startEditDish(dish)">Edit</button>
                 <button type="button" class="btn-custom btn-danger btn-sm"
                   (click="removeDish(restaurant._id!, dish)">✕</button>
               </span>
@@ -1006,7 +1085,7 @@
             min="1" [max]="Math.max(1, Math.ceil((employeeTotal[restaurant._id!] || 0) / employeeLimit))"
             style="width:70px;" />
           <button class="btn-custom btn-primary btn-sm" type="button"
-            (click="goToEmployeePage(restaurant._id!)">Go</button>
+            (click)="goToEmployeePage(restaurant._id!)">Go</button>
         </div>
       </div>
 
@@ -1093,8 +1172,7 @@
                 </select>
                 <button type="submit" class="btn-custom btn-success btn-sm"
                   [disabled]="editBadgeForm.invalid">Save</button>
-                <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click="cancelEditBadge()">Cancel</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm" (click="cancelEditBadge()">Cancel</button>
               </form>
             </ng-container>
           </li>
@@ -1252,104 +1330,89 @@
         </div>
 
         <!-- Location + map card -->
-          @if (hasLocationData(deletedRestaurantFull[restaurant._id])) {
-            <div class="info-card info-card-full location-card">
-              <span class="info-card-title">📍 Location</span>
+        @if (hasLocationData(deletedRestaurantFull[restaurant._id])) {
+        <div class="info-card info-card-full location-card">
+          <span class="info-card-title">📍 Location</span>
 
-              <div class="location-layout">
-                <div class="location-content">
-                  <span class="info-card-value"><strong>Address:</strong> {{ deletedRestaurantFull[restaurant._id].profile.location.address || '—' }}</span>
-                  <span class="info-card-value"><strong>City:</strong> {{ deletedRestaurantFull[restaurant._id].profile.location.city || '—' }}</span>
-                  @if (deletedRestaurantFull[restaurant._id].profile.location.googlePlaceId) {
-                    <span class="info-card-value"><strong>Place ID:</strong> {{ deletedRestaurantFull[restaurant._id].profile.location.googlePlaceId }}</span>
-                  }
-                  @if (hasCoordinates(deletedRestaurantFull[restaurant._id])) {
-                    <span class="info-card-value">
-                      <strong>Coords:</strong>
-                      {{ deletedRestaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }},
-                      {{ deletedRestaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}
-                    </span>
-                  }
+          <div class="location-layout">
+            <div class="location-content">
+              <span class="info-card-value"><strong>Address:</strong> {{
+                deletedRestaurantFull[restaurant._id].profile.location.address || '—' }}</span>
+              <span class="info-card-value"><strong>City:</strong> {{
+                deletedRestaurantFull[restaurant._id].profile.location.city || '—' }}</span>
+              @if (deletedRestaurantFull[restaurant._id].profile.location.googlePlaceId) {
+              <span class="info-card-value"><strong>Place ID:</strong> {{
+                deletedRestaurantFull[restaurant._id].profile.location.googlePlaceId }}</span>
+              }
+              @if (hasCoordinates(deletedRestaurantFull[restaurant._id])) {
+              <span class="info-card-value">
+                <strong>Coords:</strong>
+                {{ deletedRestaurantFull[restaurant._id].profile.location.coordinates.coordinates[1] }},
+                {{ deletedRestaurantFull[restaurant._id].profile.location.coordinates.coordinates[0] }}
+              </span>
+              }
 
-                  <div class="location-actions">
-                    @if (getDirectionsUrl(restaurant._id!)) {
-                      <a
-                        class="btn-custom btn-secondary btn-sm"
-                        [href]="getDirectionsUrl(restaurant._id!)"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Open route in Google Maps in a new tab"
-                      >
-                        How to get there
-                      </a>
-                    }
-                    @if (getOpenMapsUrl(restaurant._id!)) {
-                      <a
-                        class="btn-custom btn-primary btn-sm"
-                        [href]="getOpenMapsUrl(restaurant._id!)"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Open location in Google Maps in a new tab"
-                      >
-                        Open in Google Maps
-                      </a>
-                    }
-                  </div>
-                </div>
-
-                <div class="location-map-wrap">
-                  @if (hasCoordinates(deletedRestaurantFull[restaurant._id]) && getMapEmbedUrl(restaurant._id!)) {
-                    @defer (on viewport) {
-                      <div class="map-frame-container" [class.map-loading]="mapLoading[restaurant._id!]" [class.map-error]="mapLoadError[restaurant._id!]">
-                        <iframe
-                          class="location-map-frame"
-                          [src]="getMapEmbedUrl(restaurant._id!)"
-                          loading="lazy"
-                          referrerpolicy="no-referrer-when-downgrade"
-                          title="Restaurant location map"
-                          (load)="onMapFrameLoad(restaurant._id!)"
-                          (error)="onMapFrameError(restaurant._id!)"
-                          aria-label="Map with restaurant location"
-                        ></iframe>
-
-                        @if (mapLoading[restaurant._id!]) {
-                          <div class="map-overlay" aria-hidden="true">
-                            <div class="map-overlay-line"></div>
-                            <div class="map-overlay-line short"></div>
-                          </div>
-                        }
-
-                        @if (mapLoadError[restaurant._id!]) {
-                          <div class="map-error-state" role="status" aria-live="polite">
-                            <p>Map could not be loaded.</p>
-                            @if (getOpenMapsUrl(restaurant._id!)) {
-                              <a
-                                class="btn-custom btn-secondary btn-sm"
-                                [href]="getOpenMapsUrl(restaurant._id!)"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                Open in Google Maps
-                              </a>
-                            }
-                          </div>
-                        }
-                      </div>
-                    } @placeholder {
-                      <div class="map-placeholder" aria-hidden="true">
-                        <div class="map-overlay-line"></div>
-                        <div class="map-overlay-line short"></div>
-                      </div>
-                    }
-                  } @else {
-                    <div class="map-fallback" role="note">
-                      <p class="info-card-value">Map preview is not available. Use Google Maps buttons to open the location.</p>
-                    </div>
-                  }
-                </div>
+              <div class="location-actions">
+                @if (getDirectionsUrl(restaurant._id!)) {
+                <a class="btn-custom btn-secondary btn-sm" [href]="getDirectionsUrl(restaurant._id!)" target="_blank"
+                  rel="noopener noreferrer" aria-label="Open route in Google Maps in a new tab">
+                  How to get there
+                </a>
+                }
+                @if (getOpenMapsUrl(restaurant._id!)) {
+                <a class="btn-custom btn-primary btn-sm" [href]="getOpenMapsUrl(restaurant._id!)" target="_blank"
+                  rel="noopener noreferrer" aria-label="Open location in Google Maps in a new tab">
+                  Open in Google Maps
+                </a>
+                }
               </div>
             </div>
-          }
+
+            <div class="location-map-wrap">
+              @if (hasCoordinates(deletedRestaurantFull[restaurant._id]) && getMapEmbedUrl(restaurant._id!)) {
+              @defer (on viewport) {
+              <div class="map-frame-container" [class.map-loading]="mapLoading[restaurant._id!]"
+                [class.map-error]="mapLoadError[restaurant._id!]">
+                <iframe class="location-map-frame" [src]="getMapEmbedUrl(restaurant._id!)" loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade" title="Restaurant location map"
+                  (load)="onMapFrameLoad(restaurant._id!)" (error)="onMapFrameError(restaurant._id!)"
+                  aria-label="Map with restaurant location"></iframe>
+
+                @if (mapLoading[restaurant._id!]) {
+                <div class="map-overlay" aria-hidden="true">
+                  <div class="map-overlay-line"></div>
+                  <div class="map-overlay-line short"></div>
+                </div>
+                }
+
+                @if (mapLoadError[restaurant._id!]) {
+                <div class="map-error-state" role="status" aria-live="polite">
+                  <p>Map could not be loaded.</p>
+                  @if (getOpenMapsUrl(restaurant._id!)) {
+                  <a class="btn-custom btn-secondary btn-sm" [href]="getOpenMapsUrl(restaurant._id!)" target="_blank"
+                    rel="noopener noreferrer">
+                    Open in Google Maps
+                  </a>
+                  }
+                </div>
+                }
+              </div>
+              } @placeholder {
+              <div class="map-placeholder" aria-hidden="true">
+                <div class="map-overlay-line"></div>
+                <div class="map-overlay-line short"></div>
+              </div>
+              }
+              } @else {
+              <div class="map-fallback" role="note">
+                <p class="info-card-value">Map preview is not available. Use Google Maps buttons to open the location.
+                </p>
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+        }
 
         <!-- Statistics card -->
         @if (deletedRestaurantFull[restaurant._id].statistics) {
@@ -1650,7 +1713,8 @@
 </ul>
 
 <!-- DELETED RESTAURANTS PAGINATION -->
-<div class="footer" *ngIf="pagedDeletedRestaurants.length > 0" style="display:flex; align-items:center; gap:10px; margin-top: 12px;">
+<div class="footer" *ngIf="pagedDeletedRestaurants.length > 0"
+  style="display:flex; align-items:center; gap:10px; margin-top: 12px;">
   <button class="btn-custom btn-primary" (click)="leftDeletedPage()" [disabled]="deletedPager.page === 1">
     ⬅ Previous
   </button>
