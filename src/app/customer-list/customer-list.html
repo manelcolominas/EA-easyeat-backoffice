@@ -60,9 +60,7 @@
 @if (!loading && !errorMsg && customers.length > 0) {
 <ul class="list">
   @for (customer of visibleCustomers; track customer._id) {
-  <li class="card-custom" [style.backgroundColor]="isCustomerDisabled(customer) ? '#fff3e0' : null"
-    [style.border]="isCustomerDisabled(customer) ? '1px solid #ffb74d' : null">
-
+  <li class="card-custom">
     <div class="list-item-row">
       <div>
         <span class="list-item-name" [style.color]="isCustomerDisabled(customer) ? '#e65100' : null">
@@ -77,24 +75,21 @@
           {{ expanded[customer._id!] ? '▲ Less' : '▼ More' }}
         </button>
 
-        @if (isCustomerDisabled(customer)) {
-        <span style="font-size:12px;font-weight:700;color:#e65100;padding:0 4px;">DISABLED</span>
-        }
-
-        <button class="btn-custom btn-primary btn-sm" type="button" (click)="edit(customer)"
-          [disabled]="isCustomerDisabled(customer)">
+        <button class="btn-custom btn-primary btn-sm" type="button" (click)="edit(customer)">
           Edit
         </button>
 
-        <button class="btn-custom btn-sm" [class.btn-danger]="!isCustomerDisabled(customer)"
-          [class.btn-success]="isCustomerDisabled(customer)" type="button"
-          (click)="toggleCustomerStatus(customer._id!, customer)">
-          {{ isCustomerDisabled(customer) ? '✓ Enable' : 'Disable' }}
+        <button class="btn-custom btn-danger btn-sm" type="button" style="background: #ff9800;"
+          (click)="softDeleteCustomer(customer._id!)">
+          Disable
         </button>
 
-        <button class="btn-custom btn-secondary btn-sm" type="button" (click)="openReviewForm(customer._id!)"
-          [disabled]="isCustomerDisabled(customer)">
+        <button class="btn-custom btn-secondary btn-sm" type="button" (click)="openReviewForm(customer._id!)">
           ➕ Review
+        </button>
+
+        <button class="btn-custom btn-danger btn-sm" type="button" (click)="hardDeleteCustomer(customer._id!)">
+          X
         </button>
       </div>
     </div>
@@ -146,7 +141,7 @@
         }
 
         @if (loadingVisits[customer._id!]) {
-        <p class="muted italic">Cargando...</p>
+        <p class="muted italic">Loading...</p>
         } @else if (customerVisits[customer._id!]?.length) {
         <table class="visits-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
           <thead>
@@ -203,7 +198,7 @@
         </div>
 
         @if (loadingVisits[customer._id!]) {
-        <p class="muted italic">Cargando...</p>
+        <p class="muted italic">Loading...</p>
         } @else {
         <table class="visits-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
           <thead>
@@ -255,7 +250,7 @@
       <div class="badges-section" style="margin-top: 20px;">
         <h4>Earned Badges</h4>
         @if (loadingBadges[customer._id!]) {
-        <p class="muted italic">Cargando...</p>
+        <p class="muted italic">Loading...</p>
         } @else if (customerBadges[customer._id!]?.length) {
         <div class="chips-wrap" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
           @for (badge of customerBadges[customer._id!]; track badge._id) {
@@ -506,8 +501,13 @@
 
         <span style="font-size:12px;font-weight:700;color:#e65100;padding:0 4px;">DELETED</span>
 
-        <button class="btn-custom btn-success btn-sm" type="button" (click)="restoreDeletedCustomer(customer._id!)">
+        <button class="btn-custom btn-danger btn-sm" type="button" style="background: #ff9800;"
+          (click)="restoreCustomer(customer._id!)">
           ✓ Restore
+        </button>
+
+        <button class="btn-custom btn-danger btn-sm" type="button" (click)="hardDeleteCustomer(customer._id!)">
+          X
         </button>
       </div>
     </div>
@@ -518,7 +518,7 @@
       <p><strong>Email:</strong> {{ customer.email }}</p>
       <p><strong>ID:</strong> {{ customer._id }}</p>
 
-      <!-- Visits (read-only) -->
+      <!-- Visits section -->
       <div class="visits-section" style="margin-top: 20px;">
         <h4>Visits History</h4>
 
@@ -563,7 +563,7 @@
         </div>
       </div>
 
-      <!-- Deleted visits (read-only) -->
+      <!-- Deleted visits section -->
       @if (customerDeletedVisits[customer._id!]?.length) {
       <div class="visits-section" style="margin-top: 20px; background-color: fff3e0;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -571,7 +571,7 @@
         </div>
 
         @if (loadingVisits[customer._id!]) {
-        <p class="muted italic">Cargando...</p>
+        <p class="muted italic">Loading...</p>
         } @else {
         <table class="visits-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
           <thead>
@@ -580,7 +580,6 @@
               <th (click)="setVisitSort('billAmount', customer._id!)" style="cursor:pointer">Spent ↕</th>
               <th (click)="setVisitSort('pointsEarned', customer._id!)" style="cursor:pointer">Points ↕</th>
               <th>Restaurant</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -613,7 +612,7 @@
       </div>
       }
 
-      <!-- Badges (read-only) -->
+      <!-- Badges section -->
       <div class="badges-section" style="margin-top: 20px;">
         <h4>Earned Badges</h4>
         @if (loadingBadges[customer._id!]) {
@@ -627,11 +626,11 @@
           }
         </div>
         } @else {
-        <p class="muted italic">No badges.</p>
+        <p class="muted italic">This customer has not earned any badges yet.</p>
         }
       </div>
 
-      <!-- Reviews (read-only) -->
+      <!--Reviews section-->
       <div class="card-custom" style="margin-top:10px;">
         <div class="card-custom" style="margin-top:10px;">
           <label>Min globalRating:</label>
@@ -682,7 +681,7 @@
         </div>
 
         <!--Deleted reviews section-->
-        @if (deletedReviewsByCustomer[customer._id!]?.length) {
+        @if (deletedReviewsByCustomer[customer._id!].length) {
         <hr>
         <hr>
 

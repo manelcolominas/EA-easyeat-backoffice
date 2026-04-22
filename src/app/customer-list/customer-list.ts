@@ -248,47 +248,63 @@ export class CustomerList implements OnInit {
     return Boolean(state.disabled ?? state.deleted ?? state.isDeleted);
   }
 
-  toggleCustomerStatus(customerId: string, customer: ICustomer): void {
-    if (!customer._id) return;
-
+  softDeleteCustomer(customerId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `disable the customer ${customer.name}`,
+      data: 'disable this customer',
     });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        const wasDisabled = this.isCustomerDisabled(customer);
-
-        const request = wasDisabled
-          ? this.api.restoreCustomer(customerId)
-          : this.api.softDeleteCustomer(customerId);
-
-        request.subscribe({
+        this.api.softDeleteCustomer(customerId).subscribe({
           next: () => {
-            (customer as ICustomer & { active?: boolean }).active = wasDisabled;
-            this.filteredCustomers = [...this.filteredCustomers];
-            this.pagedCustomers = [...this.pagedCustomers];
-            this.cdr.markForCheck();
-
             this.load();
           },
           error: (err) => {
             console.error(err);
-            this.errorMsg = 'Error updating customer status';
+            this.errorMsg = 'Error disabling customer';
           },
         });
       }
     });
   }
 
-  hardDelete(id: string): void {
-    this.api.hardDeleteCustomer(id).subscribe(() => this.load());
+  restoreCustomer(customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'restore this customer',
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.api.restoreCustomer(customerId).subscribe({
+          next: () => {
+            this.load();
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error restoring customer';
+          },
+        });
+      }
+    });
   }
 
-  confirmDelete(id: string, name?: string): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: name });
+  hardDeleteCustomer(customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'PERMANENTLY DELETE this customer',
+    });
+
     dialogRef.afterClosed().subscribe((result) => {
-      if (result) this.hardDelete(id);
+      if (result) {
+        this.api.hardDeleteCustomer(customerId).subscribe({
+          next: () => {
+            this.load();
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error deleting customer';
+          },
+        });
+      }
     });
   }
 
@@ -432,25 +448,6 @@ export class CustomerList implements OnInit {
 
       this.loadCustomerBadges(id);
     }
-  }
-
-  restoreDeletedCustomer(customerId: string): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: 'restore this customer',
-    });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.api.restoreCustomer(customerId).subscribe({
-          next: () => {
-            this.load();
-          },
-          error: (err) => {
-            console.error(err);
-            this.errorMsg = 'Error restoring customer';
-          },
-        });
-      }
-    });
   }
 
   // Removed redundant handlePagination method
