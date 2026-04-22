@@ -80,7 +80,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedRewardPage: { [restaurantId: string]: number } = {};
   rewardTotal: { [key: string]: number } = {};
   deletedRewardTotal: { [key: string]: number } = {};
-  rewardLimit = 1;
+  rewardLimit = 2;
   rewardExpanded: { [restaurantId: string]: boolean } = {};
   goToRewardPageControl = new FormControl<number | null>(1);
   goToDeletedRewardPageControl = new FormControl<number | null>(1);
@@ -96,7 +96,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedVisitPage: { [restaurantId: string]: number } = {};
   visitTotal: { [key: string]: number } = {};
   deletedVisitTotal: { [key: string]: number } = {};
-  visitLimit = 1;
+  visitLimit = 2;
   visitsExpanded: { [restaurantId: string]: boolean } = {};
   goToVisitPageControl = new FormControl<number | null>(1);
   goToDeletedVisitPageControl = new FormControl<number | null>(1);
@@ -111,7 +111,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedDishPage: { [restaurantId: string]: number } = {};
   dishTotal: { [key: string]: number } = {};
   deletedDishTotal: { [key: string]: number } = {};
-  dishLimit = 1;
+  dishLimit = 2;
   goToDishPageControl = new FormControl<number | null>(1);
   goToDeletedDishPageControl = new FormControl<number | null>(1);
   topDishByRestaurant: { [key: string]: IDish | null } = {};
@@ -128,7 +128,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedEmployeePage: { [restaurantId: string]: number } = {};
   employeeTotal: { [key: string]: number } = {};
   deletedEmployeeTotal: { [key: string]: number } = {};
-  employeeLimit = 1;
+  employeeLimit = 2;
   goToEmployeePageControl = new FormControl<number | null>(1);
   goToDeletedEmployeePageControl = new FormControl<number | null>(1);
 
@@ -142,7 +142,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   deletedBadgePage: { [restaurantId: string]: number } = {};
   badgeTotal: { [key: string]: number } = {};
   deletedBadgeTotal: { [key: string]: number } = {};
-  badgeLimit = 1;
+  badgeLimit = 2;
   goToBadgePageControl = new FormControl<number | null>(1);
   goToDeletedBadgePageControl = new FormControl<number | null>(1);
   mapEmbedUrl: { [key: string]: SafeResourceUrl | null } = {};
@@ -314,7 +314,6 @@ export class RestaurantList implements OnInit, OnDestroy {
       description: [''],
       section: ['', Validators.required],
       price: [0, [Validators.required, Validators.min(0)]],
-      active: [true],
       availableAtBreakfast: [false],
       availableAtBrunch: [false],
       availableAtLunch: [false],
@@ -329,7 +328,6 @@ export class RestaurantList implements OnInit, OnDestroy {
       description: [''],
       section: ['', Validators.required],
       price: [0, [Validators.required, Validators.min(0)]],
-      active: [true],
       availableAtBreakfast: [false],
       availableAtBrunch: [false],
       availableAtLunch: [false],
@@ -345,7 +343,6 @@ export class RestaurantList implements OnInit, OnDestroy {
       phone: [''],
       role: ['staff'],
       password: [''],
-      isActive: [true],
     });
 
     this.editEmployeeForm = this.fb.group({
@@ -353,7 +350,6 @@ export class RestaurantList implements OnInit, OnDestroy {
       email: ['', [Validators.email]],
       phone: [''],
       role: ['staff'],
-      isActive: [true],
     });
 
     this.newBadgeForm = this.fb.group({
@@ -1826,7 +1822,6 @@ export class RestaurantList implements OnInit, OnDestroy {
       description: v.description || undefined,
       section: v.section,
       price: v.price,
-      active: v.active,
       availableAt,
       portionSize: v.portionSize || undefined,
     };
@@ -1895,9 +1890,19 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.loadRestaurantEmployees(restaurantId);
   }
 
+  nextDeletedEmployeePage(restaurantId: string): void {
+    this.deletedEmployeePage[restaurantId] = this.paginationUtils.getSafePage((this.deletedEmployeePage[restaurantId] || 1) + 1, this.deletedEmployeeTotal[restaurantId] || 0, this.employeeLimit);
+    this.loadDeletedRestaurantEmployees(restaurantId);
+  }
+
   prevEmployeePage(restaurantId: string): void {
     this.employeePage[restaurantId] = this.paginationUtils.getSafePage((this.employeePage[restaurantId] || 1) - 1, this.employeeTotal[restaurantId] || 0, this.employeeLimit);
     this.loadRestaurantEmployees(restaurantId);
+  }
+
+  prevDeletedEmployeePage(restaurantId: string): void {
+    this.deletedEmployeePage[restaurantId] = this.paginationUtils.getSafePage((this.deletedEmployeePage[restaurantId] || 1) - 1, this.deletedEmployeeTotal[restaurantId] || 0, this.employeeLimit);
+    this.loadDeletedRestaurantEmployees(restaurantId);
   }
 
   goToEmployeePage(restaurantId: string): void {
@@ -1905,6 +1910,13 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.employeePage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.employeeTotal[restaurantId] || 0, this.employeeLimit);
     this.goToEmployeePageControl.setValue(this.employeePage[restaurantId], { emitEvent: false });
     this.loadRestaurantEmployees(restaurantId);
+  }
+
+  goToDeletedEmployeePage(restaurantId: string): void {
+    const requestedPage = Number(this.goToDeletedEmployeePageControl.value);
+    this.deletedEmployeePage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.deletedEmployeeTotal[restaurantId] || 0, this.employeeLimit);
+    this.goToDeletedEmployeePageControl.setValue(this.deletedEmployeePage[restaurantId], { emitEvent: false });
+    this.loadDeletedRestaurantEmployees(restaurantId);
   }
 
   toggleEmployeeForm(restaurantId: string): void {
@@ -1944,22 +1956,73 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  removeEmployee(restaurantId: string, employee: any): void {
+  softDeleteEmployee(restaurantId: string, employeeId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `soft delete "${employee.profile?.name || 'this employee'}"`,
+      data: `soft delete this employee`,
     });
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        const employeeId = employee._id;
-        if (!employeeId) return;
+        if (!employeeId || !restaurantId) return;
+
         this.loading = true;
         this.cdr.markForCheck();
         this.employeeApi.softDeleteEmployee(employeeId).subscribe({
           next: () => {
             this.loadRestaurantEmployees(restaurantId);
+            this.loadDeletedRestaurantEmployees(restaurantId);
           },
           error: () => {
             this.errorMsg = 'Could not remove employee.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  restoreEmployee(restaurantId: string, employeeId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `restore this employee`,
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!employeeId || !restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+        this.employeeApi.restoreEmployee(employeeId).subscribe({
+          next: () => {
+            this.loadRestaurantEmployees(restaurantId);
+            this.loadDeletedRestaurantEmployees(restaurantId);
+          },
+          error: () => {
+            this.errorMsg = 'Could not restore employee.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  hardDeleteEmployee(restaurantId: string, employeeId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `PERMANENTLY DELETE this employee`,
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!employeeId || !restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+        this.employeeApi.hardDeleteEmployee(employeeId).subscribe({
+          next: () => {
+            this.loadRestaurantEmployees(restaurantId);
+            this.loadDeletedRestaurantEmployees(restaurantId);
+          },
+          error: () => {
+            this.errorMsg = 'Could not delete employee.';
             this.loading = false;
             this.cdr.markForCheck();
           },
@@ -2066,9 +2129,19 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.loadRestaurantBadges(restaurantId);
   }
 
+  nextDeletedBadgePage(restaurantId: string): void {
+    this.deletedBadgePage[restaurantId] = this.paginationUtils.getSafePage((this.deletedBadgePage[restaurantId] || 1) + 1, this.deletedBadgeTotal[restaurantId] || 0, this.badgeLimit);
+    this.loadDeletedRestaurantBadges(restaurantId);
+  }
+
   prevBadgePage(restaurantId: string): void {
     this.badgePage[restaurantId] = this.paginationUtils.getSafePage((this.badgePage[restaurantId] || 1) - 1, this.badgeTotal[restaurantId] || 0, this.badgeLimit);
     this.loadRestaurantBadges(restaurantId);
+  }
+
+  prevDeletedBadgePage(restaurantId: string): void {
+    this.deletedBadgePage[restaurantId] = this.paginationUtils.getSafePage((this.deletedBadgePage[restaurantId] || 1) - 1, this.deletedBadgeTotal[restaurantId] || 0, this.badgeLimit);
+    this.loadDeletedRestaurantBadges(restaurantId);
   }
 
   goToBadgePage(restaurantId: string): void {
@@ -2076,6 +2149,13 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.badgePage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.badgeTotal[restaurantId] || 0, this.badgeLimit);
     this.goToBadgePageControl.setValue(this.badgePage[restaurantId], { emitEvent: false });
     this.loadRestaurantBadges(restaurantId);
+  }
+
+  goToDeletedBadgePage(restaurantId: string): void {
+    const requestedPage = Number(this.goToDeletedBadgePageControl.value);
+    this.deletedBadgePage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.deletedBadgeTotal[restaurantId] || 0, this.badgeLimit);
+    this.goToDeletedBadgePageControl.setValue(this.deletedBadgePage[restaurantId], { emitEvent: false });
+    this.loadDeletedRestaurantBadges(restaurantId);
   }
 
   toggleBadgeForm(restaurantId: string): void {
@@ -2134,14 +2214,14 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  removeBadge(restaurantId: string, badge: any): void {
+  softDeleteBadge(restaurantId: string, badgeId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `soft delete badge "${badge.title || 'this badge'}"`,
+      data: `soft delete this badge`,
     });
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        const badgeId = badge._id;
-        if (!badgeId) return;
+        if (!badgeId || !restaurantId) return;
+
         this.loading = true;
         this.cdr.markForCheck();
 
@@ -2153,16 +2233,16 @@ export class RestaurantList implements OnInit, OnDestroy {
 
         this.api.updateRestaurant(restaurantId, { badges: updatedIds as any }).subscribe({
           next: () => {
-            // Then delete the global badge
             this.badgeApi.softDeleteBadge(badgeId).subscribe({
               next: () => {
                 this.loading = false;
-                this.refreshRestaurantFull(restaurantId);
                 this.loadRestaurantBadges(restaurantId);
+                this.loadDeletedRestaurantBadges(restaurantId);
               },
               error: () => {
                 this.loading = false;
                 this.loadRestaurantBadges(restaurantId);
+                this.loadDeletedRestaurantBadges(restaurantId);
               },
             });
           },
@@ -2170,6 +2250,60 @@ export class RestaurantList implements OnInit, OnDestroy {
             this.errorMsg = 'Could not unlink badge from restaurant.';
             this.loading = false;
             this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  restoreBadge(restaurantId: string, badgeId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `restore this badge`,
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!badgeId || !restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+
+        this.badgeApi.restoreBadge(badgeId).subscribe({
+          next: () => {
+            this.loading = false;
+            this.loadRestaurantBadges(restaurantId);
+            this.loadDeletedRestaurantBadges(restaurantId);
+          },
+          error: () => {
+            this.loading = false;
+            this.loadRestaurantBadges(restaurantId);
+            this.loadDeletedRestaurantBadges(restaurantId);
+          },
+        });
+      }
+    });
+  }
+
+  hardDeleteBadge(restaurantId: string, badgeId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `PERMANENTLY DELETE this badge`,
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!badgeId || !restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+
+        this.badgeApi.hardDeleteBadge(badgeId).subscribe({
+          next: () => {
+            this.loading = false;
+            this.loadRestaurantBadges(restaurantId);
+            this.loadDeletedRestaurantBadges(restaurantId);
+          },
+          error: () => {
+            this.loading = false;
+            this.loadRestaurantBadges(restaurantId);
+            this.loadDeletedRestaurantBadges(restaurantId);
           },
         });
       }

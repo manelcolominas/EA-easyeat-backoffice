@@ -572,14 +572,34 @@
         <ul class="data-list">
           @for (reward of restaurantRewards[restaurant._id!]; track $index) {
           <li>
-            <span>{{ $any(reward).name }} — {{ $any(reward).description }}</span>
-            <span style="display:flex;align-items:center;gap:8px;">
-              <span class="chip chip-warning">{{ $any(reward).pointsRequired }} pts</span>
-              <button type="button" class="btn-custom btn-danger btn-sm"
-                (click)="softDeleteReward(restaurant._id!, reward._id!)" style="background: #ff9800;">Disable</button>
-              <button type="button" class="btn-custom btn-danger btn-sm"
-                (click)="hardDeleteReward(restaurant._id!, reward._id!)">X</button>
-            </span>
+            <ng-container *ngIf="editingRewardId !== (reward._id || reward.id)">
+              <span>{{ $any(reward).name }} — {{ $any(reward).description }}</span>
+              <span style="display:flex;align-items:center;gap:8px;">
+                <span class="chip chip-warning">{{ $any(reward).pointsRequired }} pts</span>
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="startEditReward(reward)">Edit</button>
+                <button type="button" class="btn-custom btn-danger btn-sm"
+                  (click)="softDeleteReward(restaurant._id!, reward._id!)" style="background: #ff9800;">Disable</button>
+                <button type="button" class="btn-custom btn-danger btn-sm"
+                  (click)="hardDeleteReward(restaurant._id!, reward._id!)">X</button>
+              </span>
+            </ng-container>
+
+            <!-- Inline edit form for Rewards -->
+            <ng-container *ngIf="editingRewardId === (reward._id || reward.id)">
+              <form [formGroup]="editRewardForm" (ngSubmit)="saveEditedReward(restaurant)"
+                style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%">
+                <input class="input-custom" type="text" formControlName="name" placeholder="Name" style="flex:1;" />
+                <input class="input-custom" type="text" formControlName="description" placeholder="Description"
+                  style="flex:2;" />
+                <input class="input-custom" type="number" formControlName="pointsRequired" placeholder="Pts"
+                  style="width:80px;" />
+                <button type="submit" class="btn-custom btn-success btn-sm"
+                  [disabled]="editRewardForm.invalid">Save</button>
+                <button type="button" class="btn-custom btn-secondary btn-sm"
+                  (click)="cancelEditReward()">Cancel</button>
+              </form>
+            </ng-container>
           </li>
           }
         </ul>
@@ -910,9 +930,6 @@
                   <option value="large">Large</option>
                   <option value="sharing">Sharing</option>
                 </select>
-                <label style="display:flex;align-items:center;gap:4px;font-size:13px;">
-                  <input type="checkbox" formControlName="active" /> Active
-                </label>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;font-size:12px;">
                   <label><input type="checkbox" formControlName="availableAtBreakfast" /> Breakfast</label>
                   <label><input type="checkbox" formControlName="availableAtBrunch" /> Brunch</label>
@@ -1065,11 +1082,6 @@
               <label><input type="checkbox" formControlName="availableAtAllDay" /> All-Day</label>
             </div>
           </div>
-          <div class="form-group">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
-              <input type="checkbox" formControlName="active" /> Active
-            </label>
-          </div>
           <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newDishForm.invalid">Save
             Dish</button>
         </form>
@@ -1089,10 +1101,6 @@
                 <span>
                   <strong>{{ employee.profile.name }}</strong>
                   <span class="chip chip-neutral" style="margin-left:6px;">{{ employee.profile.role || 'staff' }}</span>
-                  <span class="chip" [class.chip-success]="employee.isActive" [class.chip-neutral]="!employee.isActive"
-                    style="margin-left:4px;">
-                    {{ employee.isActive ? 'Active' : 'Inactive' }}
-                  </span>
                 </span>
                 <span class="muted" *ngIf="employee.profile.email">{{ employee.profile.email }}</span>
                 <span class="muted" *ngIf="employee.profile.phone">{{ employee.profile.phone }}</span>
@@ -1100,8 +1108,10 @@
               <span style="display:flex;align-items:center;gap:6px;">
                 <button type="button" class="btn-custom btn-secondary btn-sm"
                   (click)="startEditEmployee(employee)">Edit</button>
+                <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                  (click)="softDeleteEmployee(restaurant._id!, employee._id!)">Disable</button>
                 <button type="button" class="btn-custom btn-danger btn-sm"
-                  (click)="removeEmployee(restaurant._id!, employee)">✕</button>
+                  (click)="hardDeleteEmployee(restaurant._id!, employee._id!)">X</button>
               </span>
             </ng-container>
 
@@ -1119,9 +1129,6 @@
                   <option value="owner">Owner</option>
                   <option value="staff">Staff</option>
                 </select>
-                <label style="display:flex;align-items:center;gap:4px;font-size:13px;">
-                  <input type="checkbox" formControlName="isActive" /> Active
-                </label>
                 <button type="submit" class="btn-custom btn-success btn-sm"
                   [disabled]="editEmployeeForm.invalid">Save</button>
                 <button type="button" class="btn-custom btn-secondary btn-sm"
@@ -1151,6 +1158,55 @@
           <button class="btn-custom btn-primary btn-sm" type="button"
             (click)="goToEmployeePage(restaurant._id!)">Go</button>
         </div>
+
+        <!-- DELETED EMPLOYEES SECTION -->
+        @if (deletedRestaurantEmployees[restaurant._id!] && deletedRestaurantEmployees[restaurant._id!].length > 0) {
+        <span class="info-card-title">👤 Deleted Employees</span>
+        @if (loading) {
+        <p class="muted">Loading deleted employees...</p>
+        } @else {
+        <ul class="data-list">
+          @for (employee of deletedRestaurantEmployees[restaurant._id!]; track $index) {
+          <li style="background-color: #fff3e0;">
+            <ng-container *ngIf="editingEmployeeId !== $any(employee)._id">
+              <span style="display:flex;flex-direction:column;gap:2px;">
+                <span>
+                  <strong>{{ employee.profile.name }}</strong>
+                  <span class="chip chip-neutral" style="margin-left:6px;">{{ employee.profile.role || 'staff' }}</span>
+                </span>
+                <span class="muted" *ngIf="employee.profile.email">{{ employee.profile.email }}</span>
+                <span class="muted" *ngIf="employee.profile.phone">{{ employee.profile.phone }}</span>
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                  (click)="restoreEmployee(restaurant._id!, employee._id!)">Restore</button>
+                <button type="button" class="btn-custom btn-danger btn-sm"
+                  (click)="hardDeleteEmployee(restaurant._id!, employee._id!)">X</button>
+              </span>
+            </ng-container>
+          </li>
+          }
+        </ul>
+
+        <!-- Pagination -->
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevDeletedEmployeePage(restaurant._id!)"
+            [disabled]="(deletedEmployeePage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (deletedEmployeePage[restaurant._id!] || 1) }} / {{
+            Math.max(1, Math.ceil((deletedEmployeeTotal[restaurant._id!] || 0) / employeeLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextDeletedEmployeePage(restaurant._id!)"
+            [disabled]="(deletedEmployeePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((deletedEmployeeTotal[restaurant._id!] || 0) / employeeLimit))">Next
+            ➡</button>
+          <label for="goToDeletedEmployeePageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedEmployeePageInput" type="number"
+            [formControl]="goToDeletedEmployeePageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedEmployeeTotal[restaurant._id!] || 0) / employeeLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDeletedEmployeePage(restaurant._id!)">Go</button>
+        </div>
+        }
+        }
       </div>
 
       <!-- Add Employee form -->
@@ -1187,11 +1243,6 @@
               <input class="input-custom" type="password" formControlName="password" />
             </div>
           </div>
-          <div class="form-group">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
-              <input type="checkbox" formControlName="isActive" /> Active
-            </label>
-          </div>
           <button type="submit" class="btn-custom btn-success btn-sm" [disabled]="newEmployeeForm.invalid">Save
             Employee</button>
         </form>
@@ -1200,52 +1251,53 @@
       <!-- BADGES SECTION -->
       <div class="info-card info-card-full mt-md">
         <span class="info-card-title">🏅 Manage Badges</span>
-        <p *ngIf="loading && expanded[restaurant._id!] && !restaurantBadges[restaurant._id!]" class="muted">Loading
-          badges...</p>
-
-        <ul class="data-list" *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length > 0">
-          <li *ngFor="let badge of restaurantBadges[restaurant._id!]">
-            <ng-container *ngIf="editingBadgeId !== $any(badge)._id">
-              <span style="display:flex;flex-direction:column;gap:2px;">
-                <span>
-                  <strong>{{ badge.title }}</strong>
-                  <span class="chip chip-success" style="margin-left:6px;">{{ badge.type }}</span>
-                </span>
-                <span class="muted">{{ badge.description }}</span>
+        @if (loading && expanded[restaurant._id!] && !restaurantBadges[restaurant._id!]) {
+        <p class="muted">Loading badges...</p>
+        } @else if (restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length > 0) {
+        <ul class="data-list">
+          @for (badge of restaurantBadges[restaurant._id!]; track badge._id) {
+          <li>
+            @if (editingBadgeId !== $any(badge)._id) {
+            <span style="display:flex;flex-direction:column;gap:2px;">
+              <span>
+                <strong>{{ badge.title }}</strong>
+                <span class="chip chip-success" style="margin-left:6px;">{{ badge.type }}</span>
               </span>
-              <span style="display:flex;align-items:center;gap:6px;">
-                <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="startEditBadge(badge)">Edit</button>
-                <button type="button" class="btn-custom btn-danger btn-sm"
-                  (click)="removeBadge(restaurant._id!, badge)">✕</button>
-              </span>
-            </ng-container>
+              <span class="muted">{{ badge.description }}</span>
+            </span>
+            <span style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="btn-custom btn-secondary btn-sm"
+                (click)="startEditBadge(badge)">Edit</button>
+              <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                (click)="softDeleteBadge(restaurant._id!, badge._id!)">Disable</button>
+              <button type="button" class="btn-custom btn-danger btn-sm"
+                (click)="hardDeleteBadge(restaurant._id!, badge._id!)">X</button>
+            </span>
 
             <!-- Inline edit form -->
-            <ng-container *ngIf="editingBadgeId === $any(badge)._id">
-              <form [formGroup]="editBadgeForm" (ngSubmit)="saveEditedBadge(restaurant._id!)"
-                style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;width:100%">
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;">
-                  <input class="input-custom" type="text" formControlName="title" placeholder="Title" />
-                  <input class="input-custom" type="text" formControlName="description" placeholder="Description" />
-                </div>
-                <select class="select-custom" formControlName="type" style="width:120px;">
-                  <option value="achievement">Achievement</option>
-                  <option value="status">Status</option>
-                  <option value="special">Special</option>
-                </select>
-                <button type="submit" class="btn-custom btn-success btn-sm"
-                  [disabled]="editBadgeForm.invalid">Save</button>
-                <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="cancelEditBadge()">Cancel</button>
-              </form>
-            </ng-container>
+            } @else if (editingBadgeId === $any(badge)._id) {
+            <form [formGroup]="editBadgeForm" (ngSubmit)="saveEditedBadge(restaurant._id!)"
+              style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;width:100%">
+              <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;">
+                <input class="input-custom" type="text" formControlName="title" placeholder="Title" />
+                <input class="input-custom" type="text" formControlName="description" placeholder="Description" />
+              </div>
+              <select class="select-custom" formControlName="type" style="width:120px;">
+                <option value="achievement">Achievement</option>
+                <option value="status">Status</option>
+                <option value="special">Special</option>
+              </select>
+              <button type="submit" class="btn-custom btn-success btn-sm"
+                [disabled]="editBadgeForm.invalid">Save</button>
+              <button type="button" class="btn-custom btn-secondary btn-sm" (click)="cancelEditBadge()">Cancel</button>
+            </form>
+            }
           </li>
+          }
         </ul>
-
-        <div *ngIf="restaurantBadges[restaurant._id!] && restaurantBadges[restaurant._id!].length === 0">
-          <span class="muted">No badges defined for this restaurant.</span>
-        </div>
+        } @else {
+        <p class="muted">No badges defined for this restaurant.</p>
+        }
 
         <!-- Pagination -->
         <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
@@ -1262,6 +1314,53 @@
           <button class="btn-custom btn-primary btn-sm" type="button"
             (click)="goToBadgePage(restaurant._id!)">Go</button>
         </div>
+
+        <!-- DELETED BADGES SECTION -->
+        @if (deletedRestaurantBadges[restaurant._id!] && deletedRestaurantBadges[restaurant._id!].length > 0) {
+        <span class="info-card-title">🏅 Manage Deleted Badges</span>
+        @if (loading) {
+        <p class="muted">Loading badges...</p>
+        } @else {
+        <ul class="data-list">
+          @for (badge of deletedRestaurantBadges[restaurant._id!]; track badge._id) {
+          <li style="background-color: #fff3e0;">
+            <span style="display:flex;flex-direction:column;gap:2px;">
+              <span>
+                <strong>{{ badge.title }}</strong>
+                <span class="chip chip-success" style="margin-left:6px;">{{ badge.type }}</span>
+              </span>
+              <span class="muted">{{ badge.description }}</span>
+            </span>
+            <span style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="btn-custom btn-danger btn-sm" style="background: #ff9800;"
+                (click)="restoreBadge(restaurant._id!, badge._id!)">Restore</button>
+              <button type="button" class="btn-custom btn-danger btn-sm"
+                (click)="hardDeleteBadge(restaurant._id!, badge._id!)">X</button>
+            </span>
+          </li>
+          }
+        </ul>
+        }
+
+        <!-- Pagination -->
+        <div class="footer" style="margin-top:var(--spacing-sm); display:flex; align-items:center; gap:10px;">
+          <button class="btn-custom btn-secondary btn-sm" (click)="prevDeletedBadgePage(restaurant._id!)"
+            [disabled]="(deletedBadgePage[restaurant._id!] || 1) === 1">⬅ Prev</button>
+          <span class="muted" style="font-size:13px;">Page {{ (deletedBadgePage[restaurant._id!] || 1) }} / {{
+            Math.max(1,
+            Math.ceil((deletedBadgeTotal[restaurant._id!] || 0) / badgeLimit)) }}</span>
+          <button class="btn-custom btn-secondary btn-sm" (click)="nextDeletedBadgePage(restaurant._id!)"
+            [disabled]="(deletedBadgePage[restaurant._id!] || 1) >= Math.max(1, Math.ceil((deletedBadgeTotal[restaurant._id!] || 0) / badgeLimit))">Next
+            ➡</button>
+          <label for="goToDeletedBadgePageInput" style="margin-left: 8px;">Go to page:</label>
+          <input class="input-custom" id="goToDeletedBadgePageInput" type="number"
+            [formControl]="goToDeletedBadgePageControl" min="1"
+            [max]="Math.max(1, Math.ceil((deletedBadgeTotal[restaurant._id!] || 0) / badgeLimit))"
+            style="width:70px;" />
+          <button class="btn-custom btn-primary btn-sm" type="button"
+            (click)="goToDeletedBadgePage(restaurant._id!)">Go</button>
+        </div>
+        }
       </div>
 
       <div style="margin-top:var(--spacing-sm)">
@@ -1290,7 +1389,6 @@
             Badge</button>
         </form>
       </div><!-- end add badge -->
-
       }
     </div><!-- end .data -->
   </li>
