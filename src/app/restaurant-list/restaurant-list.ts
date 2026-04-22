@@ -1647,9 +1647,19 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.loadRestaurantDishes(restaurantId);
   }
 
+  nextDeletedDishPage(restaurantId: string): void {
+    this.deletedDishPage[restaurantId] = this.paginationUtils.getSafePage((this.deletedDishPage[restaurantId] || 1) + 1, this.deletedDishTotal[restaurantId] || 0, this.dishLimit);
+    this.loadDeletedRestaurantDishes(restaurantId);
+  }
+
   prevDishPage(restaurantId: string): void {
     this.dishPage[restaurantId] = this.paginationUtils.getSafePage((this.dishPage[restaurantId] || 1) - 1, this.dishTotal[restaurantId] || 0, this.dishLimit);
     this.loadRestaurantDishes(restaurantId);
+  }
+
+  prevDeletedDishPage(restaurantId: string): void {
+    this.deletedDishPage[restaurantId] = this.paginationUtils.getSafePage((this.deletedDishPage[restaurantId] || 1) - 1, this.deletedDishTotal[restaurantId] || 0, this.dishLimit);
+    this.loadDeletedRestaurantDishes(restaurantId);
   }
 
   goToDishPage(restaurantId: string): void {
@@ -1657,6 +1667,13 @@ export class RestaurantList implements OnInit, OnDestroy {
     this.dishPage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.dishTotal[restaurantId] || 0, this.dishLimit);
     this.goToDishPageControl.setValue(this.dishPage[restaurantId], { emitEvent: false });
     this.loadRestaurantDishes(restaurantId);
+  }
+
+  goToDeletedDishPage(restaurantId: string): void {
+    const requestedPage = Number(this.goToDeletedDishPageControl.value);
+    this.deletedDishPage[restaurantId] = this.paginationUtils.getSafePage(requestedPage, this.deletedDishTotal[restaurantId] || 0, this.dishLimit);
+    this.goToDeletedDishPageControl.setValue(this.deletedDishPage[restaurantId], { emitEvent: false });
+    this.loadDeletedRestaurantDishes(restaurantId);
   }
 
   toggleDishForm(restaurantId: string): void {
@@ -1700,19 +1717,69 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
   }
 
-  removeDish(restaurantId: string, dish: any): void {
+  softDeleteDish(restaurantId: string, dishId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: `soft delete "${dish.name || 'this dish'}"`,
+      data: `soft delete this dish`,
     });
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        const dishId = dish._id || dish.id;
         if (!dishId) return;
         this.loading = true;
         this.cdr.markForCheck();
         this.dishApi.softDeleteDish(dishId).subscribe({
           next: () => {
             this.loadRestaurantDishes(restaurantId);
+            this.loadDeletedRestaurantDishes(restaurantId);
+          },
+          error: () => {
+            this.errorMsg = 'Could not remove dish.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  restoreDish(restaurantId: string, dishId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `restore this dish`,
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!dishId || !restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+        this.dishApi.restoreDish(dishId).subscribe({
+          next: () => {
+            this.loadRestaurantDishes(restaurantId);
+            this.loadDeletedRestaurantDishes(restaurantId);
+          },
+          error: () => {
+            this.errorMsg = 'Could not restore dish.';
+            this.loading = false;
+            this.cdr.markForCheck();
+          },
+        });
+      }
+    });
+  }
+
+  hardDeleteDish(restaurantId: string, dishId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `hard delete this dish`,
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        if (!dishId || !restaurantId) return;
+
+        this.loading = true;
+        this.cdr.markForCheck();
+        this.dishApi.hardDeleteDish(dishId).subscribe({
+          next: () => {
+            this.loadRestaurantDishes(restaurantId);
+            this.loadDeletedRestaurantDishes(restaurantId);
           },
           error: () => {
             this.errorMsg = 'Could not remove dish.';
