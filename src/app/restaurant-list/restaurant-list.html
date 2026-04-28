@@ -345,7 +345,7 @@
           <span class="info-card-title">⭐ General Info</span>
           <span class="info-card-value">{{ restaurantFull[restaurant._id].profile.description }}</span>
           <span class="info-card-value">
-            <strong>Rating:</strong> {{ restaurantFull[restaurant._id].profile.globalRating || '—' }} / 10
+            <strong>Rating:</strong> {{ formatRating(restaurantFull[restaurant._id].profile.globalRating) }} / 10
           </span>
         </div>
 
@@ -738,6 +738,11 @@
         <!-- DISHES SECTION -->
         <div class="info-card info-card-full mt-md">
           <span class="info-card-title">🍽️ Dishes</span>
+          <div class="location-actions" style="margin-top:var(--spacing-xs); margin-bottom:var(--spacing-sm);">
+            <button type="button" class="btn-custom btn-secondary btn-sm" (click)="toggleDeletedDishes(restaurant._id!)">
+              {{ showDeletedDishes[restaurant._id!] ? 'Hide deleted dishes' : 'Show deleted dishes' }}
+            </button>
+          </div>
 
           <section class="top-dish-card" aria-label="Top rated dish">
             <div class="top-dish-header">
@@ -782,9 +787,15 @@
                     style="margin-left:4px;">
                     {{ dish.active ? 'Active' : 'Inactive' }}
                   </span>
+                  @if (dish.isDeleted) {
+                    <span class="chip chip-warning" style="margin-left:4px;">DELETED</span>
+                  } @else {
+                    <span class="chip chip-success" style="margin-left:4px;">Available</span>
+                  }
                   <span *ngIf="dish.portionSize" class="chip chip-primary" style="margin-left:4px;">{{ dish.portionSize
                     }}</span>
                 </span>
+                <span class="muted">Rating: {{ formatDishRating(dish.avgRating) }}</span>
                 <span class="muted" *ngIf="dish.description">{{ dish.description }}</span>
                 <span *ngIf="dish.availableAt && dish.availableAt.length > 0">
                   <span *ngFor="let slot of dish.availableAt" class="chip chip-warning" style="margin-right:2px;">{{
@@ -793,10 +804,15 @@
               </span>
               <span style="display:flex;align-items:center;gap:6px;">
                 <span class="chip chip-success">{{ dish.price | number:'1.2-2' }}€</span>
-                <button type="button" class="btn-custom btn-secondary btn-sm"
-                  (click)="startEditDish(dish)">Edit</button>
-                <button type="button" class="btn-custom btn-danger btn-sm"
-                  (click)="removeDish(restaurant._id!, dish)">✕</button>
+                @if (!dish.isDeleted) {
+                  <button type="button" class="btn-custom btn-secondary btn-sm"
+                    (click)="startEditDish(dish)">Edit</button>
+                  <button type="button" class="btn-custom btn-danger btn-sm"
+                    (click)="removeDish(restaurant._id!, dish)">✕</button>
+                } @else {
+                  <button type="button" class="btn-custom btn-secondary btn-sm"
+                    (click)="restoreDish(restaurant._id!, dish)">Restore</button>
+                }
               </span>
             </ng-container>
 
@@ -1231,7 +1247,7 @@
           <span class="info-card-title">⭐ General Info</span>
           <span class="info-card-value">{{ deletedRestaurantFull[restaurant._id].profile.description }}</span>
           <span class="info-card-value">
-            <strong>Rating:</strong> {{ deletedRestaurantFull[restaurant._id].profile.globalRating || '—' }} / 10
+            <strong>Rating:</strong> {{ formatRating(deletedRestaurantFull[restaurant._id].profile.globalRating) }} / 10
           </span>
         </div>
 
@@ -1532,6 +1548,11 @@
       <!-- DISHES SECTION (read-only) -->
       <div class="info-card info-card-full mt-md">
         <span class="info-card-title">🍽️ Dishes</span>
+        <div class="location-actions" style="margin-top:var(--spacing-xs); margin-bottom:var(--spacing-sm);">
+          <button type="button" class="btn-custom btn-secondary btn-sm" (click)="toggleDeletedDishes(restaurant._id!)">
+            {{ showDeletedDishes[restaurant._id!] ? 'Hide deleted dishes' : 'Show deleted dishes' }}
+          </button>
+        </div>
 
         <ul class="data-list" *ngIf="restaurantDishes[restaurant._id!] && restaurantDishes[restaurant._id!].length > 0">
           <li *ngFor="let dish of restaurantDishes[restaurant._id!]">
@@ -1543,9 +1564,15 @@
                   style="margin-left:4px;">
                   {{ dish.active ? 'Active' : 'Inactive' }}
                 </span>
+                @if (dish.isDeleted) {
+                  <span class="chip chip-warning" style="margin-left:4px;">DELETED</span>
+                } @else {
+                  <span class="chip chip-success" style="margin-left:4px;">Available</span>
+                }
                 <span *ngIf="dish.portionSize" class="chip chip-primary" style="margin-left:4px;">{{ dish.portionSize
                   }}</span>
               </span>
+              <span class="muted">Rating: {{ formatDishRating(dish.avgRating) }}</span>
               <span class="muted" *ngIf="dish.description">{{ dish.description }}</span>
               <span *ngIf="dish.availableAt && dish.availableAt.length > 0">
                 <span *ngFor="let slot of dish.availableAt" class="chip chip-warning" style="margin-right:2px;">{{

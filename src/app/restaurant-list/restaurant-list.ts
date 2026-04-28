@@ -21,6 +21,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { ICustomer } from '../models/customer.model';
 import { CustomerService } from '../services/customer.service';
 import { environment } from '../../environments/environment';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import {
   buildGoogleMapsDirectionsUrl,
   buildGoogleMapsEmbedUrl,
@@ -94,6 +95,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   goToVisitPageControl = new FormControl<number | null>(1);
 
   restaurantDishes: { [key: string]: IDish[] } = {};
+  showDeletedDishes: { [key: string]: boolean } = {};
   showDishForm: { [key: string]: boolean } = {};
   newDishForm!: FormGroup;
   editingDishId: string | null = null;
@@ -326,15 +328,34 @@ export class RestaurantList implements OnInit, OnDestroy {
   }
 
   load(): void {
+    type PaginatedResponse<T> = {
+      data?: T[];
+      meta?: unknown;
+    };
+
+    const extractData = <T>(response: T[] | PaginatedResponse<T> | null | undefined): T[] => {
+      if (Array.isArray(response)) {
+        return response;
+      }
+
+      if (Array.isArray(response?.data)) {
+        return response.data;
+      }
+
+      return [];
+    };
+
     this.loading = true;
     this.errorMsg = '';
     this.cdr.markForCheck();
 
     this.api.getRestaurants().subscribe({
-      next: (res: any) => {
-        const data = res ?? [];
-        this.restaurants = data;
-        this.filteredRestaurants = [...data];
+      next: (res) => {
+        const data = extractData<IRestaurant>(res as IRestaurant[] | PaginatedResponse<IRestaurant> | null | undefined);
+        console.log('RATING:', data[0]?.profile?.globalRating, typeof data[0]?.profile?.globalRating);
+        const normalizedData = data.map((restaurant) => this.normalizeRestaurantGlobalRating(restaurant));
+        this.restaurants = normalizedData;
+        this.filteredRestaurants = [...normalizedData];
         this.updatePagedRestaurants();
         this.loading = false;
         this.cdr.markForCheck();
@@ -347,10 +368,11 @@ export class RestaurantList implements OnInit, OnDestroy {
     });
 
     this.api.getDeletedRestaurants().subscribe({
-      next: (res: any) => {
-        const data = res ?? [];
-        this.deletedRestaurants = data;
-        this.filteredDeletedRestaurants = [...data];
+      next: (res) => {
+        const data = extractData<IRestaurant>(res as IRestaurant[] | PaginatedResponse<IRestaurant> | null | undefined);
+        const normalizedData = data.map((restaurant) => this.normalizeRestaurantGlobalRating(restaurant));
+        this.deletedRestaurants = normalizedData;
+        this.filteredDeletedRestaurants = [...normalizedData];
         this.updatePagedDeletedRestaurants();
         this.loading = false;
         this.cdr.markForCheck();
@@ -397,8 +419,9 @@ export class RestaurantList implements OnInit, OnDestroy {
   private refreshRestaurantFull(restaurantId: string) {
     this.api.getRestaurantFull(restaurantId).subscribe({
       next: (full) => {
-        this.restaurantFull[restaurantId] = full;
-        this.initializeLocationMapState(restaurantId, full);
+        const normalizedFull = this.normalizeRestaurantGlobalRating(full);
+        this.restaurantFull[restaurantId] = normalizedFull;
+        this.initializeLocationMapState(restaurantId, normalizedFull);
         this.visitPage[restaurantId] = 0;
         this.cdr.markForCheck();
       },
@@ -450,6 +473,22 @@ export class RestaurantList implements OnInit, OnDestroy {
     return candidate;
   }
 
+  private toFiniteNumber(value: unknown, fallback = 0): number {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  private normalizeRestaurantGlobalRating(restaurant: IRestaurant): IRestaurant {
+    const profile = restaurant.profile ?? ({} as IRestaurant['profile']);
+    return {
+      ...restaurant,
+      profile: {
+        ...profile,
+        globalRating: this.toFiniteNumber(profile.globalRating, 0),
+      },
+    };
+  }
+
   private loadRestaurantTopDish(restaurantId: string): void {
     this.topDishState[restaurantId] = 'loading';
     this.topDishErrorText[restaurantId] = '';
@@ -493,12 +532,29 @@ export class RestaurantList implements OnInit, OnDestroy {
     return this.topDishByRestaurant[restaurantId] ?? null;
   }
 
-  formatTopDishRating(rating: number | null | undefined): string {
-    if (rating === null || rating === undefined || !Number.isFinite(rating)) {
+  formatTopDishRating(rating: unknown): string {
+    const parsed = Number(rating);
+    if (!Number.isFinite(parsed)) {
       return '—';
     }
-    const fixed = Number(rating.toFixed(2));
+    const fixed = Number(parsed.toFixed(2));
     return fixed.toString();
+  }
+
+  formatDishRating(rating: unknown): string {
+    const parsed = Number(rating);
+    if (!Number.isFinite(parsed)) {
+      return '—';
+    }
+    return parsed.toFixed(1);
+  }
+
+  formatRating(rating: unknown): string {
+    const parsed = Number(rating);
+    if (!Number.isFinite(parsed)) {
+      return '—';
+    }
+    return parsed.toFixed(1);
   }
 
   formatTopDishVotes(count: number | null | undefined): string {
@@ -580,7 +636,7 @@ export class RestaurantList implements OnInit, OnDestroy {
   private refreshDeletedRestaurantFull(restaurantId: string) {
     this.api.getDeletedRestaurantFull(restaurantId).subscribe({
       next: (full) => {
-        this.deletedRestaurantFull[restaurantId] = full;
+        this.deletedRestaurantFull[restaurantId] = this.normalizeRestaurantGlobalRating(full);
         this.cdr.markForCheck();
       },
       error: () => {
@@ -745,8 +801,9 @@ export class RestaurantList implements OnInit, OnDestroy {
 
     this.api.getRestaurantFull(restaurant._id).subscribe({
       next: (full) => {
-        this.restaurantFull[restaurant._id!] = full;
-        this.patchRestaurantForm(full);
+        const normalizedFull = this.normalizeRestaurantGlobalRating(full);
+        this.restaurantFull[restaurant._id!] = normalizedFull;
+        this.patchRestaurantForm(normalizedFull);
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1266,6 +1323,47 @@ export class RestaurantList implements OnInit, OnDestroy {
   // DISHES
   // ========================
 
+  private isDeletedDish(dish: IDish): boolean {
+    const candidate = dish as IDish & { isDeleted?: boolean; deletedAt?: string | Date | null };
+    return Boolean(candidate.isDeleted ?? candidate.deletedAt);
+  }
+
+  private sortDishes(dishes: IDish[]): IDish[] {
+    return [...dishes].sort((left, right) => {
+      const leftDeleted = Number(this.isDeletedDish(left));
+      const rightDeleted = Number(this.isDeletedDish(right));
+      const byStatus = leftDeleted - rightDeleted;
+
+      if (byStatus !== 0) {
+        return byStatus;
+      }
+
+      return left.name.localeCompare(right.name, 'es', { sensitivity: 'base' });
+    });
+  }
+
+  private loadAllDishPages(
+    loader: (page: number, limit: number) => Observable<{ data?: IDish[]; meta?: { totalPages?: number } }>
+  ): Observable<IDish[]> {
+    const pageSize = 200;
+
+    return loader(1, pageSize).pipe(
+      switchMap((firstPage) => {
+        const totalPages = Math.max(firstPage.meta?.totalPages ?? 1, 1);
+
+        if (totalPages === 1) {
+          return of(firstPage.data ?? []);
+        }
+
+        const remainingPages = Array.from({ length: totalPages - 1 }, (_, index) => index + 2);
+
+        return forkJoin(remainingPages.map((page) => loader(page, pageSize))).pipe(
+          map((restPages) => [firstPage, ...restPages].flatMap((page) => page.data ?? []))
+        );
+      })
+    );
+  }
+
   private buildAvailableAt(formValue: any): string[] {
     const map: { [key: string]: string } = {
       availableAtBreakfast: 'breakfast',
@@ -1290,11 +1388,18 @@ export class RestaurantList implements OnInit, OnDestroy {
   }
 
   private loadRestaurantDishes(restaurantId: string): void {
-    this.dishApi.getDishes().subscribe({
-      next: (allDishes: IDish[]) => {
-        const filtered = allDishes.filter(d => d.restaurant_id === restaurantId);
-        this.dishTotal[restaurantId] = filtered.length;
-        this.restaurantDishes[restaurantId] = this.paginateDishes(filtered, restaurantId);
+    forkJoin({
+      active: this.loadAllDishPages((page, limit) => this.dishApi.getDishes(page, limit)),
+      deleted: this.loadAllDishPages((page, limit) => this.dishApi.getDeletedDishes(page, limit)),
+    }).subscribe({
+      next: ({ active, deleted }) => {
+        const visible = this.showDeletedDishes[restaurantId]
+          ? [...active, ...deleted]
+          : active;
+        const filtered = visible.filter(d => d.restaurant_id === restaurantId);
+        const sorted = this.sortDishes(filtered);
+        this.dishTotal[restaurantId] = sorted.length;
+        this.restaurantDishes[restaurantId] = this.paginateDishes(sorted, restaurantId);
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -1344,6 +1449,12 @@ export class RestaurantList implements OnInit, OnDestroy {
       this.newDishForm.reset();
       this.newDishForm.patchValue({ active: true, price: 0 });
     }
+  }
+
+  toggleDeletedDishes(restaurantId: string): void {
+    this.showDeletedDishes[restaurantId] = !this.showDeletedDishes[restaurantId];
+    this.dishPage[restaurantId] = 0;
+    this.loadRestaurantDishes(restaurantId);
   }
 
   saveDish(restaurantId: string): void {
@@ -1399,6 +1510,25 @@ export class RestaurantList implements OnInit, OnDestroy {
             this.cdr.markForCheck();
           }
         });
+      }
+    });
+  }
+
+  restoreDish(restaurantId: string, dish: any): void {
+    const dishId = dish._id || dish.id;
+    if (!dishId) return;
+
+    this.loading = true;
+    this.cdr.markForCheck();
+
+    this.dishApi.restoreDish(dishId).subscribe({
+      next: () => {
+        this.loadRestaurantDishes(restaurantId);
+      },
+      error: () => {
+        this.errorMsg = 'Could not restore dish.';
+        this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
