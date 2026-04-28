@@ -19,6 +19,8 @@ export interface IDish {
     cuisineTags?: string[];
 
     portionSize?: 'small' | 'medium' | 'large' | 'sharing';
-    avgRating: number;
-    ratingsCount : number;
+    avgRating?: number | null;
+    ratingsCount?: number | null;
+    isDeleted?: boolean;
+    deletedAt?: Date | string | null;
 }
