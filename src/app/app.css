@@ -60,12 +60,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: var(--spacing-lg) var(--spacing-md);
-}
-
 .footer {
   margin-top: var(--spacing-xl);
   border-top: 1px solid var(--border-color);
