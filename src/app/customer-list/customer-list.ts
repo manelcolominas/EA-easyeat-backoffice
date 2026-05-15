@@ -22,6 +22,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, MatDialogModule],
   templateUrl: './customer-list.html',
+  styleUrls: ['./customer-list.css'],
 })
 export class CustomerList implements OnInit {
   Math = Math;

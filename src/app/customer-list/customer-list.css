@@ -1,69 +1,28 @@
-/* HEADER */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-xl);
+.form-card {
+  margin-bottom: var(--spacing-md);
 }
 
-.header h2 {
-  font-size: 24px;
-  font-weight: 600;
+.form-card h3,
+.form-card h4,
+.form-card h5 {
+  margin: 0 0 var(--spacing-sm) 0;
 }
 
-/* ACTIONS */
-.actions {
-  display: flex;
-  gap: var(--spacing-md);
-  align-items: center;
+.customer-card-details > p {
+  margin: 0;
 }
 
-/* ROW */
-.row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.visits-table th,
+.visits-table td {
+  padding: var(--spacing-sm);
+  vertical-align: top;
 }
 
-/* TEXTO */
-.name {
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.muted {
+.visits-table th {
   font-size: 13px;
   color: var(--color-text-muted);
 }
 
-/* FORM */
-.form-group {
-  margin-bottom: var(--spacing-md);
-}
-
-.form-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-md);
-}
-
-/* DATOS */
-.data {
-  margin-top: var(--spacing-md);
-  background: var(--color-surface);
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  border: 1px solid var(--border-color);
-}
-
-/* MENSAJES */
-.info {
-  color: var(--color-text-muted);
+.visits-table td {
   font-size: 14px;
-}
-
-.error {
-  color: var(--color-danger);
-  font-size: 14px;
-  font-weight: 500;
 }

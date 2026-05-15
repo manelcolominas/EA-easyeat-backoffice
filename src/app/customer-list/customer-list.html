@@ -29,7 +29,7 @@
       <label>Name:</label>
       <input class="input-custom" type="text" formControlName="name" />
       @if (customerForm.get('name')?.invalid && customerForm.get('name')?.touched) {
-      <small class="error-text">Name is required</small>
+      <small class="error-sm">Name is required</small>
       }
     </div>
     <div class="form-group">
@@ -95,7 +95,7 @@
     </div>
 
     @if (expanded[customer._id!]) {
-    <div class="data card-details">
+    <div class="data customer-card-details">
       <hr>
       <p><strong>Email:</strong> {{ customer.email }}</p>
       <p><strong>ID:</strong> {{ customer._id }}</p>
@@ -513,7 +513,7 @@
     </div>
 
     @if (expandedDeleted[customer._id!]) {
-    <div class="data card-details">
+    <div class="data customer-card-details">
       <hr>
       <p><strong>Email:</strong> {{ customer.email }}</p>
       <p><strong>ID:</strong> {{ customer._id }}</p>
