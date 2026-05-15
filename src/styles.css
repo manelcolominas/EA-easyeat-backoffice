@@ -239,7 +239,7 @@ body {
   font-weight: 500;
 }
 
-.error-text {
+.error-sm {
   color: var(--color-danger);
   font-size: 12px;
 }
