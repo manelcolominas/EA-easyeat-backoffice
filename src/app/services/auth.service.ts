@@ -1,8 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { environment } from '../../environments/environment';
 import { isPlatformBrowser } from '@angular/common';
+import { ApiClientService } from './api-client.service';
 
 export interface LoginResponse {
   message: string;
@@ -19,21 +18,20 @@ export interface LoginResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private baseUrl = environment.apiUrl;
   private isBrowser: boolean;
 
   constructor(
-    private http: HttpClient,
+    private api: ApiClientService,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
   login(email: string, password: string): Observable<LoginResponse> {
-  return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, { email, password }).pipe(
+  return this.api.post<LoginResponse>('/auth/login', { email, password }).pipe(
     tap(response => {
       if (response && response.accessToken && this.isBrowser) {
-        localStorage.setItem('admin_token', response.accessToken); // ← Fix: response.token → response.accessToken
+        localStorage.setItem('admin_token', response.accessToken);
         localStorage.setItem('admin_user', JSON.stringify(response.admin));
       }
     })
@@ -41,7 +39,7 @@ export class AuthService {
 }
 
   logout() {
-  this.http.post(`${this.baseUrl}/auth/logout`, {}).subscribe({
+  this.api.post('/auth/logout', {}).subscribe({
     complete: () => {
       if (this.isBrowser) {
         localStorage.removeItem('admin_token');

@@ -1,11 +1,1 @@
-.btn {
-  background: white;
-  border: 1px solid #ddd;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-left: 4px;
-}
-.btn:hover {
-  background: #f3f3f3;
-}
+/* Uses shared button utilities from src/styles.css */

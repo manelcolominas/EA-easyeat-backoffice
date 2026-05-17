@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl, FormArray } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { CustomerService } from '../services/customer.service';
@@ -14,7 +14,7 @@ import { IReview } from '../models/review.model';
 import { IRestaurant } from '../models/restaurant.model';
 import { IVisit } from '../models/visit.model';
 import { IBadge } from '../models/badge.model';
-
+import { PaginationUtils } from '../services/pagination.util';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 
 @Component({
@@ -22,50 +22,62 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, MatDialogModule],
   templateUrl: './customer-list.html',
+  styleUrls: ['./customer-list.css'],
 })
 export class CustomerList implements OnInit {
-
   Math = Math;
 
   // ========================
   // CUSTOMERS
   // ========================
   customers: ICustomer[] = [];
+  deletedCustomers: ICustomer[] = [];
   filteredCustomers: ICustomer[] = [];
+  filteredDeletedCustomers: ICustomer[] = [];
   pagedCustomers: ICustomer[] = [];
+  pagedDeletedCustomers: ICustomer[] = [];
   customerEditId?: string;
   searching: boolean = false;
+  searchDeleted: boolean = false;
   loading: boolean = true;
+  loadingDeleted: boolean = false;
   errorMsg: string = '';
   searchControl = new FormControl('');
+  searchDeletedControl = new FormControl('');
   customerForm!: FormGroup;
   editting = false;
   showForm = false;
-  limit = 2;
-  currentPage = 1;
+  customerPager = { page: 1, limit: 2 };
+  deletedPager = { page: 1, limit: 2 };
   expanded: { [key: string]: boolean } = {};
+  expandedDeleted: { [key: string]: boolean } = {};
   goToPageControl = new FormControl<number | null>(1);
+  goToDeletedPageControl = new FormControl<number | null>(1);
 
   // ========================
   // REVIEWS
   // ========================
-  reviews: IReview[] = [];
   reviewsByCustomer: { [key: string]: IReview[] } = {};
+  deletedReviewsByCustomer: { [key: string]: IReview[] } = {}
   restaurants: IRestaurant[] = [];
   reviewForm!: FormGroup;
   selectedCustomerId: string | null = null;
   editingReviewId: string | null = null;
   reviewLimit = 2;
   reviewPage: { [key: string]: number } = {};
+  deletedReviewPage: { [key: string]: number } = {};
   reviewTotal: { [key: string]: number } = {};
+  deletedReviewTotal: { [key: string]: number } = {};
   minGlobalRatingFilter: number | null = null;
   sortByLikes = false;
   goToReviewPageControl = new FormControl<number | null>(1);
+  goToDeletedReviewPageControl = new FormControl<number | null>(1);
 
   // ========================
   // VISITS
   // ========================
   customerVisits: { [key: string]: IVisit[] } = {};
+  customerDeletedVisits: { [key: string]: IVisit[] } = {};
   loadingVisits: { [key: string]: boolean } = {};
   visitForm!: FormGroup;
   activeVisitForm = false;
@@ -74,14 +86,21 @@ export class CustomerList implements OnInit {
   selectedVisitId: string | null = null;
   visitPage: { [customerId: string]: number } = {};
   visitTotal: { [key: string]: number } = {};
+  deletedVisitPage: { [customerId: string]: number } = {};
+  deletedVisitTotal: { [key: string]: number } = {};
   visitLimit = 2;
   visitsExpanded: { [customerId: string]: boolean } = {};
   visitSortField: 'date' | 'billAmount' | 'pointsEarned' = 'date';
   visitSortOrder: 'asc' | 'desc' = 'desc';
   goToVisitPageControl = new FormControl<number | null>(1);
+  goToDeletedVisitPageControl = new FormControl<number | null>(1);
 
   customerBadges: { [key: string]: IBadge[] } = {};
+  customerDeletedBadges: { [key: string]: IBadge[] } = {};
   loadingBadges: { [key: string]: boolean } = {};
+  badgeTotal: { [customerId: string]: number } = {};
+  deletedBadgeTotal: { [customerId: string]: number } = {};
+  badgeLimit = 50;
 
   constructor(
     private api: CustomerService,
@@ -89,27 +108,38 @@ export class CustomerList implements OnInit {
     private restaurantService: RestaurantService,
     private visitService: VisitService,
     private badgeService: BadgeService,
-    private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private paginationUtils: PaginationUtils,
+    private fb: FormBuilder,
   ) {
     this.customerForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/)]],
+      password: [
+        '',
+        [Validators.required, Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/)],
+      ],
     });
 
     this.reviewForm = this.fb.group({
       restaurant_id: ['', Validators.required],
       globalRating: [null, [Validators.required, Validators.min(1), Validators.max(10)]],
-      comment: ['']
+      comment: [''],
+      ratings: this.fb.group({
+        foodQuality: [null, [Validators.min(0), Validators.max(10)]],
+        staffService: [null, [Validators.min(0), Validators.max(10)]],
+        cleanliness: [null, [Validators.min(0), Validators.max(10)]],
+        environment: [null, [Validators.min(0), Validators.max(10)]],
+      }),
+      images: this.fb.array([]),
     });
 
     this.visitForm = this.fb.group({
       restaurant_id: ['', [Validators.required, Validators.pattern(/^[0-9a-fA-F]{24}$/)]],
       billAmount: [0, [Validators.required, Validators.min(1)]],
       pointsEarned: [0, [Validators.required, Validators.min(0)]],
-      date: [new Date().toISOString().substring(0, 10), Validators.required]
+      date: [new Date().toISOString().substring(0, 10), Validators.required],
     });
   }
 
@@ -121,14 +151,22 @@ export class CustomerList implements OnInit {
     this.load();
     this.loadRestaurants();
 
-    this.searchControl.valueChanges.subscribe(value => {
+    this.searchControl.valueChanges.subscribe((value) => {
       const term = value?.toLowerCase().trim() ?? '';
-      term ? this.searching = true : this.searching = false;
-      this.filteredCustomers = this.customers.filter(c =>
-        c.name.toLowerCase().includes(term)
-      );
-      this.currentPage = 1;
+      term ? (this.searching = true) : (this.searching = false);
+      this.filteredCustomers = this.customers.filter((c) => c.name.toLowerCase().includes(term));
+      this.customerPager.page = 1;
       this.updatePagedCustomers();
+    });
+
+    this.searchDeletedControl.valueChanges.subscribe((value) => {
+      const term = value?.toLowerCase().trim() ?? '';
+      term ? (this.searchDeleted = true) : (this.searchDeleted = false);
+      this.filteredDeletedCustomers = this.deletedCustomers.filter((c) =>
+        c.name.toLowerCase().includes(term),
+      );
+      this.deletedPager.page = 1;
+      this.updatePagedDeletedCustomers();
     });
   }
 
@@ -141,8 +179,8 @@ export class CustomerList implements OnInit {
     this.errorMsg = '';
 
     this.api.getCustomers().subscribe({
-      next: (res: any) => {
-        const data = res?.data ?? res ?? [];
+      next: (res: ICustomer[]) => {
+        const data = res ?? [];
         this.customers = data;
         this.filteredCustomers = [...data];
         this.updatePagedCustomers();
@@ -156,7 +194,27 @@ export class CustomerList implements OnInit {
         this.filteredCustomers = [];
         this.loading = false;
         this.cdr.markForCheck();
-      }
+      },
+    });
+
+    this.loadingDeleted = true;
+
+    this.api.getDeletedCustomers().subscribe({
+      next: (res: ICustomer[]) => {
+        const data = res ?? [];
+        this.deletedCustomers = data;
+        this.filteredDeletedCustomers = [...data];
+        this.updatePagedDeletedCustomers();
+        this.loadingDeleted = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error(err);
+        this.deletedCustomers = [];
+        this.filteredDeletedCustomers = [];
+        this.loadingDeleted = false;
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -165,9 +223,10 @@ export class CustomerList implements OnInit {
 
     const data = this.customerForm.value;
 
-    const request = this.editting && this.customerEditId
-      ? this.api.updateCustomer(this.customerEditId, data)
-      : this.api.createCustomer(data);
+    const request =
+      this.editting && this.customerEditId
+        ? this.api.updateCustomer(this.customerEditId, data)
+        : this.api.createCustomer(data);
 
     request.subscribe(() => {
       this.load();
@@ -190,37 +249,63 @@ export class CustomerList implements OnInit {
     return Boolean(state.disabled ?? state.deleted ?? state.isDeleted);
   }
 
-  toggleCustomerStatus(customer: ICustomer): void {
-    if (!customer._id) return;
+  softDeleteCustomer(customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'disable this customer',
+    });
 
-    const wasDisabled = this.isCustomerDisabled(customer);
-
-    const request = wasDisabled
-      ? this.api.restoreCustomer(customer._id)
-      : this.api.softDeleteCustomer(customer._id);
-
-    request.subscribe({
-      next: () => {
-        (customer as ICustomer & { active?: boolean }).active = wasDisabled;
-        this.filteredCustomers = [...this.filteredCustomers];
-        this.pagedCustomers = [... this.pagedCustomers];
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error(err);
-        this.errorMsg = 'Error updating customer status';
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.api.softDeleteCustomer(customerId).subscribe({
+          next: () => {
+            this.load();
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error disabling customer';
+          },
+        });
       }
     });
   }
 
-  hardDdelete(id: string): void {
-    this.api.hardDeleteCustomer(id).subscribe(() => this.load());
+  restoreCustomer(customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'restore this customer',
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.api.restoreCustomer(customerId).subscribe({
+          next: () => {
+            this.load();
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error restoring customer';
+          },
+        });
+      }
+    });
   }
 
-  confirmDelete(id: string, name?: string): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, { data: name });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) this.hardDdelete(id);
+  hardDeleteCustomer(customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'PERMANENTLY DELETE this customer',
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.api.hardDeleteCustomer(customerId).subscribe({
+          next: () => {
+            this.load();
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error deleting customer';
+          },
+        });
+      }
     });
   }
 
@@ -231,7 +316,7 @@ export class CustomerList implements OnInit {
     this.customerForm.patchValue({
       name: customer.name,
       email: customer.email,
-      password: ''
+      password: '',
     });
   }
 
@@ -255,49 +340,62 @@ export class CustomerList implements OnInit {
     return this.pagedCustomers;
   }
 
+  get visibleDeletedCustomers(): ICustomer[] {
+    if (this.searchDeleted) {
+      return this.filteredDeletedCustomers;
+    }
+    return this.pagedDeletedCustomers;
+  }
+
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredCustomers.length / this.limit));
-  }
-
-  nextCustomersPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.updatePagedCustomers();
-    }
-  }
-
-  prevCustomersPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.updatePagedCustomers();
-    }
+    return this.paginationUtils.getTotalPages(this.filteredCustomers.length, this.customerPager.limit);
   }
 
   loadRestaurants(): void {
     this.restaurantService.getRestaurants().subscribe({
-      next: (res: any) => {
-        this.restaurants = res?.data ?? res ?? [];
+      next: (res: IRestaurant[]) => {
+        this.restaurants = res ?? [];
         this.cdr.markForCheck();
       },
       error: (err) => {
         console.error(err);
         this.restaurants = [];
         this.cdr.markForCheck();
-      }
+      },
     });
+  }
+
+  get imagesControls(): FormArray {
+    return this.reviewForm.get('images') as FormArray;
+  }
+
+  addImage(initialUrl: string = ''): void {
+    this.imagesControls.push(this.fb.control(initialUrl));
+  }
+
+  removeImage(index: number): void {
+    this.imagesControls.removeAt(index);
+  }
+
+  private clearFormArray(array: FormArray): void {
+    while (array.length > 0) {
+      array.removeAt(0);
+    }
   }
 
   toggleExpand(id: string): void {
     this.expanded[id] = !this.expanded[id];
 
-    // LOAD VISITS WHEN EXPANDING
     if (this.expanded[id]) {
-      this.reviewPage[id] = 0;
+      this.reviewPage[id] = 1; // Initialize page to 1
+      this.deletedReviewPage[id] = 1; // Initialize page to 1
       this.loadReviews(id);
-      
-      // NEW: Load visits on expand
-      this.visitPage[id] = 0;
+      this.loadDeletedReviews(id);
+
+      this.visitPage[id] = 1; // Initialize page to 1
+      this.deletedVisitPage[id] = 1;
       this.loadVisits(id);
+      this.loadDeletedVisits(id);
 
       this.loadCustomerBadges(id);
     }
@@ -305,24 +403,63 @@ export class CustomerList implements OnInit {
 
   goToPage(): void {
     const requestedPage = Number(this.goToPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = this.totalPages;
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.currentPage = safePage;
-    this.goToPageControl.setValue(safePage, { emitEvent: false });
+    this.customerPager.page = this.paginationUtils.getSafePage(requestedPage, this.filteredCustomers.length, this.customerPager.limit);
+    this.goToPageControl.setValue(this.customerPager.page, { emitEvent: false });
     this.updatePagedCustomers();
   }
 
-  private updatePagedCustomers(): void {
-    const totalPages = this.totalPages;
-    this.currentPage = Math.min(Math.max(1, this.currentPage), totalPages);
+  // ========================
+  // DELETED CUSTOMERS PAGINATION
+  // ========================
 
-    const start = (this.currentPage - 1) * this.limit;
-    const end = start + this.limit;
-    this.pagedCustomers = this.filteredCustomers.slice(start, end);
-    // this.goToPageControl.setValue(this.currentPage, { emitEvent: false });
+  get totalDeletedPages(): number {
+    return this.paginationUtils.getTotalPages(this.filteredDeletedCustomers.length, this.deletedPager.limit);
+  }
+
+  goToDeletedPage(): void {
+    const requestedPage = Number(this.goToDeletedPageControl.value);
+    this.deletedPager.page = this.paginationUtils.getSafePage(requestedPage, this.filteredDeletedCustomers.length, this.deletedPager.limit);
+    this.goToDeletedPageControl.setValue(this.deletedPager.page, { emitEvent: false });
+    this.updatePagedDeletedCustomers();
+  }
+
+  private updatePagedDeletedCustomers(): void {
+    this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page, this.filteredDeletedCustomers.length, this.deletedPager.limit);
+    this.pagedDeletedCustomers = this.paginationUtils.getPaginatedData(
+      this.filteredDeletedCustomers,
+      this.deletedPager.page,
+      this.deletedPager.limit
+    );
+    this.cdr.markForCheck();
+  }
+
+  toggleExpandDeleted(id: string): void {
+    this.expandedDeleted[id] = !this.expandedDeleted[id];
+
+    if (this.expandedDeleted[id]) {
+      this.reviewPage[id] = 1; // Initialize page to 1
+      this.deletedReviewPage[id] = 1; // Initialize page to 1
+      this.loadReviews(id);
+      this.loadDeletedReviews(id);
+
+      this.visitPage[id] = 1; // Initialize page to 1
+      this.deletedVisitPage[id] = 1;
+      this.loadVisits(id);
+      this.loadDeletedVisits(id);
+
+      this.loadCustomerBadges(id);
+    }
+  }
+
+  // Removed redundant handlePagination method
+
+  private updatePagedCustomers(): void {
+    this.customerPager.page = this.paginationUtils.getSafePage(this.customerPager.page, this.filteredCustomers.length, this.customerPager.limit);
+    this.pagedCustomers = this.paginationUtils.getPaginatedData(
+      this.filteredCustomers,
+      this.customerPager.page,
+      this.customerPager.limit
+    );
     this.cdr.markForCheck();
   }
 
@@ -352,7 +489,7 @@ export class CustomerList implements OnInit {
   getReviewRestaurantName(review: IReview): string {
     const raw = review.restaurant_id as unknown;
     if (typeof raw === 'string') {
-      const restaurant = this.restaurants.find(r => r._id === raw);
+      const restaurant = this.restaurants.find((r) => r._id === raw);
       return restaurant?.profile?.name ?? 'Restaurant';
     }
 
@@ -372,23 +509,20 @@ export class CustomerList implements OnInit {
   }
 
   loadReviews(customerId: string): void {
-    this.reviewService.getByCustomer(customerId).subscribe({
-      next: (response: IPaginatedReviews) => {
-        const allReviews = response?.data ?? [];
-        // STEP 1: FILTER
-        let filtered = this.filterReviews(allReviews);
+    this.reviewService.getByCustomer(customerId, this.reviewLimit, this.reviewPage[customerId]).subscribe({
+      next: (data: any) => {
+        const allReviews = data.data ?? [];
 
-        // STEP 2: SORT
+        let filtered = this.filterReviews(allReviews);
         let sorted = this.sortReviews(filtered);
 
-        // STEP 3: PAGINATE
-        let paginated = this.paginateReviews(sorted, customerId);
-
-        // Store filtered & paginated reviews for display
-        this.reviewsByCustomer = {
-          ...this.reviewsByCustomer,
-          [customerId]: paginated
-        };
+        this.reviewTotal[customerId] = data.meta.total;
+        this.reviewPage[customerId] = this.paginationUtils.getSafePage(
+          this.reviewPage[customerId] || 1,
+          data.meta.total,
+          this.reviewLimit
+        );
+        this.reviewsByCustomer[customerId] = sorted;
 
         this.cdr.markForCheck();
       },
@@ -396,65 +530,69 @@ export class CustomerList implements OnInit {
         console.error('Error loading reviews:', err);
         this.reviewsByCustomer[customerId] = [];
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
-  /**
-   * STEP 1: Filter by minimum rating
-   */
+  loadDeletedReviews(customerId: string): void {
+    this.reviewService.getDeletedByCustomer(customerId, this.reviewLimit, this.deletedReviewPage[customerId]).subscribe({
+      next: (data: any) => {
+        const allReviews = data.data ?? [];
+
+        let filtered = this.filterReviews(allReviews);
+        let sorted = this.sortReviews(filtered);
+
+        this.deletedReviewTotal[customerId] = data.meta.total;
+        this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage(
+          this.deletedReviewPage[customerId] || 1,
+          data.meta.total,
+          this.reviewLimit
+        );
+        this.deletedReviewsByCustomer[customerId] = sorted;
+
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading reviews:', err);
+        this.deletedReviewsByCustomer[customerId] = [];
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
   private filterReviews(reviews: IReview[]): IReview[] {
     if (!this.minGlobalRatingFilter) {
       return reviews;
     }
-    return reviews.filter(r =>r.globalRating >= this.minGlobalRatingFilter!);
+    return reviews.filter((r) => r.globalRating >= this.minGlobalRatingFilter!);
   }
 
-  /**
-   * STEP 2: Sort by likes (descending)
-   */
   private sortReviews(reviews: IReview[]): IReview[] {
     if (!this.sortByLikes) {
       return reviews;
     }
-    // Sort by likes descending
     return [...reviews].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-  }
-
-  /**
-   * STEP 3: Paginate using slice()
-   */
-  private paginateReviews(reviews: IReview[], customerId: string): IReview[] {
-    const page = this.reviewPage[customerId] || 0;
-    const start = page * this.reviewLimit;
-    const end = start + this.reviewLimit;
-
-    // Store total for pagination controls
-    this.reviewTotal[customerId] = reviews.length;
-
-    return reviews.slice(start, end);
-  }
-
-  nextPage(customerId: string): void {
-    const page = this.reviewPage[customerId] || 0;
-    const total = this.reviewTotal[customerId] || 0;
-
-    if ((page + 1) * this.reviewLimit >= total) return;
-
-    this.reviewPage[customerId] = page + 1;
-    this.loadReviews(customerId);
-  }
-
-  prevPage(customerId: string): void {
-    if ((this.reviewPage[customerId] || 0) === 0) return;
-    this.reviewPage[customerId]--;
-    this.loadReviews(customerId);
   }
 
   openReviewForm(customerId: string): void {
     this.selectedCustomerId = customerId;
     this.editingReviewId = null;
-    this.reviewForm.reset();
+    this.resetReviewForm();
+  }
+
+  private resetReviewForm(): void {
+    this.reviewForm.reset({
+      restaurant_id: '',
+      globalRating: null,
+      comment: '',
+      ratings: {
+        foodQuality: null,
+        staffService: null,
+        cleanliness: null,
+        environment: null,
+      },
+    });
+    this.clearFormArray(this.imagesControls);
   }
 
   editReview(review: IReview): void {
@@ -464,72 +602,152 @@ export class CustomerList implements OnInit {
     this.editingReviewId = review._id!;
     this.expanded[customerId] = true;
 
+    const images = Array.isArray(review.images) ? review.images : [];
+
     this.reviewForm.patchValue({
       restaurant_id: this.getReviewRestaurantId(review),
       globalRating: review.globalRating,
-      comment: review.comment ?? ''
+      comment: review.comment ?? '',
+      ratings: {
+        foodQuality: review.ratings?.foodQuality ?? null,
+        staffService: review.ratings?.staffService ?? null,
+        cleanliness: review.ratings?.cleanliness ?? null,
+        environment: review.ratings?.environment ?? null,
+      },
     });
+
+    this.clearFormArray(this.imagesControls);
+    images.forEach((url) => this.addImage(url));
   }
 
-  createReview(): void {
+  private buildReviewPayload(): {
+    restaurant_id: string;
+    globalRating: number;
+    comment: string;
+    ratings: {
+      foodQuality: number;
+      staffService: number;
+      cleanliness: number;
+      environment: number;
+    };
+    images: string[];
+  } {
+    const formValue = this.reviewForm.value;
+    const ratingValues = formValue.ratings ?? {};
+
+    return {
+      restaurant_id: String(formValue.restaurant_id ?? ''),
+      globalRating: Number(formValue.globalRating),
+      comment: String(formValue.comment ?? ''),
+      ratings: {
+        foodQuality: Number(ratingValues.foodQuality ?? 0),
+        staffService: Number(ratingValues.staffService ?? 0),
+        cleanliness: Number(ratingValues.cleanliness ?? 0),
+        environment: Number(ratingValues.environment ?? 0),
+      },
+      images: (formValue.images ?? [])
+        .map((url: string) => String(url ?? '').trim())
+        .filter((url: string) => url.length > 0),
+    };
+  }
+
+  saveReview(): void {
     if (this.reviewForm.invalid || !this.selectedCustomerId) return;
 
+    const reviewPayload = this.buildReviewPayload();
+
     if (this.editingReviewId) {
-      const data = {
-        globalRating: this.reviewForm.value.globalRating,
-        comment: this.reviewForm.value.comment
-      };
-      this.reviewService.update(this.editingReviewId, data)
-        .subscribe(() => this.finishReviewAction());
+      this.reviewService.update(this.editingReviewId, reviewPayload).subscribe({
+        next: () => {
+          this.finishReviewAction();
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error updating review:', err);
+          alert('Error updating review');
+          this.cdr.markForCheck();
+        },
+      });
       return;
     }
 
-    const restaurantId = this.reviewForm.value.restaurant_id;
+    const restaurantId = reviewPayload.restaurant_id;
     const exists = this.reviewsByCustomer[this.selectedCustomerId]?.find(
-      r => this.getReviewRestaurantId(r) === restaurantId
+      (r) => this.getReviewRestaurantId(r) === restaurantId,
     );
 
     if (exists) {
-      alert('Already reviewed');
+      alert('Already reviewed this restaurant');
       return;
     }
 
     const data = {
-      ...this.reviewForm.value,
+      ...reviewPayload,
       customer_id: this.selectedCustomerId,
-      date: new Date()
+      date: new Date(),
     };
 
-    this.reviewService.create(data)
-      .subscribe(() => this.finishReviewAction());
+    this.reviewService.create(data).subscribe({
+      next: () => {
+        this.finishReviewAction();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error creating review:', err);
+        alert('Error creating review: ' + (err.error?.message || 'Please try again'));
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   finishReviewAction(): void {
     const id = this.selectedCustomerId;
-    this.reviewForm.reset();
+    this.resetReviewForm();
     this.selectedCustomerId = null;
     this.editingReviewId = null;
     if (id) this.loadReviews(id);
   }
 
-  deleteReview(reviewId: string, customerId: string): void {
+  softDeleteReview(reviewId: string, customerId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: 'Delete this review?'
+      data: 'delete this review',
     });
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.reviewService.delete(reviewId)
-          .subscribe(() => this.loadReviews(customerId));
+        this.reviewService.softDelete(reviewId).subscribe(() => {
+          this.loadReviews(customerId);
+          this.loadDeletedReviews(customerId);
+        });
       }
     });
   }
 
-  like(review: IReview): void {
-    this.reviewService.like(review._id!)
-      .subscribe(updated => {
-        review.likes = updated.likes;
-        this.cdr.markForCheck();
-      });
+  hardDeleteReview(reviewId: string, customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'PERMANENTLY DELETE this review',
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.reviewService.hardDelete(reviewId).subscribe(() => {
+          this.loadReviews(customerId);
+          this.loadDeletedReviews(customerId);
+        });
+      }
+    });
+  }
+
+  restoreReview(reviewId: string, customerId: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: 'restore this review',
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.reviewService.restoreDelete(reviewId).subscribe(() => {
+          this.loadReviews(customerId);
+          this.loadDeletedReviews(customerId);
+        });
+      }
+    });
   }
 
   getStars(globalRating: number): number[] {
@@ -538,14 +756,16 @@ export class CustomerList implements OnInit {
 
   goToReviewPage(customerId: string): void {
     const requestedPage = Number(this.goToReviewPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = Math.max(1, Math.ceil((this.reviewTotal[customerId] || 0) / this.reviewLimit));
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.reviewPage[customerId] = safePage - 1;
-    this.goToReviewPageControl.setValue(safePage, { emitEvent: false });
+    this.reviewPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.reviewTotal[customerId] || 0, this.reviewLimit);
+    this.goToReviewPageControl.setValue(this.reviewPage[customerId], { emitEvent: false });
     this.loadReviews(customerId);
+  }
+
+  goToDeletedReviewPage(customerId: string): void {
+    const requestedPage = Number(this.goToDeletedReviewPageControl.value);
+    this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
+    this.goToDeletedReviewPageControl.setValue(this.deletedReviewPage[customerId], { emitEvent: false });
+    this.loadDeletedReviews(customerId);
   }
 
   // ========================
@@ -553,35 +773,55 @@ export class CustomerList implements OnInit {
   // ========================
 
   loadVisits(customerId: string): void {
-    this.visitService.getVisitsByCustomerId(customerId).subscribe({
-      next: (allVisits: IVisit[]) => {
-        // STEP 1: FILTER
-        let filtered = this.filterVisits(allVisits);
-
-        // STEP 2: SORT
+    this.visitService.getVisitsByCustomerId(customerId, this.visitLimit, this.visitPage[customerId]).subscribe({
+      next: (allVisits: any) => {
+        let filtered = this.filterVisits(allVisits.data);
         let sorted = this.sortVisits(filtered);
 
-        // STEP 3: PAGINATE
-        let paginated = this.paginateVisits(sorted, customerId);
-
-        // Store filtered & paginated reviews for display
-        this.customerVisits = {
-          ...this.customerVisits,
-          [customerId]: paginated
-        };
+        this.visitTotal[customerId] = allVisits.meta.total;
+        this.visitPage[customerId] = this.paginationUtils.getSafePage(
+          this.visitPage[customerId] || 1,
+          allVisits.meta.total,
+          this.visitLimit
+        );
+        this.customerVisits[customerId] = sorted;
 
         this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error loading reviews:', err);
-        this.reviewsByCustomer[customerId] = [];
+        console.error('Error loading visits:', err);
+        this.customerVisits[customerId] = [];
         this.cdr.markForCheck();
-      }
+      },
+    });
+  }
+
+  loadDeletedVisits(customerId: string): void {
+    this.visitService.getDeletedVisitsByCustomerId(customerId, this.visitLimit, this.deletedVisitPage[customerId]).subscribe({
+      next: (deletedData: any) => {
+        let filtered = this.filterVisits(deletedData.data);
+        let sorted = this.sortVisits(filtered);
+
+        this.deletedVisitTotal[customerId] = deletedData.meta.total;
+        this.deletedVisitPage[customerId] = this.paginationUtils.getSafePage(
+          this.deletedVisitPage[customerId] || 1,
+          deletedData.meta.total,
+          this.visitLimit
+        );
+        this.customerDeletedVisits[customerId] = sorted;
+
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading deleted visits:', err);
+        this.customerDeletedVisits[customerId] = [];
+        this.cdr.markForCheck();
+      },
     });
   }
 
   private filterVisits(visits: IVisit[]): IVisit[] {
-    return visits; // No filters yes
+    return visits;
   }
 
   private sortVisits(visits: IVisit[]): IVisit[] {
@@ -589,7 +829,6 @@ export class CustomerList implements OnInit {
       let aVal = a[this.visitSortField];
       let bVal = b[this.visitSortField];
 
-      // Handle undefined values
       if (aVal === undefined || aVal === null) aVal = '';
       if (bVal === undefined || bVal === null) bVal = '';
 
@@ -606,34 +845,6 @@ export class CustomerList implements OnInit {
     });
   }
 
-  private paginateVisits(visits: IVisit[], customerId: string): IVisit[] {
-    const page = this.visitPage[customerId] || 0;
-    const start = page * this.visitLimit;
-    const end = start + this.visitLimit;
-
-    // Store total for pagination controls
-    this.visitTotal[customerId] = visits.length;
-
-    return visits.slice(start, end);
-  }
-
-  nextVisitPage(customerId: string): void {
-    const page = this.visitPage[customerId] || 0;
-    const total = this.visitTotal[customerId] || 0;
-
-    if ((page + 1) * this.visitLimit >= total) return;
-
-    this.visitPage[customerId] = page + 1;
-    this.loadVisits(customerId);
-  }
-
-  prevVisitPage(customerId: string): void {
-    if ((this.visitPage[customerId] || 0) === 0) return;
-
-    this.visitPage[customerId]--;
-    this.loadVisits(customerId);
-  }
-
   prepareNewVisit(customerId: string): void {
     this.currentCustomerId = customerId;
     this.isEditingVisit = false;
@@ -641,7 +852,7 @@ export class CustomerList implements OnInit {
     this.visitForm.reset({
       date: new Date().toISOString().substring(0, 10),
       billAmount: 0,
-      pointsEarned: 0
+      pointsEarned: 0,
     });
   }
 
@@ -658,7 +869,7 @@ export class CustomerList implements OnInit {
       restaurant_id: restaurantId,
       billAmount: visit.billAmount,
       pointsEarned: visit.pointsEarned,
-      date: formattedDate
+      date: formattedDate,
     });
   }
 
@@ -670,14 +881,14 @@ export class CustomerList implements OnInit {
       const updatePayload = {
         date: formValue.date,
         pointsEarned: Number(formValue.pointsEarned),
-        billAmount: Number(formValue.billAmount)
+        billAmount: Number(formValue.billAmount),
       };
       this.visitService.updateVisit(this.selectedVisitId, updatePayload).subscribe({
         next: () => {
           this.loadVisits(this.currentCustomerId!);
           this.cancelVisitForm();
         },
-        error: (err) => alert('Error al actualizar: ' + (err.error?.message || 'Revisa Joi'))
+        error: (err) => alert('Error al actualizar: ' + (err.error?.message || 'Revisa Joi')),
       });
     } else {
       const createPayload = {
@@ -685,7 +896,7 @@ export class CustomerList implements OnInit {
         restaurant_id: formValue.restaurant_id,
         date: formValue.date,
         pointsEarned: Number(formValue.pointsEarned),
-        billAmount: Number(formValue.billAmount)
+        billAmount: Number(formValue.billAmount),
       };
       this.visitService.createVisit(createPayload).subscribe(() => {
         this.loadVisits(this.currentCustomerId!);
@@ -695,35 +906,81 @@ export class CustomerList implements OnInit {
   }
 
   softDeleteVisit(visitId: string, customerId: string): void {
-    if (confirm('¿Deseas enviar esta visita a la papelera?')) {
-      this.visitService.updateVisit(visitId, { deletedAt: new Date() }).subscribe({
-        next: () => this.loadVisits(customerId),
-        error: (err) => console.error('Error en Soft Delete:', err)
-      });
-    }
+    if (!customerId) return;
+    if (!visitId) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `soft-delete the visit`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.visitService.softDeleteVisit(visitId).subscribe({
+          next: () => {
+            this.loadVisits(customerId);
+            this.loadDeletedVisits(customerId);
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error deleting visit';
+          },
+        });
+      }
+    });
   }
 
-  deleteVisit(visitId: string, customerId: string): void {
-    if (confirm('¿Seguro que quieres borrar permanentemente (Hard Delete)?')) {
-      this.visitService.deleteVisit(visitId).subscribe(() => {
-        this.loadVisits(customerId);
-      });
-    }
+  hardDeleteVisit(visitId: string, customerId: string): void {
+    if (!customerId) return;
+    if (!visitId) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `PERMANENTLY DELETE the visit`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.visitService.hardDeleteVisit(visitId).subscribe({
+          next: () => {
+            this.loadVisits(customerId);
+            this.loadDeletedVisits(customerId);
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error deleting visit';
+          },
+        });
+      }
+    });
+  }
+
+  restoreVisit(visitId: string, customerId: string): void {
+    if (!customerId) return;
+    if (!visitId) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: `restore the visit`,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.visitService.restoreVisit(visitId).subscribe({
+          next: () => {
+            this.loadVisits(customerId);
+            this.loadDeletedVisits(customerId);
+          },
+          error: (err) => {
+            console.error(err);
+            this.errorMsg = 'Error restoring visit';
+          },
+        });
+      }
+    });
   }
 
   cancelVisitForm(): void {
     this.activeVisitForm = false;
     this.selectedVisitId = null;
     this.visitForm.reset();
-  }
-
-  toggleVisitsExpand(customerId: string): void {
-    this.visitsExpanded[customerId] = !this.visitsExpanded[customerId];
-
-    if (this.visitsExpanded[customerId]) {
-      this.visitPage[customerId] = 0;
-      this.loadVisits(customerId);
-    }
   }
 
   setVisitSort(field: 'date' | 'billAmount' | 'pointsEarned', customerId: string): void {
@@ -734,22 +991,21 @@ export class CustomerList implements OnInit {
       this.visitSortOrder = 'desc';
     }
     this.loadVisits(customerId);
-  }
-
-  getVisitsByCustomer(customerId: string): IVisit[] {
-    return this.customerVisits[customerId] || [];
+    this.loadDeletedVisits(customerId);
   }
 
   goToVisitPage(customerId: string): void {
     const requestedPage = Number(this.goToVisitPageControl.value);
-    if (!Number.isFinite(requestedPage)) return;
-
-    const totalPages = Math.max(1, Math.ceil((this.visitTotal[customerId] || 0) / this.visitLimit));
-    const safePage = Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages);
-
-    this.visitPage[customerId] = safePage - 1;
-    this.goToVisitPageControl.setValue(safePage, { emitEvent: false });
+    this.visitPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.visitTotal[customerId] || 0, this.visitLimit);
+    this.goToVisitPageControl.setValue(this.visitPage[customerId], { emitEvent: false });
     this.loadVisits(customerId);
+  }
+
+  goToDeletedVisitPage(customerId: string): void {
+    const requestedPage = Number(this.goToDeletedVisitPageControl.value);
+    this.deletedVisitPage[customerId] = this.paginationUtils.getSafePage(requestedPage, this.deletedVisitTotal[customerId] || 0, this.visitLimit);
+    this.goToDeletedVisitPageControl.setValue(this.deletedVisitPage[customerId], { emitEvent: false });
+    this.loadDeletedVisits(customerId);
   }
 
   // ========================
@@ -758,7 +1014,7 @@ export class CustomerList implements OnInit {
 
   loadCustomerBadges(customerId: string): void {
     this.loadingBadges[customerId] = true;
-    this.badgeService.getBadgesByCustomer(customerId).subscribe({
+    this.badgeService.getBadgesByCustomerId(customerId, 1, this.badgeLimit).subscribe({
       next: (badges: IBadge[]) => {
         this.customerBadges[customerId] = badges;
         this.loadingBadges[customerId] = false;
@@ -768,7 +1024,71 @@ export class CustomerList implements OnInit {
         this.customerBadges[customerId] = [];
         this.loadingBadges[customerId] = false;
         this.cdr.markForCheck();
-      }
+      },
     });
+  }
+
+  // ========================
+  // PAGINATION METHODS FOR TEMPLATE
+  // ========================
+
+  prevVisitPage(customerId: string): void {
+    this.visitPage[customerId] = this.paginationUtils.getSafePage((this.visitPage[customerId] || 1) - 1, this.visitTotal[customerId] || 0, this.visitLimit);
+    this.loadVisits(customerId);
+  }
+
+  prevDeletedVisitPage(customerId: string): void {
+    this.deletedVisitPage[customerId] = this.paginationUtils.getSafePage((this.deletedVisitPage[customerId] || 1) - 1, this.deletedVisitTotal[customerId] || 0, this.visitLimit);
+    this.loadDeletedVisits(customerId);
+  }
+
+  nextVisitPage(customerId: string): void {
+    this.visitPage[customerId] = this.paginationUtils.getSafePage((this.visitPage[customerId] || 1) + 1, this.visitTotal[customerId] || 0, this.visitLimit);
+    this.loadVisits(customerId);
+  }
+
+  nextDeletedVisitPage(customerId: string): void {
+    this.deletedVisitPage[customerId] = this.paginationUtils.getSafePage((this.deletedVisitPage[customerId] || 1) + 1, this.deletedVisitTotal[customerId] || 0, this.visitLimit);
+    this.loadDeletedVisits(customerId);
+  }
+
+  prevPage(customerId: string): void { // For reviews
+    this.reviewPage[customerId] = this.paginationUtils.getSafePage((this.reviewPage[customerId] || 1) - 1, this.reviewTotal[customerId] || 0, this.reviewLimit);
+    this.loadReviews(customerId);
+  }
+
+  prevDeletedReviewPage(customerId: string): void { // For deleted reviews
+    this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage((this.deletedReviewPage[customerId] || 1) - 1, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
+    this.loadDeletedReviews(customerId);
+  }
+
+  nextPage(customerId: string): void { // For reviews
+    this.reviewPage[customerId] = this.paginationUtils.getSafePage((this.reviewPage[customerId] || 1) + 1, this.reviewTotal[customerId] || 0, this.reviewLimit);
+    this.loadReviews(customerId);
+  }
+
+  nextDeletedReviewPage(customerId: string): void { // For deleted reviews
+    this.deletedReviewPage[customerId] = this.paginationUtils.getSafePage((this.deletedReviewPage[customerId] || 1) + 1, this.deletedReviewTotal[customerId] || 0, this.reviewLimit);
+    this.loadDeletedReviews(customerId);
+  }
+
+  prevCustomersPage(): void {
+    this.customerPager.page = this.paginationUtils.getSafePage(this.customerPager.page - 1, this.filteredCustomers.length, this.customerPager.limit);
+    this.updatePagedCustomers();
+  }
+
+  nextCustomersPage(): void {
+    this.customerPager.page = this.paginationUtils.getSafePage(this.customerPager.page + 1, this.filteredCustomers.length, this.customerPager.limit);
+    this.updatePagedCustomers();
+  }
+
+  prevDeletedPage(): void {
+    this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page - 1, this.filteredDeletedCustomers.length, this.deletedPager.limit);
+    this.updatePagedDeletedCustomers();
+  }
+
+  nextDeletedPage(): void {
+    this.deletedPager.page = this.paginationUtils.getSafePage(this.deletedPager.page + 1, this.filteredDeletedCustomers.length, this.deletedPager.limit);
+    this.updatePagedDeletedCustomers();
   }
 }

@@ -1,34 +1,104 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { map } from 'rxjs/operators';
 import { IDish } from '../models/dish.model';
+import { ApiClientService } from './api-client.service';
+import { normalizePaginatedResponse } from './api-response.util';
+
+// ─── INTERFACES ────────────────────────────────────────
+
+export interface DishSummary {
+  averageRating: number | null;
+  totalRatings: number | null;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+// ─── SERVICE ───────────────────────────────────────────
 
 @Injectable({
   providedIn: 'root',
 })
 export class DishService {
-  private baseUrl = environment.apiUrl;
+  constructor(private api: ApiClientService) {}
 
-  constructor(private http: HttpClient) {}
+  // ─── GET ALL ─────────────────────────────────────────
 
-  getDishes(): Observable<IDish[]> {
-    return this.http.get<IDish[]>(`${this.baseUrl}/dishes`);
+  getDishes(page = 1, limit = 10): Observable<PaginatedResponse<IDish>> {
+    return this.api.get<PaginatedResponse<IDish>>(`/dishes?page=${page}&limit=${limit}`);
   }
+
+  getDeletedDishes(page = 1, limit = 10): Observable<PaginatedResponse<IDish>> {
+    return this.api.get<PaginatedResponse<IDish>>(`/dishes/deleted?page=${page}&limit=${limit}`);
+  }
+
+  // ─── GET BY RESTAURANT ───────────────────────────────
+
+  getDishesByRestaurantId(
+    restaurantId: string,
+    page: number,
+    limit: number
+  ): Observable<PaginatedResponse<IDish>> {
+    return this.api
+      .get(`/dishes/restaurant/${restaurantId}`, { page, limit })
+      .pipe(map((res) => normalizePaginatedResponse<IDish>(res)));
+  }
+
+  getDeletedDishesByRestaurantId(
+    restaurantId: string,
+    page: number,
+    limit: number
+  ): Observable<PaginatedResponse<IDish>> {
+    return this.api
+      .get(`/dishes/restaurant/${restaurantId}/deleted`, { page, limit })
+      .pipe(map((res) => normalizePaginatedResponse<IDish>(res)));
+  }
+
+  // ─── GET ONE ─────────────────────────────────────────
 
   getDish(dishId: string): Observable<IDish> {
-    return this.http.get<IDish>(`${this.baseUrl}/dishes/${dishId}`);
+    return this.api.get<IDish>(`/dishes/${dishId}`);
   }
 
+  getDeletedDish(dishId: string): Observable<IDish> {
+    return this.api.get<IDish>(`/dishes/${dishId}/deleted`);
+  }
+
+  // ─── CRUD ────────────────────────────────────────────
+
   createDish(data: Partial<IDish>): Observable<IDish> {
-    return this.http.post<IDish>(`${this.baseUrl}/dishes`, data);
+    return this.api.post<IDish>('/dishes', data);
   }
 
   updateDish(dishId: string, data: Partial<IDish>): Observable<IDish> {
-    return this.http.put<IDish>(`${this.baseUrl}/dishes/${dishId}`, data);
+    return this.api.put<IDish>(`/dishes/${dishId}`, data);
   }
 
-  deleteDish(dishId: string): Observable<IDish> {
-    return this.http.delete<IDish>(`${this.baseUrl}/dishes/${dishId}`);
+  // ─── DELETE ──────────────────────────────────────────
+
+  softDeleteDish(dishId: string): Observable<IDish> {
+    return this.api.delete<IDish>(`/dishes/${dishId}/soft`);
+  }
+
+  restoreDish(dishId: string): Observable<IDish> {
+    return this.api.patch<IDish>(`/dishes/${dishId}/restore`, {});
+  }
+
+  hardDeleteDish(dishId: string): Observable<IDish> {
+    return this.api.delete<IDish>(`/dishes/${dishId}/hard`);
+  }
+
+  // ─── RATINGS ─────────────────────────────────────────
+
+  getDishSummary(dishId: string): Observable<DishSummary> {
+    return this.api.get<DishSummary>(`/dis-ratings/dish/${dishId}/summary`);
   }
 }

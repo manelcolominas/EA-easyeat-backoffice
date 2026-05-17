@@ -1,10 +1,10 @@
 <h2 mat-dialog-title>Delete</h2>
 
 <mat-dialog-content>
-  Are you sure you want to delete {{ name }}?
+  Are you sure you want to {{ name }}?
 </mat-dialog-content>
 
 <mat-dialog-actions>
-  <button class="btn" (click)="onNo()">No</button>
-  <button class="btn" color="warn" (click)="onYes()">Yes</button>
+  <button class="btn-custom btn-secondary btn-sm" (click)="onNo()">No</button>
+  <button class="btn-custom btn-danger btn-sm" (click)="onYes()">Yes</button>
 </mat-dialog-actions>

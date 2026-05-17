@@ -1,30 +1,69 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
 import { IReward } from '../models/reward.model';
+import { ApiClientService } from './api-client.service';
+import { map } from 'rxjs/operators';
+import { normalizePaginatedResponse } from './api-response.util';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RewardService {
-  private baseUrl = environment.apiUrl;
+  constructor(private api: ApiClientService) { }
 
-  constructor(private http: HttpClient) {}
+  getRewards(page: number, limit: number): Observable<any> {
+    return this.api.get('/rewards', {
+      page: page,
+      limit: limit,
+    }).pipe(map((res) => normalizePaginatedResponse<IReward>(res)));
+  }
 
-  getRewards(): Observable<IReward[]> {
-    return this.http.get<IReward[]>(`${this.baseUrl}/rewards`)
+  getDeletedRewards(page: number, limit: number): Observable<any> {
+    return this.api.get('/rewards/deleted', {
+      page: page,
+      limit: limit,
+    }).pipe(map((res) => normalizePaginatedResponse<IReward>(res)));
+  }
+
+  getRewardsByRestaurant(restaurantId: string, page: number, limit: number): Observable<any> {
+    return this.api.get(`/rewards/restaurant/${restaurantId}`, {
+      page: page,
+      limit: limit,
+    }).pipe(map((res) => normalizePaginatedResponse<IReward>(res)));
+  }
+
+  getDeletedRewardsByRestaurant(restaurantId: string, page: number, limit: number): Observable<any> {
+    return this.api.get(`/rewards/restaurant/${restaurantId}/deleted`, {
+      page: page,
+      limit: limit,
+    }).pipe(map((res) => normalizePaginatedResponse<IReward>(res)));
+  }
+
+  getReward(rewardId: string): Observable<IReward> {
+    return this.api.get<IReward>(`/rewards/${rewardId}`);
+  }
+
+  getDeletedReward(rewardId: string): Observable<IReward> {
+    return this.api.get<IReward>(`/rewards/${rewardId}/deleted`);
   }
 
   createReward(data: Partial<IReward>): Observable<IReward> {
-    return this.http.post<IReward>(`${this.baseUrl}/rewards`, data);
+    return this.api.post<IReward>('/rewards', data);
   }
 
   updateReward(rewardId: string, data: Partial<IReward>): Observable<IReward> {
-    return this.http.put<IReward>(`${this.baseUrl}/rewards/${rewardId}`, data);
+    return this.api.put<IReward>(`/rewards/${rewardId}`, data);
   }
 
-  deleteReward(rewardId: string): Observable<IReward> {
-    return this.http.delete<IReward>(`${this.baseUrl}/rewards/${rewardId}`);
+  softDeleteReward(rewardId: string): Observable<IReward> {
+    return this.api.delete<IReward>(`/rewards/${rewardId}/soft`);
+  }
+
+  restoreReward(rewardId: string): Observable<IReward> {
+    return this.api.patch<IReward>(`/rewards/${rewardId}/restore`, {});
+  }
+
+  hardDeleteReward(rewardId: string): Observable<IReward> {
+    return this.api.delete<IReward>(`/rewards/${rewardId}/hard`);
   }
 }

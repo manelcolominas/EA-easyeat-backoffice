@@ -1,55 +1,56 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ICustomer } from '../models/customer.model';
-import { environment } from '../../environments/environment';
+import { ApiClientService } from './api-client.service';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CustomerService {
-  private baseUrl = environment.apiUrl;
-
-  constructor(private http: HttpClient) {}
+  constructor(private api: ApiClientService) {}
 
   createCustomer(data: Partial<ICustomer>): Observable<ICustomer> {
-    return this.http.post<ICustomer>(`${this.baseUrl}/customers`, data);
+    return this.api.post<ICustomer>('/customers', data);
   }
 
   getCustomerById(customerId: string): Observable<ICustomer> {
-    return this.http.get<ICustomer>(
-      `${this.baseUrl}/customers/${customerId}`
-    );
+    return this.api.get<ICustomer>(`/customers/${customerId}`);
+  }
+
+  getDeletedCustomerById(customerId: string): Observable<ICustomer> {
+    return this.api.get<ICustomer>(`/customers/${customerId}/deleted`);
   }
 
   getCustomers(): Observable<ICustomer[]> {
-    return this.http.get<ICustomer[]>(
-      `${this.baseUrl}/customers`
-    );
+    return this.api.getAllPaginatedData<ICustomer>('/customers').pipe(map((res) => res.data));
   }
 
+  getDeletedCustomers(): Observable<ICustomer[]> {
+    return this.api.getAllPaginatedData<ICustomer>('/customers/deleted').pipe(map((res) => res.data));
+  }
+
+  getFullCustomer(customerId: string): Observable<ICustomer> {
+    return this.api.get<ICustomer>(`/customers/${customerId}/full`);
+  }
+
+  getFullDeletedCustomer(customerId: string): Observable<ICustomer> {
+    return this.api.get<ICustomer>(`/customers/${customerId}/full/deleted`);
+  }
 
   updateCustomer(id: string, data: any): Observable<ICustomer> {
-  return this.http.put<ICustomer>(
-    `${this.baseUrl}/customers/${id}`,
-    data   
-  );
-}
-softDeleteCustomer(customerId: string): Observable<ICustomer> {
-    return this.http.delete<ICustomer>(
-      `${this.baseUrl}/customers/${customerId}/soft`
-    );
+    return this.api.put<ICustomer>(`/customers/${id}`, data);
   }
-   restoreCustomer(customerId: string): Observable<ICustomer> {
-    return this.http.patch<ICustomer>(
-      `${this.baseUrl}/customers/${customerId}/restore`,
-      {}
-    );
+
+  softDeleteCustomer(customerId: string): Observable<ICustomer> {
+    return this.api.delete<ICustomer>(`/customers/${customerId}/soft`);
+  }
+
+  restoreCustomer(customerId: string): Observable<ICustomer> {
+    return this.api.patch<ICustomer>(`/customers/${customerId}/restore`, {});
   }
 
   hardDeleteCustomer(customerId: string): Observable<ICustomer> {
-    return this.http.delete<ICustomer>(
-      `${this.baseUrl}/customers/${customerId}/hard`
-    );
+    return this.api.delete<ICustomer>(`/customers/${customerId}/hard`);
   }
 }
