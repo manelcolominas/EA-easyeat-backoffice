@@ -14,7 +14,7 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-  let token = null;
+    let token = null;
   
   if (this.isBrowser) {
     token = localStorage.getItem('admin_token');
