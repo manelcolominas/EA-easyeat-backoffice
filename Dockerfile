@@ -1,34 +1,26 @@
-# --- Stage 1: Build ---
-FROM node:18-alpine AS build
+FROM node:22-bookworm-slim AS build
 
 WORKDIR /app
 
 COPY package*.json ./
+RUN npm ci
 
-# 1. Instal·lem sense executar el "postinstall"
-RUN npm install --ignore-scripts
-
-# 2. Ara copiem tot el codi (inclòs el tsconfig.json)
 COPY . .
 
-# 3. Executem la compilació manualment ara que ja tenim els fitxers
 RUN npm run build
 
-# --- Stage 2: Production ---
-FROM node:18-alpine
+FROM node:22-bookworm-slim AS runtime
 
 WORKDIR /app
 
+ENV NODE_ENV=production
+ENV PORT=4000
+
 COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Aquí també ignorem scripts per evitar errors de tsc
-RUN npm install --only=production --ignore-scripts
+COPY --from=build /app/dist ./dist
 
-# Copiem el build generat
-COPY --from=build /app/build ./build
+EXPOSE 4000
 
-COPY src/data ./src/data
-
-EXPOSE 3000
-
-CMD ["node", "build/server.js"]
+CMD ["npm", "run", "serve:ssr:mini-spa"]
